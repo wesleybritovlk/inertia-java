@@ -191,18 +191,33 @@ class StarterUnitsTest {
     }
 
     @Test
-    void pageSerializerFallsThroughDetectionWhenNoMapperBeanIsDefined() {
+    void pageSerializerFallsThroughDetectionWhenNoMapperBeanIsDefined() throws Exception {
+        // registration uses whichever Jackson generation sits on the test classpath
+        Class<?> mapperClass = knownMapperClassOrNull();
+        org.junit.jupiter.api.Assumptions.assumeTrue(mapperClass != null, "no Jackson runtime in test scope");
+
+        // no UNIQUE mapper bean: the ambiguous lookup degrades to the runtime detection path
+        var ambiguousFactory = new org.springframework.beans.factory.support.DefaultListableBeanFactory();
+        ambiguousFactory.registerSingleton("m1", mapperClass.getDeclaredConstructor().newInstance());
+        ambiguousFactory.registerSingleton("m2", mapperClass.getDeclaredConstructor().newInstance());
+        var fromAmbiguous = new InertiaConfiguration().inertiaPageSerializer(ambiguousFactory);
+        assertTrue(fromAmbiguous instanceof io.github.wesleybritovlk.inertia.core.ReflectiveJacksonPageSerializer);
+
         // javax-free path: no mapper bean defined anywhere — class detection constructs one
         var emptyFactory = new org.springframework.beans.factory.support.DefaultListableBeanFactory();
         var runtimeSerializer = new InertiaConfiguration().inertiaPageSerializer(emptyFactory);
         assertTrue(runtimeSerializer instanceof io.github.wesleybritovlk.inertia.core.ReflectiveJacksonPageSerializer);
+    }
 
-        // no UNIQUE mapper bean: the ambiguous lookup degrades to the runtime detection path
-        var ambiguousFactory = new org.springframework.beans.factory.support.DefaultListableBeanFactory();
-        ambiguousFactory.registerSingleton("m1", new com.fasterxml.jackson.databind.ObjectMapper());
-        ambiguousFactory.registerSingleton("m2", new com.fasterxml.jackson.databind.ObjectMapper());
-        var fromAmbiguous = new InertiaConfiguration().inertiaPageSerializer(ambiguousFactory);
-        assertTrue(fromAmbiguous instanceof io.github.wesleybritovlk.inertia.core.ReflectiveJacksonPageSerializer);
+    private static Class<?> knownMapperClassOrNull() {
+        for (String name : List.of("com.fasterxml.jackson.databind.ObjectMapper", "tools.jackson.databind.ObjectMapper")) {
+            try {
+                return Class.forName(name);
+            } catch (ClassNotFoundException ignored) {
+                // next generation
+            }
+        }
+        return null;
     }
 
     // ---------------------------------------------------------- test support

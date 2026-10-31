@@ -114,8 +114,13 @@ public class InertiaConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(InertiaFilter.class)
-    FilterRegistrationBean<InertiaFilter> inertiaFilter(InertiaProperties properties, VersionProvider versionProvider) {
-        FilterRegistrationBean<InertiaFilter> registration = new FilterRegistrationBean<>(new InertiaFilter(versionProvider));
+    InertiaFilter inertiaFilter(VersionProvider versionProvider) {
+        return new InertiaFilter(versionProvider);
+    }
+
+    @Bean
+    FilterRegistrationBean<InertiaFilter> inertiaFilterRegistration(InertiaFilter filter, InertiaProperties properties) {
+        FilterRegistrationBean<InertiaFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setOrder(properties.getFilterOrder());
         registration.addUrlPatterns("/*");
         registration.setName("inertiaFilter");

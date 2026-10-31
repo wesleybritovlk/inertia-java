@@ -56,7 +56,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- tests: real Boot 3.x web app -->
+        <!-- tests: real Boot web app (3.x by default, 4.x via the boot4 profile) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -68,6 +68,20 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <!-- same -Pboot4 session: Boot 4 moved MockMvc support to a dedicated test starter -->
+        <profile>
+            <id>boot4</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-webmvc-test</artifactId>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>

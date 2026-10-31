@@ -15,30 +15,45 @@ import io.github.wesleybritovlk.inertia.core.InertiaHeaders;
 import io.github.wesleybritovlk.inertia.core.InertiaPage;
 import io.github.wesleybritovlk.inertia.core.InertiaResult;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.context.WebApplicationContext;
 
 /**
  * End-to-end starter integration over the Inertia protocol: auto-configuration, request
  * scoped engine, return value wiring, middleware rules, Thymeleaf root page, flash errors.
+ *
+ * <p>The servlet is wired manually through {@code webAppContextSetup} + the Inertia filter
+ * bean so the suite compiles across Boot majors (Boot 4 moved the MockMvc auto
+ * configuration to a dedicated starter). Uses only spring-test APIs.</p>
  */
 @SpringBootTest(classes = InertiaIntegrationTest.TestApp.class, properties = "inertia.version=v-test")
-@AutoConfigureMockMvc
 class InertiaIntegrationTest {
 
     private static final String INERTIA = "true";
 
     @Autowired
-    MockMvc mvc;
+    WebApplicationContext wac;
+
+    @Autowired
+    InertiaFilter inertiaFilter;
+
+    private MockMvc mvc;
+
+    @BeforeEach
+    void bootstrapMockServer() {
+        mvc = MockMvcBuilders.webAppContextSetup(wac).addFilters(inertiaFilter).build();
+    }
 
     // ---------------------------------------------------------------- root page
 

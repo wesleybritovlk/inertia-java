@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>inertia-java-bean demo</title>
+    <!-- cd esm.sh serves the adapter with externalized vue; mapping 'vue' to the same
+       url the adapter resolves internally guarantees ONE Vue instance in the page -->
+    <script type="importmap" th:inline="none">
+      {
+        "imports": {
+          "vue": "https://esm.sh/vue@^3.0.0?target=es2022",
+          "@inertiajs/vue3": "https://esm.sh/@inertiajs/vue3@3.10.0?target=es2022"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div th:id="${inertiaRootId}"></div>
+    <script th:attr="data-page=${inertiaRootId}" type="application/json" th:utext="${inertiaPageJson}"></script>
+
+    <script type="module">
+      import { createApp, h } from 'vue';
+      import { createInertiaApp, usePage } from '@inertiajs/vue3';
+
+      // esm.sh provides the runtime-only Vue build: pages use render functions
+      const HelloWorld = {
+        setup() {
+          const page = usePage();
+          const card = {
+            fontFamily: 'system-ui, sans-serif',
+            textAlign: 'center',
+            marginTop: '24vh',
+            color: '#1f2937',
+          };
+          const title = {
+            fontSize: '2.5rem',
+            margin: 0,
+          };
+          const badge = {
+            display: 'inline-block',
+            padding: '8px 14px',
+            borderRadius: '999px',
+            background: '#eef2ff',
+            color: '#4338ca',
+            fontSize: '0.95rem',
+          };
+          return () =>
+            h('div', { style: card }, [
+              h('h1', { style: title }, page.props.greeting),
+              h('p', { style: badge }, page.props.builtWith),
+              h('p', { style: 'color:#6b7280' }, 'served as text/html by the bundled Thymeleaf root template'),
+            ]);
+        },
+      };
+
+      const pages = { 'Hello/Index': HelloWorld };
+
+      createInertiaApp({
+        id: 'app',
+        resolve: (name) => {
+          const page = pages[name];
+          if (page === undefined) {
+            return Promise.reject(new Error('Page not found: ' + name));
+          }
+          return Promise.resolve(page);
+        },
+        setup({ el, App, props, plugin }) {
+          createApp({ render: () => h(App, props) }).use(plugin).mount(el);
+        },
+      });
+    </script>
+  </body>
+</html>

@@ -23,6 +23,7 @@
     <modules>
         <module>inertia-core</module>
         <module>inertia-spring-boot-starter</module>
+        <module>inertia-demo</module>
     </modules>
 
     <properties>
@@ -155,4 +156,14 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <profiles>
+        <!-- Boot 4 compatibility benchmark: mvn -Pboot4 verify -->
+        <profile>
+            <id>boot4</id>
+            <properties>
+                <spring.boot.version>4.0.5</spring.boot.version>
+            </properties>
+        </profile>
+    </profiles>
 </project>
