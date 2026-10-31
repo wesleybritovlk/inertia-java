@@ -22,6 +22,6 @@ class HelloController {
     InertiaPage hello() {
         return inertia.render("Hello/Index")
                 .with("greeting", "Hello World from inertia-java-bean")
-                .with("builtWith", "Spring Boot + Vue 3 + Vite + Inertia");
+                .with("builtWith", "Spring Boot + Vite + Inertia");
     }
 }

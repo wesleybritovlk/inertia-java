@@ -1,25 +1,30 @@
 # inertia-demo
 
-Hello-world application exercising the full Inertia flow with the canonical
-**Vite + Vue 3** front-end layout (the one the Inertia docs prescribe, minus Laravel):
+Hello-world application exercising the full Inertia flow with a **canonical Vite
+front-end** in your framework of choice: Vue 3, React 19 or Svelte 5 (the layouts the
+Inertia docs prescribe, minus Laravel):
 
 ```
 inertia-demo/
-├── frontend/                         # Vite + Vue (@inertiajs/vue3)
-│   ├── src/app.js                    # createInertiaApp + import.meta.glob page map
-│   ├── src/Pages/Hello/Index.vue     # SFC page (lazy chunk)
-│   └── vite.config.js                # manifest build straight into src/main/resources/static
-└── src/main/...                      # Spring Boot back-end (controller + the @vite bridge)
+├── frontend-demo-vue/                 # Vue 3 SFC pages (@inertiajs/vue3)
+├── frontend-demo-react/               # React 19 pages (@inertiajs/react)
+├── frontend-demo-svelte/              # Svelte 5 pages (@inertiajs/svelte)
+│   └── (each: src/app.(js|jsx) + src/Pages/Hello/Index.* + vite.config.js)
+└── src/main/...                       # Spring Boot back-end (controller only)
 ```
+
+All three front-ends produce the SAME page (`Hello/Index`) and the same build output —
+the Spring Boot back-end is shared, so pick the framework, build it, run.
 
 ## Run it
 
 ```bash
-# 1. front-end (once, or after editing Pages)
-cd inertia-demo/frontend
+# 1. front-end (choose ONE, first run needs npm install)
+cd inertia-demo/frontend-demo-vue    # demo-react | demo-svelte
 npm install
 npm run build
 # → writes static/assets/app-<hash>.js (+ per-page chunks) and static/manifest.json
+#   (builds are NOT committed — every framework rebuilds into the same folder)
 
 # 2. back-end
 cd ..
@@ -45,13 +50,21 @@ from the manifest) AND the asset version hashing — no configuration classes.
 - **`inertia.render("Hello/Index")`** on a plain `@Controller` returning `InertiaPage`;
 - **`data-page` root template**: `templates/inertia.html` carries the page payload the
   client boots from (Laravel `@inertia` equivalent);
-- **the `@vite` equivalent** server-side: `DemoConfiguration.viteAwareRenderer` reads the
-  Vite manifest and injects the entry script (`<script type="module" src="/assets/app-<hash>.js">`)
-  plus any CSS — so hashed, content-addressed assets by default;
+- **the `@vite` equivalent** server-side: `inertia.vite-manifest` makes the starter
+  resolve the entry script + css from the manifest every render (hashed, content-addressed
+  assets by default);
 - **live asset versioning**: the Vite manifest doubles as `inertia.version-file`
   (`FileVersionProvider` SHA-256 of it). Every `npm run build` changes the version; the
   next stale Inertia visit receives `409` + `X-Inertia-Location` and reloads with the
-  fresh bundle — the whole flow is live with `/^(GET)/` Inertia requests.
+  fresh bundle.
 
-The compiled assets are committed so the demo runs without Node installed; rebuild with
-`npm run build` (Node 18+ needed) whenever the Pages change.
+### Framework notes (Inertia v3 client-side setup parity)
+
+| Front-end | Entry | Page props | Title |
+|---|---|---|---|
+| Vue | `app.js` + `createInertiaApp` + `h(App, props)` + `.use(plugin)` | SFC `defineProps` / `$page.props` | `<Head title>` component |
+| React | `app.jsx` + `createRoot(el).render(<App {...props} />)` | `usePage().props` | `<Head title>` component |
+| Svelte | `app.js` + `mount(App, { target: el, props })` | `usePage().props` (runes `$state`, reactive) | native `<svelte:head><title>` (the Svelte adapter has no `Head` component) |
+
+All three populate the identical page JSON from the back-end — proving the adapter is
+client-framework agnostic exactly like the Inertia protocol intends.

@@ -1,0 +1,17 @@
+{
+  "name": "inertia-java-bean-demo-svelte",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "@inertiajs/svelte": "^3.10.0",
+    "svelte": "^5.57.3"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "vite": "^7.3.7"
+  }
+}

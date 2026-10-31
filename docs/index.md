@@ -30,16 +30,19 @@ with Thymeleaf playing the role of Laravel's Blade.
 
 ## Try the demo
 
-`inertia-demo/` is a runnable Hello World with the canonical **Vite + Vue 3** layout
-(SFC pages, hashed assets, asset versioning live from the Vite manifest):
+`inertia-demo/` is a runnable Hello World with your framework of choice — canonical
+**Vite** layouts for **Vue 3**, **React 19** and **Svelte 5** (hashed assets, asset
+versioning live from the Vite manifest):
 
 ```bash
-cd inertia-demo/frontend && npm install && npm run build && cd ..
+cd inertia-demo/frontend-demo-vue && npm install && npm run build && cd ..   # or demo-react | demo-svelte
 mvn install
 mvn -pl inertia-demo spring-boot:run          # Boot 3.3.12
 mvn -Pboot4 -pl inertia-demo spring-boot:run  # Boot 4.0.5
 # → http://localhost:8800
 ```
+
+See [inertia-demo/README.md](inertia-demo/README.md) for the per-framework notes.
 
 ## Non-Servlet environments
 
