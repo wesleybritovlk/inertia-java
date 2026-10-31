@@ -1,14 +1,24 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import { inertiaHotPlugin } from '../vite-inertia-hot-plugin.js';
+import fs from 'node:fs';
+
+// .hot-inertia = the flag the Spring adapter reads PER RENDER to switch the root
+// template to dev mode (HMR) - inertia-laravel public/hot parity; written on
+// `npm run dev`, removed on shutdown (kill -9 leaves it: delete manually).
+const inertiaHotFile = () => ({
+    name: 'inertia-hot-file',
+    configureServer(server) {
+        fs.writeFileSync('../.hot-inertia', String(server.config.server?.port ?? 5173));
+        server.httpServer?.on?.('close', () => fs.rmSync('../.hot-inertia', { force: true }));
+    },
+});
 
 // Inertia canonical layout for non-Laravel stacks: the Spring static folder receives
 // the hashed build plus the manifest, so the backend can (a) resolve assets and
 // (b) hash the manifest into the asset version.
-// build: `npm run build`  |  dev: `npm run dev` (writes .hot-inertia -> HMR mode)
 // cors: the page is served by Spring on localhost:8800 but the modules come from here.
 export default defineConfig({
-    plugins: [inertiaHotPlugin(), vue()],
+    plugins: [inertiaHotFile(), vue()],
     server: {
         cors: { origin: 'http://localhost:8800' },
     },

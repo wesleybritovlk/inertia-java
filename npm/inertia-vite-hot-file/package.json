@@ -1,0 +1,34 @@
+{
+  "name": "@wesleybritovlk/inertia-vite-hot-file",
+  "version": "0.1.0",
+  "description": "Vite plugin that writes/removes the .hot-inertia flag file so the inertia-java-bean Spring adapter switches its root template rendering between build mode (hashed manifest assets + version guard) and dev mode (npm run dev + HMR). inertia-laravel public/hot parity.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "prepublish": "node -e \"import('./src/index.js').then(m => console.log('plugin exports:', Object.keys(m)))\""
+  },
+  "keywords": [
+    "inertia",
+    "inertiajs",
+    "vite",
+    "vite-plugin",
+    "hmr",
+    "hot",
+    "spring-boot",
+    "java"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wesleybritovlk/inertia-java-bean"
+  },
+  "engines": {
+    "node": ">=20.11"
+  }
+}

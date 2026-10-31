@@ -1,8 +1,8 @@
-# inertia-demo
+# inertia-java-bean
 
-Hello-world application exercising the full Inertia flow with a **canonical Vite
-front-end** in your framework of choice: Vue 3, React 19 or Svelte 5 (the layouts the
-Inertia docs prescribe, minus Laravel):
+A Spring Boot adapter for [Inertia.js] with canonical **Vite** front-ends in any
+framework — Vue 3, React 19 or Svelte 5 (the layouts the Inertia docs prescribe, minus
+Laravel):
 
 ```
 inertia-demo/
@@ -13,8 +13,11 @@ inertia-demo/
 └── src/main/...                       # Spring Boot back-end (controller only)
 ```
 
-All three front-ends produce the SAME page (`Hello/Index`) and the same build output —
-the Spring Boot back-end is shared, so pick the framework, build it, run.
+The three front-ends produce the SAME page (`Hello/Index`) — the Spring Boot
+back-end is shared, so pick the framework, build it, run. Each `vite.config.js`
+carries the dev-mode flag plugin **inline** (the copy-paste boilerplate from the
+[getting started](../docs/getting-started.md)); teams reusing it across projects +
+prefer the ready-to-publish package in `npm/inertia-vite-hot-file`.
 
 ## Run it
 

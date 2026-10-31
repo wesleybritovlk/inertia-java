@@ -34,22 +34,31 @@ of a hot flag file (the adapter equivalent of Laravel's `public/hot`, named here
   hands between the two workflows. The `@vite client` establishes the HMR socket to the
   dev server even though the HTML is rendered by Spring (`localhost:5173` origin).
 
-## The hot file plugin (shipped with the demo front-ends)
+## The hot file (inline in the boilerplate vite.config.js)
 
-`inertia-demo/vite-inertia-hot-plugin.js` — ~15 lines, importable by every front-end:
+The dev loop needs something to tell the Spring process that the Vite dev server is
+running — the Laravel adapter equivalent of `laravel-vite-plugin` writing `public/hot`.
+The canonical way here is the **inline plugin** inside the boilerplate
+[`vite.config.js`](getting-started.md#4b-the-viteconfigjs-boilerplate-includes-dev-mode)
+(~10 lines, zero dependencies, written on dev boot, removed on shutdown):
 
 ```js
-import { inertiaHotPlugin } from '../vite-inertia-hot-plugin.js';
-
-export default defineConfig({
-    plugins: [inertiaHotPlugin(), vue()], // react() / svelte() for the others
-    server: { cors: { origin: 'http://localhost:8800' } },
-    // ...
+const inertiaHotFile = () => ({
+    name: 'inertia-hot-file',
+    configureServer(server) {
+        fs.writeFileSync('../.hot-inertia', String(server.config.server?.port ?? 5173));
+        server.httpServer?.on?.('close', () => fs.rmSync('../.hot-inertia', { force: true }));
+    },
 });
 ```
 
-It writes `.hot-inertia` when the dev server boots and deletes it on shutdown
-(Laravel parity). If a dev process is killed with `kill -9`, remove the file manually.
+For teams maintaining several projects, the same plugin ships as a reusable npm
+package in this repository (`npm/inertia-vite-hot-file`,
+`@wesleybritovlk/inertia-vite-hot-file` — `npm i` + `inertiaHotFile()`), consumable
+from any front-end to avoid copy-paste drift.
+
+It writes `.hot-inertia` on dev server boot and deletes it when the process closes
+gracefully. If a dev process dies hard (`kill -9`), remove the file manually.
 
 ## Configuration (all under `inertia.*`)
 

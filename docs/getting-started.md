@@ -122,6 +122,46 @@ The `<script data-page>` block is what `@inertiajs/*` reads on boot — this is 
 `@inertia` Blade directive equivalent. Keep exactly one, and keep `data-page` equal to
 `root-id`.
 
+## 4b. The vite.config.js boilerplate (includes dev mode)
+
+Front-end production builds AND the live dev loop need the flag plugin; it is small
+enough to be copied **inline** — this is the exact `vite.config.js` the demo uses
+(Vue variant; React: `react()` + `'src/app.jsx'`; Svelte: `{ svelte }` + `.svelte`):
+
+```js
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import fs from 'node:fs';
+
+// .hot-inertia = the flag the Spring adapter reads PER RENDER to switch the root
+// template to dev mode (HMR) - inertia-laravel public/hot parity; written on
+// `npm run dev`, removed on shutdown (kill -9 leaves it: delete manually).
+const inertiaHotFile = () => ({
+    name: 'inertia-hot-file',
+    configureServer(server) {
+        fs.writeFileSync('../.hot-inertia', String(server.config.server?.port ?? 5173));
+        server.httpServer?.on?.('close', () => fs.rmSync('../.hot-inertia', { force: true }));
+    },
+});
+
+export default defineConfig({
+    plugins: [inertiaHotFile(), vue()],
+    server: { cors: { origin: 'http://localhost:8800' } },
+    build: {
+        manifest: 'manifest.json',                    // drives hashing + versioning
+        outDir: '../src/main/resources/static',       // served by Spring static handler
+        emptyOutDir: true,
+        rollupOptions: { input: { app: 'src/app.js' } },
+    },
+});
+```
+
+The dev loop then pairs `npm run dev` (writes the flag) with `spring-boot:run`
+(answers pages in dev mode, HMR live) — details in
+[dev-workflow.md](dev-workflow.md). If you maintain several projects, the same plugin
+ships as a reusable package: `npm/inertia-vite-hot-file` in this repository
+(`npm i @wesleybritovlk/inertia-vite-hot-file` once published).
+
 ## 5. Front-end entrypoint
 
 Standard `@inertiajs` setup (Vue 3 example):
