@@ -43,6 +43,8 @@
         <!-- the demo is an application, not a library: gates stay on the library modules -->
         <jacoco.skip>true</jacoco.skip>
         <spotbugs.skip>true</spotbugs.skip>
+        <!-- @PathVariable without explicit names needs reflection parameter names -->
+        <maven.compiler.parameters>true</maven.compiler.parameters>
     </properties>
 
     <build>

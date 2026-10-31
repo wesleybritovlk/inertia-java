@@ -1,17 +1,20 @@
 <script>
-    import { usePage } from '@inertiajs/svelte';
+    import { Head, usePage } from '@inertiajs/svelte';
+    import Navbar from '../../Shared/Navbar.svelte';
 
-    const page = usePage(); // runes $state from page.svelte.js - reactive props
+    const page = usePage();
 </script>
 
 <svelte:head>
     <title>Hello</title>
 </svelte:head>
 
+<Navbar />
+
 <div class="wrap">
     <h1>{page.props.greeting}</h1>
     <p class="badge">{page.props.builtWith}</p>
-    <p class="hint">Svelte 5 · built by Vite · asset versioning wired to the Vite manifest</p>
+    <p class="hint">Vite build · hashed assets · asset versioning wired to the Vite manifest</p>
 </div>
 
 <style>

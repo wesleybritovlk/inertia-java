@@ -1,5 +1,6 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
+import Navbar from '../../Shared/Navbar.vue';
 
 defineProps({
     greeting: String,
@@ -9,6 +10,7 @@ defineProps({
 
 <template>
     <Head title="Hello" />
+    <Navbar />
     <div class="wrap">
         <h1>{{ greeting }}</h1>
         <p class="badge">{{ builtWith }}</p>

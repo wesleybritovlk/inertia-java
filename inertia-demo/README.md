@@ -60,24 +60,29 @@ inertia.vite-manifest=src/main/resources/static/manifest.json
 With it the starter wires the `@vite` equivalent (hashed entry script + css injected
 from the manifest) AND the asset version hashing — no configuration classes.
 
-## What the demo demonstrates
+## Pages + routes exercised
 
-- **`inertia.render("Hello/Index")`** on a plain `@Controller` returning `InertiaPage`;
-- **`data-page` root template**: `templates/inertia.html` carries the page payload the
-  client boots from (Laravel `@inertia` equivalent);
-- **the `@vite` equivalent** server-side: `inertia.vite-manifest` makes the starter
-  resolve the entry script + css from the manifest every render (hashed, content-addressed
-  assets by default);
-- **live asset versioning (build mode)**: the Vite manifest doubles as
-  `inertia.version-file` (`FileVersionProvider` SHA-256 of it). Every `npm run build`
-  changes the version; the next stale Inertia visit receives `409` +
-  `X-Inertia-Location` and reloads with the fresh bundle. In **dev mode** the version
-  goes `null` (hot-aware provider — Laravel parity).
+| Route | What it shows | Method |
+|---|---|---|
+| `/` | `Hello/Index` hello page (all three front-ends) | GET |
+| `/form-todo` | `SimpleFormTodo/Index` CRUD list, in-memory | GET |
+| `/form-todo` | create with validation (empty title → shared `errors` bag) | POST |
+| `/form-todo/{id}` | toggle done — **the adapter filter upgrades this redirect to 303** | PATCH |
+| `/form-todo/{id}` | delete — same 303 upgrade | DELETE |
+
+The navbar renders through the Inertia `<Link>` in each framework, so navigating is
+SPA-internal (no full reloads) — including the 303 follow-ups after POST/PATCH/DELETE.
+All flows were validated live in the browser (Vue, React and Svelte built from the same
+back-end): create → toggle (303) → delete, empty-title error round trip, navbar
+navigation.
+
+The CRUD back-end is a single controller (`SimpleFormTodoController`) with an in-memory
+map — no service layer, it is a demo.
 
 ### Dev mode rewards
 
 `npm run dev` (Vite) + Spring Boot pair exactly like `artisan serve` + Vite in Laravel:
-while `.hot-inertia` exists (written by the shipped vite plugin running `npm run dev`),
+while `.hot-inertia` exists (written by the shared vite plugin running `npm run dev`),
 every render answers with the dev modules and the HMR socket — your front edits update
 the running page without reloads, and the back-end keeps its own process. Full details:
 [dev-workflow.md](dev-workflow.md).

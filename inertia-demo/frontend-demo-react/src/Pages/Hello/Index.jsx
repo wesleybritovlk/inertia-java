@@ -1,4 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
+import Navbar from '../../Shared/Navbar.jsx';
 
 const card = {
     fontFamily: 'system-ui, sans-serif',
@@ -22,6 +23,7 @@ export default function Index() {
 
     return (
         <div style={card}>
+            <Navbar />
             <Head title="Hello" />
             <h1 style={title}>{greeting}</h1>
             <p style={badge}>{builtWith}</p>
