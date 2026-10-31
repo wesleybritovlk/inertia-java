@@ -3,7 +3,6 @@ package io.github.wesleybritovlk.inertia.spring;
 import java.io.IOException;
 import java.util.List;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;

@@ -3,8 +3,10 @@ package io.github.wesleybritovlk.inertia.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -344,6 +346,98 @@ class InertiaProtocolTest {
     }
 
     @Test
+    void flashMergeAccumulatesOverwritesAndSkipsNullKeys() {
+        MockRequest request = MockRequest.get("/f-flash").inertia();
+        Inertia engine = engine(request)
+                .flash(Map.of("first", 1))
+                .flash(null)
+                .flash(Map.of("second", 2, "first", 99));
+
+        LinkedHashMap<String, Object> third = new LinkedHashMap<>();
+        third.put(null, "skipped");
+        third.put("third", 3);
+        engine.flash(third);
+
+        InertiaResult result = engine.result(new InertiaPage("F"));
+        Map<String, Object> parsed = result.json().map(PageJson::parse).orElseThrow();
+
+        assertEquals(Map.of("first", 99L, "second", 2L, "third", 3L), parsed.get(PageKeys.FLASH));
+        // consumed once: the second page render carries no flash data
+        Map<String, Object> again = engine.result(new InertiaPage("F")).json().map(PageJson::parse).orElseThrow();
+        assertTrue(again.containsKey(PageKeys.FLASH) == false);
+    }
+
+    @Test
+    void noneFlashStoreDegradesGracefully() {
+        MockRequest noneFlash = MockRequest.noneFlash("/f-none");
+        Inertia engine = engine(noneFlash)
+                .flash(Map.of("ignored", true))
+                .clearHistory()
+                .preserveFragment();
+        InertiaResult result = engine.result(new InertiaPage("X"));
+
+        Map<String, Object> parsed = result.json().map(PageJson::parse).orElseThrow();
+        assertTrue(parsed.containsKey(PageKeys.FLASH) == false);
+        assertTrue(parsed.containsKey(PageKeys.CLEAR_HISTORY) == false);
+        assertTrue(parsed.containsKey(PageKeys.PRESERVE_FRAGMENT) == false);
+        assertEquals(Map.of(), ((Map<?, ?>) parsed.get(PageKeys.PROPS)).get("errors"));
+    }
+
+    @Test
+    void renderConsumerAndPropFailureSinkWork() {
+        // deferred props resolve only on partial reloads that request them
+        MockRequest request = MockRequest.get("/f-hook").inertia()
+                .header(InertiaHeaders.PARTIAL_COMPONENT, "R")
+                .header(InertiaHeaders.PARTIAL_DATA, "boom");
+        List<Throwable> failures = new ArrayList<>();
+        Inertia engine = engine(request)
+                .onPropFailure(failures::add);
+
+        InertiaPage page = engine.render("R", p -> p
+                .with("name", "render-consumer")
+                .withDeferredRescued("boom", () -> {
+                    throw new RuntimeException("rescue-me");
+                }));
+        Map<String, Object> parsed = engine.result(page).json().map(PageJson::parse).orElseThrow();
+
+        assertEquals(1, failures.size());
+        assertEquals("rescue-me", failures.get(0).getMessage());
+        assertEquals(List.of("boom"), parsed.get(PageKeys.RESCUED_PROPS));
+        assertSame(request, engine.request());
+    }
+
+    @Test
+    void renderRejectsBlankComponentsAndBlankKeys() {
+        MockRequest request = MockRequest.get("/x").inertia();
+        assertThrows(IllegalArgumentException.class, () -> engine(request).render("  "));
+        assertThrows(IllegalArgumentException.class, () -> engine(request).render("X", p -> p.with(" ", 1)));
+    }
+
+    @Test
+    void flagGettersDefaultToUnset() {
+        InertiaPage page = engine(MockRequest.get("/x").inertia()).render("X");
+        assertNull(page.isEncryptHistory());
+        assertNull(page.isPreserveBigIntegers());
+        page.withViewData(Map.of("a", 1)).withViewData("b", 2);
+        assertEquals(Map.of("a", 1, "b", 2), page.view());
+        assertTrue(page.component().equals("X"));
+    }
+
+    @Test
+    void mergeOptionBuildersCoverAppendAtPrependAtAndModeSwitching() {
+        MockRequest request = MockRequest.get("/m-cols").inertia();
+        InertiaPage page = engine(request).render("M", p -> p
+                .withMerged("a", () -> List.of(), o -> o.appendAt("sub"))
+                .withMerged("b", () -> List.of(), o -> o.prependAt("tail"))
+                .withMerged("c", () -> List.of(), o -> o.prepend().append())
+                .withMerged("d", () -> List.of(), o -> o.append().prepend()));
+
+        Map<String, Object> parsed = PageJson.parse(engine(request).result(page).json().orElseThrow());
+
+        assertEquals(List.of("a.sub", "c"), parsed.get(PageKeys.MERGE_PROPS));
+        assertEquals(List.of("b.tail", "d"), parsed.get(PageKeys.PREPEND_PROPS));
+    }
+    @Test
     void responseUpgradeAddsVaryUpgradesNonGetAndEscalatesFragmentRedirects() {
         MockShell shell = new MockShell(302).location("/after");
 
@@ -355,5 +449,25 @@ class InertiaProtocolTest {
         InertiaResponseUpgrade.apply(MockRequest.get("/x").inertia(), fragment);
         assertEquals(409, fragment.status);
         assertEquals("/docs#pricing", fragment.headers.get(InertiaHeaders.REDIRECT));
+    }
+
+    @Test
+    void responseUpgradeCoversRemainingMethodAndStatusBranches() {
+        // QUERY/PATCH/DELETE all upgrade to see-other
+        for (String method : List.of("QUERY", "PATCH", "DELETE")) {
+            MockShell shell = new MockShell(302).location("/after-" + method.toLowerCase());
+            InertiaResponseUpgrade.apply(new MockRequest(method, "/x", "").inertia(), shell);
+            assertEquals(303, shell.status, method);
+        }
+
+        // non-Inertia redirect and non-302 statuses only get the Vary header
+        MockShell plain = new MockShell(302).location("/after");
+        InertiaResponseUpgrade.apply(MockRequest.get("/x"), plain);
+        assertEquals(302, plain.status);
+
+        MockShell page200 = new MockShell(200);
+        InertiaResponseUpgrade.apply(MockRequest.get("/x").inertia(), page200);
+        assertEquals(200, page200.status);
+        assertEquals(InertiaHeaders.INERTIA, page200.headers.get(InertiaHeaders.VARY));
     }
 }

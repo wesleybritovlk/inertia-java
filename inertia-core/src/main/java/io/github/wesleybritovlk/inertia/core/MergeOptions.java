@@ -6,40 +6,39 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Merge configuration for {@link InertiaPage#withMerged(String, java.util.function.Supplier, Consumer)}.
- * Defaults to a root append exactly like {@code Inertia::merge(...)} from the Laravel adapter.
+ * Merge configuration for {@link InertiaPage#withMerged(String, java.util.function.Supplier, Consumer)},
+ * mirroring the {@code MergesProps} trait of inertia-laravel: a single root-family flag
+ * ({@code append}, default true, flipped by {@link #prepend()}), independent
+ * {@code appendAt/prependAt} sub-path lists, {@code deep()} merging and item identity through
+ * {@code matchOn(...)}.
  */
 public final class MergeOptions {
 
-    boolean appendRoot = true;
+    boolean append = true;
     final List<String> appendsAtPaths = new ArrayList<>();
-    boolean prependRoot;
     final List<String> prependsAtPaths = new ArrayList<>();
     boolean deep;
     final List<String> matchOn = new ArrayList<>();
 
-    /** Client appends the received items to the array prop (default behavior). */
+    /** Root append; the default behavior (also re-enables it after {@link #prepend()}). */
     public MergeOptions append() {
-        this.appendRoot = true;
-        this.prependRoot = false;
+        this.append = true;
         return this;
     }
 
-    /** Client appends into the nested array at {@code "prop." + subPath}. */
+    /** Appends into the nested array at {@code "prop." + subPath} (root family flag untouched). */
     public MergeOptions appendAt(String subPath) {
         this.appendsAtPaths.add(subPath);
-        this.appendRoot = false;
         return this;
     }
 
-    /** Client prepends the received items to the array prop. */
+    /** Root prepend: flips the root family off-append (Laravel {@code prepend(true)} parity). */
     public MergeOptions prepend() {
-        this.prependRoot = true;
-        this.appendRoot = false;
+        this.append = false;
         return this;
     }
 
-    /** Client prepends into the nested array at {@code "prop." + subPath}. */
+    /** Prepends into the nested array at {@code "prop." + subPath} (root family flag untouched). */
     public MergeOptions prependAt(String subPath) {
         this.prependsAtPaths.add(subPath);
         return this;

@@ -36,17 +36,24 @@ public sealed interface Prop
     record Deferred(Supplier<?> value, String group, boolean rescue) implements Prop {}
 
     /**
-     * Merged by the client on subsequent visits instead of replaced. The raw merge metadata
-     * shapes are collected by the resolver under {@link PageKeys#MERGE_PROPS},
+     * Merged by the client on subsequent visits instead of replaced. Metadata shapes are
+     * collected by the resolver under {@link PageKeys#MERGE_PROPS},
      * {@link PageKeys#PREPEND_PROPS}, {@link PageKeys#DEEP_MERGE_PROPS} and
-     * {@link PageKeys#MATCH_PROPS_ON}.
+     * {@link PageKeys#MATCH_PROPS_ON}. The {@code append} flag selects the root family
+     * (Laravel {@code MergesProps::$append}); list fields are defensively copied.
      */
     record Merge(
             Supplier<?> value,
-            boolean appendRoot,
+            boolean append,
             List<String> appendsAtPaths,
-            boolean prependRoot,
             List<String> prependsAtPaths,
             boolean deep,
-            List<String> matchOn) implements Prop {}
+            List<String> matchOn) implements Prop {
+
+        public Merge {
+            appendsAtPaths = List.copyOf(appendsAtPaths);
+            prependsAtPaths = List.copyOf(prependsAtPaths);
+            matchOn = List.copyOf(matchOn);
+        }
+    }
 }

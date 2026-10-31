@@ -91,12 +91,9 @@ final class PageResolver {
                         .add(path);
             }
         } else if (prop instanceof Prop.Merge merge) {
-            boolean includeOnPartial = DotPaths.matchesOnly(path, ctx.only) && !DotPaths.matchesAny(path, ctx.except);
-            if (!ctx.partial || includeOnPartial) {
+            if (!ctx.partial || DotPaths.matches(path, ctx.only, ctx.except)) {
                 include(path, merge.value().get(), bypassChildren, ctx, out);
-                if (ctx.partial ? includeOnPartial : true) {
-                    collectMergeMetadata(path, merge, ctx, out);
-                }
+                collectMergeMetadata(path, merge, ctx, out);
             }
         }
     }
@@ -197,7 +194,7 @@ final class PageResolver {
         if (Boolean.TRUE.equals(page.isPreserveBigIntegers())) {
             pageJson.put(PageKeys.PRESERVE_BIG_INTEGERS, Boolean.TRUE);
         }
-        if (flash.pull(FlashKeys.CLEAR_HISTORY) == Boolean.TRUE) {
+        if (Boolean.TRUE.equals(flash.pull(FlashKeys.CLEAR_HISTORY))) {
             pageJson.put(PageKeys.CLEAR_HISTORY, Boolean.TRUE);
         }
         if (Boolean.TRUE.equals(page.isEncryptHistory())) {
@@ -207,7 +204,7 @@ final class PageResolver {
         if (flashData instanceof Map<?, ?> flashMap && !flashMap.isEmpty()) {
             pageJson.put(PageKeys.FLASH, flashMap);
         }
-        if (flash.pull(FlashKeys.PRESERVE_FRAGMENT) == Boolean.TRUE) {
+        if (Boolean.TRUE.equals(flash.pull(FlashKeys.PRESERVE_FRAGMENT))) {
             pageJson.put(PageKeys.PRESERVE_FRAGMENT, Boolean.TRUE);
         }
 
@@ -248,18 +245,25 @@ final class PageResolver {
         if (DotPaths.isReset(path, ctx.reset)) {
             return; // X-Inertia-Reset drops all merge metadata for the path
         }
+        boolean partialMetadata = !ctx.partial
+                || (DotPaths.matchesOnly(path, ctx.only) && !DotPaths.matchesAny(path, ctx.except));
+        if (!partialMetadata) {
+            return;
+        }
+        boolean atRoot = merge.appendsAtPaths().isEmpty() && merge.prependsAtPaths().isEmpty();
         if (merge.deep()) {
             out.deepMergeProps.add(path); // deep takes priority over append/prepend
-        } else if (merge.appendRoot() && merge.appendsAtPaths().isEmpty()) {
+        } else if (atRoot && merge.append()) {
             out.mergeProps.add(path);
-        } else if (merge.prependRoot() && merge.prependsAtPaths().isEmpty()) {
+        } else if (atRoot) {
             out.prependProps.add(path);
-        }
-        for (String subPath : merge.appendsAtPaths()) {
-            out.mergeProps.add(path + '.' + subPath);
-        }
-        for (String subPath : merge.prependsAtPaths()) {
-            out.prependProps.add(path + '.' + subPath);
+        } else {
+            for (String subPath : merge.appendsAtPaths()) {
+                out.mergeProps.add(path + '.' + subPath);
+            }
+            for (String subPath : merge.prependsAtPaths()) {
+                out.prependProps.add(path + '.' + subPath);
+            }
         }
         for (String matchKey : merge.matchOn()) {
             out.matchPropsOn.add(path + '.' + matchKey);

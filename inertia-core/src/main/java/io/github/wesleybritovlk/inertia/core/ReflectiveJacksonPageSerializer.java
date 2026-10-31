@@ -50,13 +50,9 @@ public final class ReflectiveJacksonPageSerializer implements PageSerializer {
         return new ReflectiveJacksonPageSerializer(mapper, locateWriter(mapper.getClass()));
     }
 
-    /**
-     * Builds a fresh Jackson mapper from the first runtime present on the classpath
-     * (Jackson 2 first, then Jackson 3). Empty when neither exists — callers must fall back
-     * to {@link PlainJsonPageSerializer}.
-     */
-    public static Optional<PageSerializer> detected() {
-        for (String mapperClass : DETECTION_ORDER) {
+    /** Same as {@link #detected()} with an explicit class-name search order. */
+    public static Optional<PageSerializer> detectedIn(List<String> classNames) {
+        for (String mapperClass : classNames) {
             try {
                 Object mapper = construct(Class.forName(mapperClass));
                 return Optional.of(over(mapper));
@@ -65,6 +61,15 @@ public final class ReflectiveJacksonPageSerializer implements PageSerializer {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Builds a fresh Jackson mapper from the first runtime present on the classpath
+     * (Jackson 2 first, then Jackson 3). Empty when neither exists — callers must fall back
+     * to {@link PlainJsonPageSerializer}.
+     */
+    public static Optional<PageSerializer> detected() {
+        return detectedIn(DETECTION_ORDER);
     }
 
     /** The Jackson mapper class names in detection order. */

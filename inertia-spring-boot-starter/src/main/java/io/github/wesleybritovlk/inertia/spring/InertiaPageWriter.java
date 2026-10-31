@@ -8,7 +8,7 @@ import io.github.wesleybritovlk.inertia.core.Inertia;
 import io.github.wesleybritovlk.inertia.core.InertiaPage;
 import io.github.wesleybritovlk.inertia.core.InertiaResult;
 
-import org.springframework.beans.factory.ObjectProvider;
+import java.util.function.Supplier;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -23,10 +23,14 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 final class InertiaPageWriter {
 
-    private final ObjectProvider<Inertia> inertia;
+    private final Supplier<Inertia> inertia;
     private final InertiaRootTemplateRenderer renderer;
 
-    InertiaPageWriter(ObjectProvider<Inertia> inertia, InertiaRootTemplateRenderer renderer) {
+    /**
+     * @param inertia resolves the CURRENT request-scoped engine each write (Spring wires
+     *                {@code inertiaProvider::getObject})
+     */
+    InertiaPageWriter(Supplier<Inertia> inertia, InertiaRootTemplateRenderer renderer) {
         this.inertia = inertia;
         this.renderer = renderer;
     }
@@ -35,7 +39,7 @@ final class InertiaPageWriter {
         InertiaResult result;
         LinkedHashMap<String, Object> viewData;
         if (returnValue instanceof InertiaPage page) {
-            result = inertia.getObject().result(page);
+            result = inertia.get().result(page);
             viewData = new LinkedHashMap<>(page.view());
         } else if (returnValue instanceof InertiaResult already) {
             result = already;

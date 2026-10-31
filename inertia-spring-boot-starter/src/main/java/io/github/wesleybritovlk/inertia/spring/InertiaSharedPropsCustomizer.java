@@ -1,7 +1,6 @@
 package io.github.wesleybritovlk.inertia.spring;
 
 import io.github.wesleybritovlk.inertia.core.Inertia;
-import org.springframework.context.ApplicationContext;
 
 /**
  * Hook implemented by beans to configure shared props on every request-scoped

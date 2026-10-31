@@ -3,7 +3,6 @@ package io.github.wesleybritovlk.inertia.spring;
 import java.util.List;
 
 import io.github.wesleybritovlk.inertia.core.Inertia;
-import io.github.wesleybritovlk.inertia.core.InertiaHeaders;
 import io.github.wesleybritovlk.inertia.core.PageSerializer;
 import io.github.wesleybritovlk.inertia.core.PlainJsonPageSerializer;
 import io.github.wesleybritovlk.inertia.core.ReflectiveJacksonPageSerializer;
@@ -125,7 +124,7 @@ public class InertiaConfiguration {
 
     @Bean
     InertiaWebMvcSupport inertiaWebMvcSupport(ObjectProvider<Inertia> inertiaObject, InertiaRootTemplateRenderer renderer) {
-        return new InertiaWebMvcSupport(new InertiaPageWriter(inertiaObject, renderer));
+        return new InertiaWebMvcSupport(new InertiaPageWriter(inertiaObject::getObject, renderer));
     }
 
     static final class InertiaWebMvcSupport implements WebMvcConfigurer {

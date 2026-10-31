@@ -53,6 +53,60 @@ class ReflectiveJacksonPageSerializerTest {
         CoreWithoutJackson.run();
     }
 
+    @Test
+    void detectionSkipsAbsentRuntimesAndConstructsJackson3() {
+        PageSerializer serializer = ReflectiveJacksonPageSerializer
+                .detectedIn(List.of("com.example.NotAJacksonRuntime", "tools.jackson.databind.ObjectMapper"))
+                .orElseThrow();
+
+        String json = serializer.serialize(Map.<String, Object>of("props", List.of("x")));
+
+        assertTrue(json.contains("\"props\":[\"x\"]"));
+    }
+
+    @Test
+    void overRejectsWritersWithoutAMatchingShape() {
+        IllegalStateException failure = org.junit.jupiter.api.Assertions
+                .assertThrows(IllegalStateException.class, () -> ReflectiveJacksonPageSerializer.over(new Object()));
+
+        assertTrue(failure.getMessage().contains("No String returning writeValue"));
+    }
+
+    @Test
+    void checkedSerializationFailuresSurfaceAsIllegalState() {
+        PageSerializer serializer = ReflectiveJacksonPageSerializer.over(new FakeCheckedMapper());
+
+        IllegalStateException failure = org.junit.jupiter.api.Assertions
+                .assertThrows(IllegalStateException.class, () -> serializer.serialize(Map.<String, Object>of("x", 1)));
+
+        assertTrue(failure.getMessage().contains("Jackson runtime"));
+    }
+
+    @Test
+    void runtimeSerializationFailuresRethrowTheOriginalCause() {
+        PageSerializer serializer = ReflectiveJacksonPageSerializer.over(new FakeRuntimeMapper());
+
+        // IllegalArgumentException propagates with the mapper's own type and message
+        IllegalArgumentException failure = org.junit.jupiter.api.Assertions
+                .assertThrows(IllegalArgumentException.class, () -> serializer.serialize(Map.<String, Object>of("x", 1)));
+
+        assertEquals("kaboom", failure.getMessage());
+    }
+
+    /** Mapper-shaped fake that throws a CHECKED exception (Jackson 2 style). */
+    static class FakeCheckedMapper {
+        public String writeValueAsString(Object value) throws java.io.IOException {
+            throw new java.io.IOException("boom");
+        }
+    }
+
+    /** Mapper-shaped fake that throws a RUNTIME exception. */
+    static class FakeRuntimeMapper {
+        public String writeValueAsString(Object value) {
+            throw new IllegalArgumentException("kaboom");
+        }
+    }
+
     /** compilation-safety probe: the core module never needs Jackson to compile or to fall back. */
     private static final class CoreWithoutJackson {
         static void run() {

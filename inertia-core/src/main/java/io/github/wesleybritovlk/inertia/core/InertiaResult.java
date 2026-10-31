@@ -74,9 +74,9 @@ public final class InertiaResult {
         return status;
     }
 
-    /** Ordered response headers as sent by the adapter. */
+    /** Ordered response headers as sent by the adapter. Unmodifiable view. */
     public Map<String, String> headers() {
-        return headers;
+        return java.util.Collections.unmodifiableMap(headers);
     }
 
     /** Serialized page object; present only for page kinds, {@code null} for redirects. */

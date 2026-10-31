@@ -1,7 +1,6 @@
 package io.github.wesleybritovlk.inertia.core;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -43,9 +42,9 @@ public final class InertiaPage {
         return viewData;
     }
 
-    /** Template-scoped variables (never in the page JSON). */
+    /** Template-scoped variables (never in the page JSON). Unmodifiable snapshot. */
     public Map<String, Object> view() {
-        return viewData;
+        return java.util.Collections.unmodifiableMap(viewData);
     }
 
     /**
@@ -113,12 +112,11 @@ public final class InertiaPage {
         }
         return put(key, new Prop.Merge(
                 supplier,
-                o.appendRoot,
-                List.copyOf(o.appendsAtPaths),
-                o.prependRoot,
-                List.copyOf(o.prependsAtPaths),
+                o.append,
+                o.appendsAtPaths,
+                o.prependsAtPaths,
                 o.deep,
-                List.copyOf(o.matchOn)));
+                o.matchOn));
     }
 
     /** Client-merged prop (root append). */

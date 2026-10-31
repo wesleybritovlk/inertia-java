@@ -1,7 +1,6 @@
 package io.github.wesleybritovlk.inertia.core;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 /** Response shell mock for core tests. */
 final class MockShell implements InertiaResponseShell {

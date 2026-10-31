@@ -12,11 +12,22 @@ final class MockRequest implements InertiaRequest {
     final String query;
     final LinkedHashMap<String, String> headers = new LinkedHashMap<>();
     final LinkedHashMap<String, Object> flashData = new LinkedHashMap<>();
+    private final InertiaFlashStore flashOverride;
 
     MockRequest(String method, String path, String query) {
+        this(method, path, query, null);
+    }
+
+    /** Request wired to an explicit flash store (e.g. the {@code NONE} degenerate store). */
+    MockRequest(String method, String path, String query, InertiaFlashStore flashOverride) {
         this.method = method;
         this.path = path;
         this.query = query;
+        this.flashOverride = flashOverride;
+    }
+
+    static MockRequest noneFlash(String path) {
+        return new MockRequest("GET", path, "", InertiaFlashStore.none()).inertia();
     }
 
     static MockRequest get(String path) {
@@ -63,6 +74,9 @@ final class MockRequest implements InertiaRequest {
 
     @Override
     public InertiaFlashStore flash() {
+        if (flashOverride != null) {
+            return flashOverride;
+        }
         return new InertiaFlashStore() {
             @Override
             public Object pull(String key) {

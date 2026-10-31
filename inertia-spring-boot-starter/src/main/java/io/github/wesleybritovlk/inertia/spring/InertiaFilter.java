@@ -2,7 +2,6 @@ package io.github.wesleybritovlk.inertia.spring;
 
 import java.io.IOException;
 
-import io.github.wesleybritovlk.inertia.core.InertiaHeaders;
 import io.github.wesleybritovlk.inertia.core.InertiaRequest;
 import io.github.wesleybritovlk.inertia.core.InertiaResponseShell;
 import io.github.wesleybritovlk.inertia.core.InertiaResult;

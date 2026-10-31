@@ -35,3 +35,19 @@ Initial protocol engine and Spring Boot integration.
 - `ValidationErrors.store` for Spring MVC `BindingResult`, persisted through the session flash.
 - Hybrid serialization: user bean → application-provided mapper → classpath Jackson (2/3) →
   bundled serializer.
+
+### Changed
+- `MergeOptions` follows the exact inertia-laravel `MergesProps` trait semantics: one root
+  family flag (`append`, flipped to prepend by `prepend()`), `appendAt/prependAt` sub-path
+  lists independent of the flag, deep-merge priority over both.
+- Mutable-exposure fixes flagged by SpotBugs at `effort Max`: unmodifiable views for the
+  page view data and result headers, defensive list copies inside the `Merge` prop record,
+  `Boolean.TRUE.equals(...)` comparisons for flash flags.
+
+### Tooling
+- Spotless (formatting gate), SpotBugs (`effort Max`/`threshold Normal`) and JaCoCo
+  coverage (75% instruction/branch per bundle) wired into the Maven build; repository
+  pre-commit hook runs `mvn verify on every commit (enable with
+  `git config core.hooksPath .githooks`).
+- Starter unit tests for version hashing, template overrides, validation bag merging and
+  writer/converter branches (67 total tests).

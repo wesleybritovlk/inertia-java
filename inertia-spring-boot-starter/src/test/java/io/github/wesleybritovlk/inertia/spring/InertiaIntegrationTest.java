@@ -1,6 +1,5 @@
 package io.github.wesleybritovlk.inertia.spring;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -165,6 +164,21 @@ class InertiaIntegrationTest {
                 .andExpect(jsonPath("$.sharedProps").exists());
     }
 
+    @Test
+    void plainControllerMethodsGoThroughTheReturnValueHandler() throws Exception {
+        // no @ResponseBody: Spring's annotation-based processors skip it, so the custom
+        // InertiaPageReturnValueHandler handles the InertiaPage return directly
+        mvc.perform(get("/plain/index").header(InertiaHeaders.INERTIA, INERTIA))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$.component").value("Plain/Index"))
+                .andExpect(jsonPath("$.props.hello").value("plain-controller"));
+
+        mvc.perform(get("/plain/away"))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", "/plain/index"));
+    }
+
     // --------------------------------------------------------------- test app
 
     @org.springframework.boot.SpringBootConfiguration
@@ -211,6 +225,32 @@ class InertiaIntegrationTest {
         @PutMapping("/update")
         InertiaResult update() {
             return inertia.redirect("/users");
+        }
+    }
+
+    /** Plain @Controller (no @ResponseBody): exercises the return-value-handler path. */
+    @org.springframework.stereotype.Controller
+    static class PlainPagesController {
+
+        private final Inertia inertia;
+
+        PlainPagesController(Inertia inertia) {
+            this.inertia = inertia;
+        }
+
+        @GetMapping("/plain/index")
+        InertiaPage index() {
+            return inertia.render("Plain/Index", p -> p.with("hello", "plain-controller"));
+        }
+
+        @GetMapping("/plain/away")
+        InertiaResult away() {
+            return inertia.redirect("/plain/index");
+        }
+
+        @GetMapping("/plain/annotated")
+        InertiaPage annotated() {
+            return inertia.render("Plain/Annotated", p -> p.with("hello", "annotated"));
         }
     }
 

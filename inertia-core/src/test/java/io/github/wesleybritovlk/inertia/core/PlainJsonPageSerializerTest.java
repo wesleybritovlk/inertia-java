@@ -125,6 +125,94 @@ class PlainJsonPageSerializerTest {
         assertEquals("{\"ctrl\":\"\\u2028line\\u2029\"}", json);
     }
 
+    @Test
+    void serializesTheWholeValueShapeMatrix() {
+        java.util.Calendar calendar = new java.util.GregorianCalendar(java.util.TimeZone.getTimeZone("UTC"));
+        calendar.setTimeInMillis(1577836800000L);
+
+        LinkedHashMap<String, Object> page = new LinkedHashMap<>();
+        page.put("dbl", Double.NaN);
+        page.put("dbl2", Double.NEGATIVE_INFINITY);
+        page.put("float", Float.NEGATIVE_INFINITY);
+        page.put("float2", 1.5f);
+        page.put("short", (short) 7);
+        page.put("byte", (byte) 3);
+        page.put("bigDec", new java.math.BigDecimal("1.50"));
+        page.put("bigInt", java.math.BigInteger.valueOf(5));
+        page.put("intArr", new int[] {1, 2});
+        page.put("longArr", new long[] {7L});
+        page.put("dblArr", new double[] {1.5});
+        page.put("fltArr", new float[] {2.5f});
+        page.put("boolArr", new boolean[] {true, false});
+        page.put("byteArr", new byte[] {1});
+        page.put("shortArr", new short[] {2});
+        page.put("charArr", new char[] {'a'});
+        page.put("objArr", new Object[] {"s", 1, null});
+        page.put("id", java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"));
+        page.put("uri", java.net.URI.create("https://example.com"));
+        page.put("path", java.nio.file.Path.of("tmp", "cfg"));
+        page.put("enum", java.time.format.FormatStyle.SHORT);
+        page.put("clazz", String.class);
+        page.put("date", new java.util.Date(1577836800000L));
+        page.put("cal", calendar);
+        page.put("emptyList", List.of());
+        page.put("emptyMap", Map.of());
+
+        String json = serializer.serialize(page);
+
+        assertTrue(json.contains("\"dbl\":null,\"dbl2\":null,\"float\":null,\"float2\":1.5"));
+        assertTrue(json.contains("\"short\":7,\"byte\":3"));
+        assertTrue(json.contains("\"bigDec\":1.50,\"bigInt\":5"));
+        assertTrue(json.contains("\"intArr\":[1,2],\"longArr\":[7],\"dblArr\":[1.5],\"fltArr\":[2.5]"));
+        assertTrue(json.contains("\"boolArr\":[true,false],\"byteArr\":[1],\"shortArr\":[2],\"charArr\":[\"a\"]"));
+        assertTrue(json.contains("\"objArr\":[\"s\",1,null]"));
+        assertTrue(json.contains("\"id\":\"00000000-0000-0000-0000-000000000001\""));
+        assertTrue(json.contains("\"uri\":\"https://example.com\""));
+        assertTrue(json.contains("\"path\":\"tmp/cfg\""));
+        assertTrue(json.contains("\"enum\":\"SHORT\""));
+        assertTrue(json.contains("\"clazz\":\"java.lang.String\""));
+        assertTrue(json.contains("\"date\":\"2020-01-01T00:00:00Z\""));
+        assertTrue(json.contains("\"cal\":\"2020-01-01T00:00:00Z\""));
+        assertTrue(json.contains("\"emptyList\":[],\"emptyMap\":{}"));
+    }
+
+    @Test
+    void depthCapAndCycleThroughArrays() {
+        Map<String, Object> current = Map.of("leaf", 1);
+        for (int i = 0; i < 70; i++) {
+            current = Map.<String, Object>of("n", current);
+        }
+        Map<String, Object> tooDeep = current;
+        assertThrows(IllegalStateException.class, () -> serializer.serialize(tooDeep));
+
+        List<Object> cycList = new java.util.ArrayList<>();
+        cycList.add(cycList);
+        cycList.add("tail");
+        List<Object> cycle = cycList;
+        assertThrows(IllegalStateException.class, () -> serializer.serialize(Map.<String, Object>of("x", cycle)));
+    }
+
+    @Test
+    void subControlCodePointsAreEscaped() {
+        String json = serializer.serialize(Map.<String, Object>of("c", "\\u0001"));
+
+        assertTrue(json.contains("\\\\u0001"));
+    }
+
+    @Test
+    void pojoWithoutGettersFallsBackToString() {
+        String json = serializer.serialize(Map.<String, Object>of("odd", new PlainValue()));
+
+        assertEquals("{\"odd\":\"plain\"}", json);
+    }
+
+    static class PlainValue {
+        @Override
+        public String toString() {
+            return "plain";
+        }
+    }
+
     static class ExampleBean {
         public String getFullName() {
             return "Ada";

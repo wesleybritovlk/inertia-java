@@ -166,9 +166,20 @@ Notes: JSON object key order is not part of the Inertia protocol; only the bundl
 ## Building from source
 
 ```bash
-mvn test          # 46 tests: 36 core + 10 starter integration
+# one-time per clone: enables the repository pre-commit hook
+git config core.hooksPath .githooks
+
+mvn test          # the full suite: 51 core + 16 starter integration, 67 total
 mvn install       # installs both artifacts locally
 ```
+
+The pre-commit hook (`mvn verify`) enforces three quality gates on every commit:
+
+| Gate | Rule |
+|---|---|
+| **Spotless** | formatting check (`removeUnusedImports`, trailing whitespace, final newline) fails the validate phase — run `mvn spotless:apply` to auto-fix before committing |
+| **JaCoCo** | **75% instruction and branch** coverage per bundle |
+| **SpotBugs** | bug-pattern analysis at `effort Max` / `threshold Normal`; zero findings (justified exclusions live in `spotbugs-exclude.xml` with a rationale comment) |
 
 Each behavioral rule was implemented and then verified against the actual sources of `inertia-laravel` and `@inertiajs/core` (v3.10) — see the test names in `inertia-core` for the mapping (`InertiaProtocolTest`).
 

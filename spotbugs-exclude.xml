@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SpotBugs exclusions (threshold Normal, effort Max).
+
+  Every match below needs a justification comment: spotbugs findings are removed
+  by correctness fixes whenever possible; exclusions are the exception, kept
+  minimal and documented.
+-->
+<FindBugsFilter>
+    <!-- no exclusions yet -->
+</FindBugsFilter>
