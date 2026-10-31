@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <div th:id="${inertiaRootId}" id="app"></div>
+    <!-- inertia-laravel @inertia parity: page payload inside a script[data-page] root -->
+    <script th:attr="data-page=${inertiaRootId}" type="application/json" th:utext="${inertiaPageJson}"></script>
+  </body>
+</html>

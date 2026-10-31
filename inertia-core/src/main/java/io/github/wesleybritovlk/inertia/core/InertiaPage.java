@@ -43,6 +43,11 @@ public final class InertiaPage {
         return viewData;
     }
 
+    /** Template-scoped variables (never in the page JSON). */
+    public Map<String, Object> view() {
+        return viewData;
+    }
+
     /**
      * Standard prop: value may be any JSON-serializable value or a supplier.
      * On partial reloads the value is only evaluated/returned when its dot-path matches.

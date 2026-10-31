@@ -10,8 +10,10 @@ import java.util.function.Supplier;
  * Request-scoped engine the library's public API hangs on. One {@link Inertia} instance per
  * request, created and scoped by the adapter (Spring: {@code @RequestScope} bean; Quarkus:
  * {@code @RequestScoped}). Prop resolution, flash, shared props and redirects all run here.
+ *
+ * <p>Not {@code final} on purpose: scoped beans proxy by CGLIB subclassing.</p>
  */
-public final class Inertia {
+public class Inertia {
 
     private final VersionProvider versionProvider;
     private final PageSerializer serializer;
