@@ -18,20 +18,32 @@ the Spring Boot back-end is shared, so pick the framework, build it, run.
 
 ## Run it
 
+**The dev loop (no build needed):**
+
 ```bash
-# 1. front-end (choose ONE, first run needs npm install)
 cd inertia-demo/frontend-demo-vue    # demo-react | demo-svelte
 npm install
+npm run dev                          # Vite on :5173, writes .hot-inertia
+```
+
+```bash
+cd ..
+mvn -pl inertia-demo spring-boot:run # → http://localhost:8800 (pages serve in DEV MODE)
+```
+
+Edits in the front-end source update the running page through HMR — no reloads, no
+builds. In dev mode the page version is `null` (the versioned 409 flow belongs to
+build mode). Full loop details: [../docs/dev-workflow.md](../docs/dev-workflow.md).
+
+**Production-like runs (`npm run build`):**
+
+```bash
 npm run build
 # → writes static/assets/app-<hash>.js (+ per-page chunks) and static/manifest.json
 #   (builds are NOT committed — every framework rebuilds into the same folder)
 
-# 2. back-end
-cd ..
-mvn install
 mvn -pl inertia-demo spring-boot:run          # Boot 3.3.12
 mvn -Pboot4 -pl inertia-demo spring-boot:run  # Boot 4.0.5
-# open http://localhost:8800
 ```
 
 The whole back-end configuration for Vite is **one property**
@@ -53,10 +65,11 @@ from the manifest) AND the asset version hashing — no configuration classes.
 - **the `@vite` equivalent** server-side: `inertia.vite-manifest` makes the starter
   resolve the entry script + css from the manifest every render (hashed, content-addressed
   assets by default);
-- **live asset versioning**: the Vite manifest doubles as `inertia.version-file`
-  (`FileVersionProvider` SHA-256 of it). Every `npm run build` changes the version; the
-  next stale Inertia visit receives `409` + `X-Inertia-Location` and reloads with the
-  fresh bundle.
+- **live asset versioning (build mode)**: the Vite manifest doubles as
+  `inertia.version-file` (`FileVersionProvider` SHA-256 of it). Every `npm run build`
+  changes the version; the next stale Inertia visit receives `409` +
+  `X-Inertia-Location` and reloads with the fresh bundle. In **dev mode** the version
+  goes `null` (hot-aware provider — Laravel parity).
 
 ### Dev mode rewards
 

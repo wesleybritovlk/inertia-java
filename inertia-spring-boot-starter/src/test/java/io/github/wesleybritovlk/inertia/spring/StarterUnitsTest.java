@@ -182,7 +182,8 @@ class StarterUnitsTest {
         InertiaProperties properties = new InertiaProperties();
         properties.setVersionFile(tempDir.resolve("any.json").toString());
         var fromFile = new InertiaConfiguration().inertiaVersionProvider(properties);
-        assertTrue(fromFile instanceof FileVersionProvider);
+        // (hot-aware wrapper when dev mode is enabled; semantics are the file hash)
+        assertEquals(new FileVersionProvider(properties.getVersionFile()).version(), fromFile.version());
 
         InertiaProperties staticProps = new InertiaProperties();
         staticProps.setVersion("static-v");
@@ -217,6 +218,22 @@ class StarterUnitsTest {
         assertEquals(null, nulls.getViteManifest());
         assertEquals(null, nulls.getViteBase());
         assertEquals(null, nulls.getViteEntry());
+    }
+
+    @Test
+    void hotFlagFileDisablesVersioningLaravelStyle() throws Exception {
+        // during the vite dev loop the version must be null (no versioned 409s for pages
+        // driven by HMR); without the flag the manifest hash is back
+        InertiaProperties properties = new InertiaProperties();
+        properties.setViteManifest("src/test/resources/vite-test/manifest.json");
+        properties.setViteDevHot(tempDir.resolve(".hot-inertia").toString());
+        var provider = new InertiaConfiguration().inertiaVersionProvider(properties);
+
+        java.nio.file.Files.writeString(java.nio.file.Path.of(properties.getViteDevHot()), "5173");
+        assertNull(provider.version());
+
+        java.nio.file.Files.delete(java.nio.file.Path.of(properties.getViteDevHot()));
+        assertEquals(new FileVersionProvider(properties.getViteManifest()).version(), provider.version());
     }
 
     @Test

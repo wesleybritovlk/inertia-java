@@ -53,15 +53,25 @@ public class InertiaConfiguration {
     @ConditionalOnMissingBean(VersionProvider.class)
     VersionProvider inertiaVersionProvider(InertiaProperties properties) {
         // priority: explicit version file > the Vite manifest (live versioning by default
-        // when it drives templates) > static version
+        // when it drives templates) > static version; while the Vite dev hot flag is
+        // present the version goes null (HMR drives changes; no stale 409s in dev)
+        VersionProvider source;
         if (properties.getVersionFile() != null && !properties.getVersionFile().isBlank()) {
-            return new FileVersionProvider(properties.getVersionFile());
+            source = new FileVersionProvider(properties.getVersionFile());
+        } else if (properties.getViteManifest() != null && !properties.getViteManifest().isBlank()) {
+            source = new FileVersionProvider(properties.getViteManifest());
+        } else {
+            String version = properties.getVersion();
+            source = () -> version;
         }
-        if (properties.getViteManifest() != null && !properties.getViteManifest().isBlank()) {
-            return new FileVersionProvider(properties.getViteManifest());
+        return wrapWithHotAware(properties, source);
+    }
+
+    private static VersionProvider wrapWithHotAware(InertiaProperties properties, VersionProvider source) {
+        if (properties.getViteDevHot() == null || properties.getViteDevHot().isBlank()) {
+            return source; // dev mode disabled: no hot awareness needed
         }
-        String version = properties.getVersion();
-        return () -> version;
+        return new HotAwareVersionProvider(source, Path.of(properties.getViteDevHot()));
     }
 
     @Bean

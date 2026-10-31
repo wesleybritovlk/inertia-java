@@ -129,9 +129,9 @@ class ViteManifestTest {
 
     @Test
     void hotFlagFileSwitchesToViteDevModeWithProbeAndReactPreamble() throws Exception {
-        // tiny JDK http server emulating the Vite dev entry + @react-refresh
+        // tiny JDK http server (ephemeral port - hermetic) emulating the Vite dev entry
         var server = com.sun.net.httpserver.HttpServer.create(
-                new java.net.InetSocketAddress(java.net.InetAddress.getLoopbackAddress(), 5173), 0);
+                new java.net.InetSocketAddress(java.net.InetAddress.getLoopbackAddress(), 0), 0);
         server.createContext("/src/app.js", exchange -> {
             byte[] body = "export default {}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
@@ -141,8 +141,10 @@ class ViteManifestTest {
         });
         server.start();
         try {
+            int devPort = server.getAddress().getPort();
+            String devUrl = "http://localhost:" + devPort;
             Path hot = tempDir.resolve(".hot-inertia");
-            java.nio.file.Files.writeString(hot, "5173");
+            java.nio.file.Files.writeString(hot, String.valueOf(devPort));
             LinkedHashMap<String, Object> captured = new LinkedHashMap<>();
             ViteInertiaRootTemplateRenderer renderer = new ViteInertiaRootTemplateRenderer(
                     (pageJson, viewData) -> {
@@ -150,15 +152,15 @@ class ViteManifestTest {
                         return "<html/>";
                     },
                     new ViteInertiaRootTemplateRenderer.ManifestSource(FIXTURE, "", "/"),
-                    new ViteInertiaRootTemplateRenderer.HotMode(hot, "http://localhost:5173", "", true));
+                    new ViteInertiaRootTemplateRenderer.HotMode(hot, devUrl, "", true));
 
             String html = renderer.render("{}", Map.of());
 
             assertEquals("<html/>", html);
             assertEquals(Boolean.TRUE, captured.get("viteDevMode"));
-            assertEquals("http://localhost:5173/@vite/client", captured.get("viteClient"));
-            assertEquals("http://localhost:5173/src/app.js", captured.get("viteAppJs")); // probe cache hit
-            assertEquals("http://localhost:5173/@react-refresh", captured.get("viteReactRefresh"));
+            assertEquals(devUrl + "/@vite/client", captured.get("viteClient"));
+            assertEquals(devUrl + "/src/app.js", captured.get("viteAppJs")); // probe cache hit
+            assertEquals(devUrl + "/@react-refresh", captured.get("viteReactRefresh"));
 
             // second render without the flag: back to build mode (manifest variables)
             java.nio.file.Files.delete(hot);

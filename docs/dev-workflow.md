@@ -26,6 +26,8 @@ of a hot flag file (the adapter equivalent of Laravel's `public/hot`, named here
   (`http://localhost:5173/@vite/client`), the **source** entry module
   (`http://localhost:5173/src/app.js`) and — for React — the Fast Refresh preamble. The
   browser therefore loads your *source files* transformed on the fly, HMR socket opened.
+  **The page version is `null`** in dev mode (the hot-aware version provider goes dark —
+  no versioned `409`s for pages driven by HMR; nothing needs a prior `npm run build`).
 - **Build mode page**: the manifest-driven hashed assets of the last `npm run build`
   plus the SHA-256 version guard (stale visits get `409` + full reload).
 - The same back-end serves both without changing any code — only the hot file changes
@@ -106,3 +108,6 @@ renderer resolves assets per render.
   the shipped plugin).
 - The React refresh preamble + dev client emission is driven by the
   `inertia.vite-react-refresh` property instead of the known-file-type heuristic.
+- **Version guard**: same parity — while hot, the page version is `null` and no `409`
+  version checks fire (the Laravel adapter's dev mode precedent). Stale-asset reloads
+  are a build-mode concern.
