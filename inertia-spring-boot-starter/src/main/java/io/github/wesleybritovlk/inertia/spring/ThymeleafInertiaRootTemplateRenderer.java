@@ -27,11 +27,13 @@ public final class ThymeleafInertiaRootTemplateRenderer implements InertiaRootTe
     static final String BUNDLED_TEMPLATE = "META-INF/inertia/templates/root.html";
 
     private final String rootId;
+    private final String cachedTemplate;
     private final TemplateEngine engine;
 
     public ThymeleafInertiaRootTemplateRenderer(String rootId, String overrideTemplatePath) {
         this.rootId = rootId;
-        this.engine = createEngine(loadTemplate(overrideTemplatePath));
+        this.cachedTemplate = loadTemplate(overrideTemplatePath);
+        this.engine = createEngine();
     }
 
     @Override
@@ -45,11 +47,12 @@ public final class ThymeleafInertiaRootTemplateRenderer implements InertiaRootTe
         }
         context.setVariables(variables);
         StringWriter out = new StringWriter();
-        engine.process("inertia-root", context, out);
+        // StringTemplateResolver treats the process() name as the template source content
+        engine.process(cachedTemplate, context, out);
         return out.toString();
     }
 
-    private static TemplateEngine createEngine(String template) {
+    private static TemplateEngine createEngine() {
         StringTemplateResolver resolver = new StringTemplateResolver();
         resolver.setTemplateMode(TemplateMode.HTML);
         TemplateEngine engine = new TemplateEngine();

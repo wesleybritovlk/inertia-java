@@ -125,20 +125,28 @@ public class InertiaConfiguration {
 
     @Bean
     InertiaWebMvcSupport inertiaWebMvcSupport(ObjectProvider<Inertia> inertiaObject, InertiaRootTemplateRenderer renderer) {
-        return new InertiaWebMvcSupport(new InertiaPageReturnValueHandler(inertiaObject, renderer));
+        return new InertiaWebMvcSupport(new InertiaPageWriter(inertiaObject, renderer));
     }
 
     static final class InertiaWebMvcSupport implements WebMvcConfigurer {
 
-        private final InertiaPageReturnValueHandler returnValueHandler;
+        private final InertiaPageWriter writer;
 
-        private InertiaWebMvcSupport(InertiaPageReturnValueHandler returnValueHandler) {
-            this.returnValueHandler = returnValueHandler;
+        private InertiaWebMvcSupport(InertiaPageWriter writer) {
+            this.writer = writer;
         }
 
         @Override
         public void addReturnValueHandlers(List<HandlerMethodReturnValueHandler> handlers) {
-            handlers.add(returnValueHandler);
+            // plain @Controller methods (annotation-based built-ins run before custom
+            // handlers on purpose) — @RestController returns go through the converter below
+            handlers.add(new InertiaPageReturnValueHandler(writer));
+        }
+
+        @Override
+        public void extendMessageConverters(List<org.springframework.http.converter.HttpMessageConverter<?>> converters) {
+            // always first: per type precedence for @RestController Inertia returns
+            converters.add(0, new InertiaPageHttpMessageConverter(writer));
         }
     }
 }
