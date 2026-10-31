@@ -32,6 +32,23 @@ The existing Java adapter ([inertia4j](https://github.com/inertia4j/inertia4j)) 
 
 Only the pieces you need: use `inertia-core` alone when bringing your own framework adapter (Quarkus, plain servlets, WS).
 
+## Documentation
+
+Complete usage documentation lives in [`docs/`](docs/index.md):
+
+| Doc | Topic |
+|---|---|
+| [Getting started](docs/getting-started.md) | First run on Spring Boot end to end (controller, root template, front-end wiring, validation flow, catch-all SPA routes) |
+| [Pages and props](docs/pages-and-props.md) | `render` + every prop builder incl. deferred groups and merge options |
+| [Partial reloads](docs/partial-reloads.md) | the `X-Inertia-Partial-*` protocol, subtree cutting, `X-Inertia-Reset` |
+| [Redirects and versioning](docs/redirects-and-versioning.md) | 303/409 redirect rules and the asset-version guard |
+| [Flash and validation](docs/flash-and-validation.md) | session flash, `ValidationErrors.store`, error-bag renaming |
+| [Shared props](docs/shared-props.md) | request-scoped shared props + customizer beans |
+| [Serialization](docs/serialization.md) | the hybrid Jackson 2/3/bundled strategy and the `PageSerializer` SPI |
+| [Configuration](docs/configuration.md) | all `inertia.*` properties and bean overrides |
+| [Other frameworks](docs/other-frameworks.md) | raw-servlet usage of `inertia-core` (the future Quarkus path) |
+| [Differences from inertia-laravel](docs/differences-from-inertia-laravel.md) | every behavior that is not a 1:1 port |
+
 ## Quick start (Spring Boot)
 
 Controllers return an `InertiaPage`; the starter decides JSON vs HTML per the protocol:
