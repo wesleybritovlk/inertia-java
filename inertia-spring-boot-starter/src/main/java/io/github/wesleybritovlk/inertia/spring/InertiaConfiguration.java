@@ -5,6 +5,9 @@ import java.util.List;
 import io.github.wesleybritovlk.inertia.core.Inertia;
 import io.github.wesleybritovlk.inertia.core.PageSerializer;
 import io.github.wesleybritovlk.inertia.core.PlainJsonPageSerializer;
+import java.nio.file.Path;
+import java.util.List;
+
 import io.github.wesleybritovlk.inertia.core.ReflectiveJacksonPageSerializer;
 import io.github.wesleybritovlk.inertia.core.VersionProvider;
 
@@ -49,11 +52,16 @@ public class InertiaConfiguration {
     @Bean
     @ConditionalOnMissingBean(VersionProvider.class)
     VersionProvider inertiaVersionProvider(InertiaProperties properties) {
-        if (properties.getVersionFile() == null || properties.getVersionFile().isBlank()) {
-            String version = properties.getVersion();
-            return () -> version;
+        // priority: explicit version file > the Vite manifest (live versioning by default
+        // when it drives templates) > static version
+        if (properties.getVersionFile() != null && !properties.getVersionFile().isBlank()) {
+            return new FileVersionProvider(properties.getVersionFile());
         }
-        return new FileVersionProvider(properties.getVersionFile());
+        if (properties.getViteManifest() != null && !properties.getViteManifest().isBlank()) {
+            return new FileVersionProvider(properties.getViteManifest());
+        }
+        String version = properties.getVersion();
+        return () -> version;
     }
 
     @Bean
@@ -95,7 +103,16 @@ public class InertiaConfiguration {
     @Bean
     @ConditionalOnMissingBean(InertiaRootTemplateRenderer.class)
     InertiaRootTemplateRenderer inertiaRootTemplateRenderer(InertiaProperties properties) {
-        return new ThymeleafInertiaRootTemplateRenderer(properties.getRootId(), properties.getTemplatePath());
+        InertiaRootTemplateRenderer base =
+                new ThymeleafInertiaRootTemplateRenderer(properties.getRootId(), properties.getTemplatePath());
+        if (properties.getViteManifest() == null || properties.getViteManifest().isBlank()) {
+            return base;
+        }
+        return new ViteInertiaRootTemplateRenderer(
+                base,
+                Path.of(properties.getViteManifest()),
+                properties.getViteBase(),
+                properties.getViteEntry());
     }
 
     @Bean

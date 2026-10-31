@@ -191,6 +191,126 @@ class StarterUnitsTest {
     }
 
     @Test
+    void viteManifestDrivesVersioningWhenNothingExplicitIsConfigured() {
+        // one property: the Vite manifest becomes BOTH the template source and the version
+        InertiaProperties viteOnly = new InertiaProperties();
+        viteOnly.setViteManifest("src/test/resources/vite-test/manifest.json");
+        var fromVite = new InertiaConfiguration().inertiaVersionProvider(viteOnly);
+        var expected = new FileVersionProvider("src/test/resources/vite-test/manifest.json");
+        assertEquals(expected.version(), fromVite.version());
+
+        // an explicit version file still wins over the Vite manifest
+        InertiaProperties explicitFile = new InertiaProperties();
+        explicitFile.setViteManifest("src/test/resources/vite-test/manifest.json");
+        explicitFile.setVersionFile(tempDir.resolve("explicit.json").toString());
+        var fromExplicit = new InertiaConfiguration().inertiaVersionProvider(explicitFile);
+        var explicitExpected = new FileVersionProvider(tempDir.resolve("explicit.json").toString());
+        assertEquals(explicitExpected.version(), fromExplicit.version());
+
+        // null sources fall through to the static version
+        InertiaProperties nulls = new InertiaProperties();
+        nulls.setVersionFile(null);
+        nulls.setViteManifest(null);
+        nulls.setViteEntry(null);
+        nulls.setViteBase(null);
+        assertEquals("1", new InertiaConfiguration().inertiaVersionProvider(nulls).version());
+        assertEquals(null, nulls.getViteManifest());
+        assertEquals(null, nulls.getViteBase());
+        assertEquals(null, nulls.getViteEntry());
+    }
+
+    @Test
+    void writerAndConverterCoverBothOutputKinds() throws java.io.IOException {
+        Inertia inertia = newStarterTestInertia();
+        InertiaPageWriter writer = new InertiaPageWriter(() -> inertia, DefaultRenderer);
+
+        var response = new org.springframework.mock.web.MockHttpServletResponse();
+        // redirect kind: JSON body skipped, status + Location written
+        writer.write(inertia.redirect("/after-redirect"), response);
+        assertEquals(302, response.getStatus());
+
+        InertiaResult jsonPage = inertia.result(
+                inertia.render("Writer/Json").with("n", 1));
+        var jsonResponse = new org.springframework.mock.web.MockHttpServletResponse();
+        writer.write(jsonPage, jsonResponse);
+        assertTrue(new String(jsonResponse.getContentAsByteArray(), java.nio.charset.StandardCharsets.UTF_8)
+                .contains("\"n\":1"));
+
+        // converter: media types getter + samsung null output guard
+        InertiaPageHttpMessageConverter converter = new InertiaPageHttpMessageConverter(
+                new InertiaPageWriter(() -> inertia, DefaultRenderer));
+        assertEquals(List.of(org.springframework.http.MediaType.APPLICATION_JSON,
+                org.springframework.http.MediaType.TEXT_HTML), converter.getSupportedMediaTypes());
+        assertThrows(IllegalStateException.class, () -> converter.write(jsonPage, null,
+                new org.springframework.http.HttpOutputMessage() {
+                    @Override
+                    public org.springframework.http.HttpHeaders getHeaders() {
+                        return new org.springframework.http.HttpHeaders();
+                    }
+
+                    @Override
+                    public java.io.OutputStream getBody() {
+                        return java.io.OutputStream.nullOutputStream();
+                    }
+                }));
+    }
+
+    @Test
+    void hashOfDirectoriesJustDisablesVersioningAndUnreadableFilesFail() throws Exception {
+        FileVersionProvider directory = new FileVersionProvider(tempDir.toString());
+        assertNull(directory.version()); // not a regular file: versioning disabled
+
+        Path guarded = tempDir.resolve("unreadable.json");
+        java.nio.file.Files.writeString(guarded, "{}");
+        java.nio.file.Files.setPosixFilePermissions(guarded, java.util.Set.of());
+
+        FileVersionProvider unreadable = new FileVersionProvider(guarded.toString());
+        java.io.UncheckedIOException failure =
+                assertThrows(java.io.UncheckedIOException.class, unreadable::version);
+        assertTrue(failure.getCause() instanceof java.io.IOException);
+    }
+
+    @Test
+    void validationErrorsToleratesNullBagsAndNullMessages() {
+        Inertia inertia = newStarterTestInertia();
+        org.springframework.validation.MapBindingResult binding =
+                new org.springframework.validation.MapBindingResult(Map.of(), "thing");
+        binding.rejectValue("silent", "code"); // no default message -> skipped
+        binding.rejectValue("spoken", "NotBlank", "has message");
+
+        ValidationErrors.store(inertia, binding, null); // null bag -> "default"
+
+        Object stored = inertia.request().flash().peek("inertia.errors");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> bags = (Map<String, Object>) stored;
+        @SuppressWarnings("unchecked")
+        Map<String, Object> bag = (Map<String, Object>) bags.get("default");
+        assertEquals("has message", bag.get("spoken"));
+        assertTrue(bag.containsKey("silent") == false);
+    }
+
+    @Test
+    void fileVersionProviderAcceptsFilePrefixedLocations() throws Exception {
+        Path versioned = tempDir.resolve("manifest-file.json");
+        java.nio.file.Files.writeString(versioned, "{\"assets\": {}}");
+
+        FileVersionProvider provider = new FileVersionProvider("file:" + versioned.toString());
+        assertEquals(new FileVersionProvider(versioned.toString()).version(), provider.version());
+    }
+
+    @Test
+    void rendererBeanActivatesViteSupportWhenManifestIsConfigured() {
+        InertiaProperties withoutVite = new InertiaProperties();
+        var plain = new InertiaConfiguration().inertiaRootTemplateRenderer(withoutVite);
+        assertTrue(plain instanceof ThymeleafInertiaRootTemplateRenderer);
+
+        InertiaProperties withVite = new InertiaProperties();
+        withVite.setViteManifest("src/test/resources/vite-test/manifest.json");
+        var vite = new InertiaConfiguration().inertiaRootTemplateRenderer(withVite);
+        assertTrue(vite instanceof ViteInertiaRootTemplateRenderer);
+    }
+
+    @Test
     void pageSerializerFallsThroughDetectionWhenNoMapperBeanIsDefined() throws Exception {
         // registration uses whichever Jackson generation sits on the test classpath
         Class<?> mapperClass = knownMapperClassOrNull();

@@ -29,6 +29,17 @@ mvn -Pboot4 -pl inertia-demo spring-boot:run  # Boot 4.0.5
 # open http://localhost:8800
 ```
 
+The whole back-end configuration for Vite is **one property**
+(`application.properties`):
+
+```properties
+server.port=8800
+inertia.vite-manifest=src/main/resources/static/manifest.json
+```
+
+With it the starter wires the `@vite` equivalent (hashed entry script + css injected
+from the manifest) AND the asset version hashing — no configuration classes.
+
 ## What the demo demonstrates
 
 - **`inertia.render("Hello/Index")`** on a plain `@Controller` returning `InertiaPage`;

@@ -20,6 +20,15 @@ public class InertiaProperties {
     /** User root template override (classpath resource); falls back to the bundled template. */
     private String templatePath = "classpath:templates/inertia.html";
 
+    /** Optional Vite manifest path; setting it enables the {@code @vite}-equivalent renderer and, by default, also drives the asset version. */
+    private String viteManifest = "";
+
+    /** URL prefix for Vite asset files (the frontend {@code base} config); default "/". */
+    private String viteBase = "/";
+
+    /** Vite entry key override; default resolves the first {@code "isEntry": true} entry. */
+    private String viteEntry = "";
+
     /** Inertia filter order (outermost by default, so security redirects also upgrade). */
     private int filterOrder = org.springframework.core.Ordered.HIGHEST_PRECEDENCE + 50;
 
@@ -53,6 +62,30 @@ public class InertiaProperties {
 
     public void setTemplatePath(String templatePath) {
         this.templatePath = templatePath;
+    }
+
+    public String getViteManifest() {
+        return viteManifest;
+    }
+
+    public void setViteManifest(String viteManifest) {
+        this.viteManifest = viteManifest;
+    }
+
+    public String getViteBase() {
+        return viteBase;
+    }
+
+    public void setViteBase(String viteBase) {
+        this.viteBase = viteBase;
+    }
+
+    public String getViteEntry() {
+        return viteEntry;
+    }
+
+    public void setViteEntry(String viteEntry) {
+        this.viteEntry = viteEntry;
     }
 
     public int getFilterOrder() {

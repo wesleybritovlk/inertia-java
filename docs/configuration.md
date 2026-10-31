@@ -8,8 +8,11 @@ are sane; `inertia.version-file` is the one you will usually set.
 | Property | Default | Meaning |
 |---|---|---|
 | `inertia.version` | `"1"` | Static asset version string |
-| `inertia.version-file` | _(empty)_ | Path of a build manifest; SHA-256 of the file becomes the version and has priority over `inertia.version`. Missing file disables versioning (`null`) |
-| `inertia.root-id` | `"app"` | DOM mount id — must equal the client's `createInertiaApp({ id })` and is used for both `data-page` and `div#id` in the root template |
+| `inertia.version-file` | _(empty)_ | Path of a build manifest; SHA-256 of the file becomes the version and takes priority over `inertia.version`. Missing file disables versioning (`null`) |
+| `inertia.vite-manifest` | _(empty)_ | **Vite integration switch**: path of the produced `manifest.json`. Activates the `@vite` equivalent renderer (`viteAppJs`/`viteCss` template variables, entry detection + lazy-chunk css) and — when no explicit version source is set — doubles as the asset version source (same SHA-256) |
+| `inertia.vite-base` | `/` | URL prefix for Vite asset files |
+| `inertia.vite-entry` | _(empty)_ | Vite entry key override; default resolves the first `"isEntry": true` entry |
+| `inertia.root-id` | `app` | DOM mount id — must equal the client's `createInertiaApp({ id })` and is used for both `data-page` and `div#id` in the root template |
 | `inertia.template-path` | `classpath:templates/inertia.html` | Classpath resource for your root template override; missing → bundled template |
 | `inertia.filter-order` | `Ordered.HIGHEST_PRECEDENCE + 50` | Filter registration order (outermost-outermost, letting security filters' redirects also get the 303/409 upgrades) |
 
