@@ -21,6 +21,7 @@ public final class MergeOptions {
     /** Client appends the received items to the array prop (default behavior). */
     public MergeOptions append() {
         this.appendRoot = true;
+        this.prependRoot = false;
         return this;
     }
 
@@ -34,6 +35,7 @@ public final class MergeOptions {
     /** Client prepends the received items to the array prop. */
     public MergeOptions prepend() {
         this.prependRoot = true;
+        this.appendRoot = false;
         return this;
     }
 

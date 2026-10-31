@@ -6,7 +6,7 @@ package io.github.wesleybritovlk.inertia.core;
 public final class FlashKeys {
 
     /** Arbitrary one-shot payload shared with the next rendered page ({@code "flash"} page key). */
-    public static final String FLASH = "inertia.flash";
+    public static final String FLASH = "inertia.flash_data";
 
     /** Validation error bags: {@code Map<String, Map<String, Object>>} of bagName &rarr; field &rarr; messages. */
     public static final String ERRORS = "inertia.errors";

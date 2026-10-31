@@ -56,9 +56,9 @@ final class DotPaths {
         return matchesAny(path, only);
     }
 
-    /** True when any reset entry equals the path or is an ancestor of it (merge state reset). */
+    /** True when any reset entry equals the path exactly (X-Inertia-Reset uses exact paths). */
     static boolean isReset(String path, List<String> reset) {
-        return matchesAny(path, reset);
+        return reset.contains(path);
     }
 
     static List<String> segments(String dottedKey) {
@@ -97,9 +97,20 @@ final class DotPaths {
         return (Map<?, ?>) map;
     }
 
-    private static boolean matchesAny(String path, List<String> targets) {
+    /** Same dot-path relation as {@link #matches(String, List, List)} without the except gate. */
+    static boolean matchesAny(String path, List<String> targets) {
         for (String target : targets) {
             if (path.equals(target) || path.startsWith(target + '.') || target.startsWith(path + '.')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Exact-or-descendant matching only (merge metadata gate on partial: no ancestors). */
+    static boolean matchesOnly(String path, List<String> targets) {
+        for (String target : targets) {
+            if (path.equals(target) || path.startsWith(target + '.')) {
                 return true;
             }
         }
