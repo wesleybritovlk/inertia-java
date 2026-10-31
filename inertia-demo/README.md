@@ -58,6 +58,14 @@ from the manifest) AND the asset version hashing — no configuration classes.
   next stale Inertia visit receives `409` + `X-Inertia-Location` and reloads with the
   fresh bundle.
 
+### Dev mode rewards
+
+`npm run dev` (Vite) + Spring Boot pair exactly like `artisan serve` + Vite in Laravel:
+while `.hot-inertia` exists (written by the shipped vite plugin running `npm run dev`),
+every render answers with the dev modules and the HMR socket — your front edits update
+the running page without reloads, and the back-end keeps its own process. Full details:
+[dev-workflow.md](dev-workflow.md).
+
 ### Framework notes (Inertia v3 client-side setup parity)
 
 | Front-end | Entry | Page props | Title |

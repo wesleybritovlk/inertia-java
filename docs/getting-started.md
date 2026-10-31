@@ -141,6 +141,10 @@ createInertiaApp({
 }).then(({ resolveComponent }) => resolveComponent);
 ```
 
+> Prefer the **live dev loop** (`npm run dev` + HMR while Spring serves the pages)? That
+> is the documented [development workflow](dev-workflow.md) — one property, one hot-file
+> flag, exactly the `artisan serve` + `npm run dev` pairing of the Laravel adapter.
+
 ## 6. SPA routing (catch-all endpoint)
 
 When the SPA has client-side routes, back them with one server mapping so first visits

@@ -6,6 +6,16 @@ All notable changes of this project are documented here. Format based on
 
 ## [Unreleased]
 
+### Added — `inertia-spring-boot-starter`
+- **Vite dev mode (HMR)** parity with the Laravel `artisan serve + npm run dev` loop:
+  while the hot flag file (`.hot-inertia`, written by the shipped vite plugin) exists,
+  pages render with the Vite client + source entry module; React Fast Refresh preamble
+  via `inertia.vite-react-refresh`; dev URL and flag file configurable
+  (`inertia.vite-dev-url`, `inertia.vite-dev-hot`).
+- Built-in Vite asset support: `inertia.vite-manifest` once wires the `@vite` equivalent
+  renderer (`viteAppJs`/`viteCss`, entry auto-detection via `"isEntry"`, lazy-chunk css)
+  and, by default, the asset version (manifest SHA-256).
+
 ## 0.1.0-SNAPSHOT — 2026-10-31
 
 Initial protocol engine and Spring Boot integration.
