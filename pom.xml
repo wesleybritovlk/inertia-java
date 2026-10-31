@@ -12,6 +12,14 @@
     <name>inertia-java-bean</name>
     <description>Framework-agnostic Inertia.js adapter for Java: server-side driving layer that plugs into Spring Boot (3 and 4) or Quarkus as a plain bean, manipulating only HTTP requests and responses.</description>
 
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
     <modules>
         <module>inertia-core</module>
         <module>inertia-spring-boot-starter</module>
