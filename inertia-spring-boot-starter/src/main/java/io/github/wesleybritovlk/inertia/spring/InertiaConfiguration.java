@@ -108,11 +108,17 @@ public class InertiaConfiguration {
         if (properties.getViteManifest() == null || properties.getViteManifest().isBlank()) {
             return base;
         }
-        return new ViteInertiaRootTemplateRenderer(
-                base,
-                Path.of(properties.getViteManifest()),
-                properties.getViteBase(),
-                properties.getViteEntry());
+        ViteInertiaRootTemplateRenderer.ManifestSource manifest = new ViteInertiaRootTemplateRenderer.ManifestSource(
+                Path.of(properties.getViteManifest()), properties.getViteEntry(), properties.getViteBase());
+        ViteInertiaRootTemplateRenderer.HotMode hot =
+                properties.getViteDevHot() == null || properties.getViteDevHot().isBlank()
+                        ? null
+                        : new ViteInertiaRootTemplateRenderer.HotMode(
+                                Path.of(properties.getViteDevHot()),
+                                properties.getViteDevUrl(),
+                                properties.getViteEntry(),
+                                properties.isViteReactRefresh());
+        return new ViteInertiaRootTemplateRenderer(base, manifest, hot);
     }
 
     @Bean

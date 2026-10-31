@@ -4,9 +4,21 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>inertia-java-bean demo</title>
-    <!-- the @vite equivalent: the renderer bean resolves the entry from the Vite manifest -->
+    <!-- inertia-laravel @vite parity: dev mode turns on while the hot flag file exists -->
+    <th:block th:if="${viteDevMode}">
+      <script type="module" th:src="${viteClient}"></script>
+      <th:block th:if="${viteReactRefresh}">
+        <script type="module" th:inline="javascript">
+          import RefreshRuntime from "[(${viteReactRefresh})]";
+          RefreshRuntime.injectIntoGlobalHook(window);
+          window.$RefreshReg$ = () => {};
+          window.$RefreshSig$ = () => {};
+          window.__vite_plugin_react_preamble_installed__ = true;
+        </script>
+      </th:block>
+    </th:block>
     <script type="module" th:src="${viteAppJs}"></script>
-    <th:block th:each="css : ${viteCss}">
+    <th:block th:unless="${viteDevMode}" th:each="css : ${viteCss}">
       <link rel="stylesheet" th:href="${css}" />
     </th:block>
   </head>

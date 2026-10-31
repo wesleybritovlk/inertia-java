@@ -29,6 +29,20 @@ public class InertiaProperties {
     /** Vite entry key override; default resolves the first {@code "isEntry": true} entry. */
     private String viteEntry = "";
 
+    /** Vite dev server base URL used while the hot flag file exists; default "http://localhost:5173". */
+    private String viteDevUrl = "http://localhost:5173";
+
+    /**
+     * Path of the hot flag file (relative to the process working directory); while the
+     * file exists, pages answer in Vite dev mode (HMR). Empty disables dev mode.
+     * Default ".hot-inertia" &mdash; the vite plugin shipped with the demo front-ends
+     * writes it on {@code npm run dev} and removes it on shutdown.
+     */
+    private String viteDevHot = ".hot-inertia";
+
+    /** Emits the React refresh preamble while in dev mode (needed only for React HMR). */
+    private boolean viteReactRefresh = false;
+
     /** Inertia filter order (outermost by default, so security redirects also upgrade). */
     private int filterOrder = org.springframework.core.Ordered.HIGHEST_PRECEDENCE + 50;
 
@@ -86,6 +100,30 @@ public class InertiaProperties {
 
     public void setViteEntry(String viteEntry) {
         this.viteEntry = viteEntry;
+    }
+
+    public String getViteDevUrl() {
+        return viteDevUrl;
+    }
+
+    public void setViteDevUrl(String viteDevUrl) {
+        this.viteDevUrl = viteDevUrl;
+    }
+
+    public String getViteDevHot() {
+        return viteDevHot;
+    }
+
+    public void setViteDevHot(String viteDevHot) {
+        this.viteDevHot = viteDevHot;
+    }
+
+    public boolean isViteReactRefresh() {
+        return viteReactRefresh;
+    }
+
+    public void setViteReactRefresh(boolean viteReactRefresh) {
+        this.viteReactRefresh = viteReactRefresh;
     }
 
     public int getFilterOrder() {
