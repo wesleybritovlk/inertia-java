@@ -28,6 +28,19 @@ with Thymeleaf playing the role of Laravel's Blade.
 3. **Response** — `X-Inertia` visits answer `application/json` with the page object and `X-Inertia: true`; other visits render the root Thymeleaf template with the page embedded in a `<script data-page="app" type="application/json">` block (the `@inertia` Blade equivalent).
 4. **After the handler** — the filter adds `Vary: X-Inertia`, upgrades redirect statuses (302 → 303 for method changes, fragment redirects to `409` + `X-Inertia-Redirect`).
 
+## Try the demo
+
+`inertia-demo/` is a runnable Hello World with the canonical **Vite + Vue 3** layout
+(SFC pages, hashed assets, asset versioning live from the Vite manifest):
+
+```bash
+cd inertia-demo/frontend && npm install && npm run build && cd ..
+mvn install
+mvn -pl inertia-demo spring-boot:run          # Boot 3.3.12
+mvn -Pboot4 -pl inertia-demo spring-boot:run  # Boot 4.0.5
+# → http://localhost:8800
+```
+
 ## Non-Servlet environments
 
 The core is pure Java 17 with zero dependencies. [other-frameworks.md](other-frameworks.md)

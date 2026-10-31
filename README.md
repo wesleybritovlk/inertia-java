@@ -27,6 +27,7 @@ even the serialization and request ports runtime-neutral.
 |---|---|
 | `io.github.wesleybritovlk.inertia:inertia-core` | The Inertia protocol engine. **Zero dependencies** (JDK 17 only). Any framework can plug in via the ports. |
 | `io.github.wesleybritovlk.inertia:inertia-spring-boot-starter` | Spring Boot integration (3.x and 4.x): request-scoped engine, protocol filter, return value support and the Thymeleaf root template. |
+| `inertia-demo` | Runnable Hello World with the canonical **Vite + Vue 3** frontend (asset versioning wired to the Vite manifest) — see [inertia-demo/README.md](inertia-demo/README.md). |
 
 ```xml
 <dependency>
@@ -37,6 +38,13 @@ even the serialization and request ports runtime-neutral.
 ```
 
 Only the pieces you need: use `inertia-core` alone when bringing your own framework adapter (Quarkus, plain servlets, WS).
+
+## Spring Boot 4
+
+The whole reactor compiles, tests and runs on **Spring Boot 4** (`mvn -Pboot4 verify`) —
+Framework 7.0.6, Tomcat 11, Jackson 3 runtime picked automatically by the hybrid
+serializer chain ([docs/serialization.md](docs/serialization.md)). The demo runs live on
+both Boot 3.3.12 and Boot 4.0.5 with the same source tree.
 
 ## Documentation
 

@@ -1,0 +1,23 @@
+{
+  "src/Pages/Hello/Index.vue": {
+    "file": "assets/Index-CowpxmId.js",
+    "name": "Index",
+    "src": "src/Pages/Hello/Index.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/app.js"
+    ],
+    "css": [
+      "assets/Index-vLZCwPn2.css"
+    ]
+  },
+  "src/app.js": {
+    "file": "assets/app-DkFOd-oa.js",
+    "name": "app",
+    "src": "src/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "src/Pages/Hello/Index.vue"
+    ]
+  }
+}
