@@ -6,14 +6,20 @@ Inertia lets you build single-page apps without a separate API: controllers retu
 
 ## Why another Java adapter?
 
-The existing Java adapter ([inertia4j](https://github.com/inertia4j/inertia4j)) couples its public API to `ResponseEntity`, reads the current request from a Spring `RequestContextHolder` thread-local, and compiles against Jackson 2 — all of which break on Spring Boot 4 (Jackson 3, new auto-configuration model, Servlet 6.1). `inertia-java-bean` was designed against those failure modes from day one:
+Most Java tooling grows convenience APIs that end up holding web-framework types in its
+core. This library takes the opposite route from the first commit, and the comparer for
+every design decision is the Laravel adapter's protocol semantics:
 
-| Coupling trap | How this library avoids it |
+| Design principle | How this library does it |
 |---|---|
-| Framework return types (`ResponseEntity<String>`) | The core exchanges only neutral types (`InertiaPage`, `InertiaResult`); adapters map them to the native response |
-| Implicit request access (thread-locals) | A neutral `InertiaRequest` port; the request-scoped engine is born from the *current* request inside the integration, never searched by the core |
-| Jackson 2 compiled in, Jackson 3 ships with Boot 4 | The core is dependency-free; a reflection adapter prefers *your* Jackson (any major), or falls back to a bundled zero-dependency serializer |
-| Hard-coded auto-configuration classes | `@AutoConfiguration` with name-based ordering, works on Boot 3.x and 4.x |
+| Framework-neutral core | The core exchanges only neutral types (`InertiaPage`, `InertiaResult`); integrations map them to the native response |
+| Request access through ports | A neutral `InertiaRequest` port; the request-scoped engine is born from the *current* request inside the integration |
+| Any JSON runtime | The core is dependency-free; a reflection adapter prefers *your* Jackson (any major), or falls back to a bundled zero-dependency serializer |
+| Modern Boot, present and next | `@AutoConfiguration` with name-based ordering, Jakarta Servlet 6.x compile-only — tested on Boot 3.x, ready for 4.x |
+
+The SPI split in [`inertia4j`](https://github.com/inertia4j/inertia4j) (core + framework
+adapters) confirmed this direction is viable — this project pushes it further by keeping
+even the serialization and request ports runtime-neutral.
 
 ## Modules
 
@@ -203,5 +209,5 @@ Each behavioral rule was implemented and then verified against the actual source
 ## Credits
 
 - [`inertia-laravel`](https://github.com/inertiajs/inertia-laravel) — the canonical server adapter; the behavioral reference for this port.
-- [`inertia4j`](https://github.com/inertia4j/inertia4j) — prior Java art; the framework-coupling lessons that shaped this design.
+- [`inertia4j`](https://github.com/inertia4j/inertia4j) — the prior Java adapter; the SPI/core split that inspired the ports design here.
 - [`@inertiajs/core`](https://github.com/inertiajs/inertia) sources + [inertia docs](https://inertiajs.com/docs/v2/the-protocol) — the client-side protocol contract.

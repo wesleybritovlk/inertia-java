@@ -2,9 +2,9 @@
 
 The Inertia protocol lives in `inertia-core`, which has **zero third-party dependencies** —
 including JSON. The `PageSerializer` SPI couples a serializer into the flow, and the
-starter implements a **hybrid strategy** built to survive Jackson generations working on
-your own dependencies (exactly the trap where `inertia4j` compiled against Jackson 2
-while Spring Boot 4 ships Jackson 3).
+starter implements a **hybrid strategy** built to survive Jackson generations inside your
+own dependency tree: Java JSON libraries change majors over the years, and a serialization
+adapter should ride along with whatever version the application runs.
 
 ## Resolution order
 
@@ -43,7 +43,7 @@ Two protocol niceties are guaranteed only here:
 - object key order: maps preserve insertion order (Jackson may reorder object keys —
   irrelevant to the protocol, relevant for byte-exact debugging);
 - `InertiaPage.preserveBigIntegers()`: JS-unsafe integers wrap as `{"$bigint": "..."}`
-  exactly like the Laravel adapter, so the client pristine them with `BigInt`. With a
+  exactly like the Laravel adapter, so the client revives them as `BigInt` values. With a
   Jackson backend the number is emitted raw by *your* mapper — provide a custom
   serializer if you need wrapping.
 
