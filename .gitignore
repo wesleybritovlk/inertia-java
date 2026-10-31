@@ -1,0 +1,16 @@
+# Build
+target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# Misc
+.DS_Store
+*.log
+.flattened-pom.xml
