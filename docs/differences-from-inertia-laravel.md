@@ -6,6 +6,35 @@ the actual PHP sources), but Java ≠ PHP. This page lists every behavior that i
 1:1 port. Read each: they are intentional consequences of being framework-agnostic, not
 missing features — unless told otherwise, they are roadmapped.
 
+## The hot file — what it is, in one paragraph (and why it can never show in git)
+
+The Spring process and the `npm run dev` process are two separate programs, and the
+Spring one must answer **per render**: "deliver dev-server modules or built assets?"
+The two programs talk through one cheap, reliable channel — a file. While
+`npm run dev` is running, the Vite plugin **touches the flag file**; when the dev
+server shuts down it **deletes the file**. Spring checks the file's existence per page
+and flips:
+
+- flag **present** → dev mode (modules streamed from the dev server, HMR socket live,
+  page version `null`);
+- flag **absent** → build mode (hashed manifest assets + the versioned `409` stale
+  reload flow).
+
+Laravel's adapter does exactly this: `laravel-vite-plugin` touches `public/hot`, and
+`Vite::isRunningHot()` reads it. Our defaults go one step friendlier: the shipped
+plugin writes the flag **inside `node_modules/`** (`node_modules/.hot-inertia`) —
+universally git-ignored by construction, guaranteed to exist at dev time, and it can
+never leak into a packaged artifact. The demo (three shared front-ends) pins ONE
+shared flag instead (`inertia.vite-dev-hot=.hot-inertia`, already in the demo's
+`.gitignore`). You never write the file yourself; `touch`ing it by hand is the manual
+override — and nothing at all is needed when you only run in build mode.
+
+| Difference | Meaning |
+|---|---|
+| Flag file name | Laravel writes `public/hot`; here `inertia.vite-dev-hot` (default `node_modules/.hot-inertia`, auto-gitignored via node_modules) |
+| React refresh preamble | driven by the `inertia.vite-react-refresh` property instead of a known-file-type heuristic |
+| **Version guard** | same parity — while hot, the page version is `null` and no `409` version checks fire (HMR owns the changes); stale-reload stays a build-mode concern |
+
 ## Compatibilities that ARE 1:1
 
 Page JSON shape and ordering rules, redirect races (`302→303`, external 409 with

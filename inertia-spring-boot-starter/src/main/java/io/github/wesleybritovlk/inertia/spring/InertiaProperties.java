@@ -35,10 +35,12 @@ public class InertiaProperties {
     /**
      * Path of the hot flag file (relative to the process working directory); while the
      * file exists, pages answer in Vite dev mode (HMR). Empty disables dev mode.
-     * Default ".hot-inertia" &mdash; the vite plugin shipped with the demo front-ends
-     * writes it on {@code npm run dev} and removes it on shutdown.
+     * Default "node_modules/.hot-inertia" &mdash; pairs with the plugin default in the
+     * companion vite plugin (node_modules is universally git-ignored, so the flag never
+     * shows in {@code git status} and cannot leak into a packaged artifact; monorepos
+     * may point both sides at one shared path).
      */
-    private String viteDevHot = ".hot-inertia";
+    private String viteDevHot = "node_modules/.hot-inertia";
 
     /** Emits the React refresh preamble while in dev mode (needed only for React HMR). */
     private boolean viteReactRefresh = false;

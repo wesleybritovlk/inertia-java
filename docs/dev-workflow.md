@@ -46,16 +46,21 @@ The canonical way here is the **inline plugin** inside the boilerplate
 const inertiaHotFile = () => ({
     name: 'inertia-hot-file',
     configureServer(server) {
-        fs.writeFileSync('../.hot-inertia', String(server.config.server?.port ?? 5173));
-        server.httpServer?.on?.('close', () => fs.rmSync('../.hot-inertia', { force: true }));
+        fs.writeFileSync('node_modules/.hot-inertia', String(server.config.server?.port ?? 5173));
+        server.httpServer?.on?.('close', () => fs.rmSync('node_modules/.hot-inertia', { force: true }));
     },
 });
 ```
 
-For teams maintaining several projects, the same plugin ships as a reusable npm
-package in this repository (`npm/inertia-vite-hot-file`,
-`@wesleybritovlk/inertia-vite-hot-file` — `npm i` + `inertiaHotFile()`), consumable
-from any front-end to avoid copy-paste drift.
+Default location **`node_modules/.hot-inertia`**: `node_modules` is universally
+git-ignored, so the flag never shows in `git status` and cannot leak into a packaged
+Java artifact — pair both sides with the same path
+(`inertia.vite-dev-hot=node_modules/.hot-inertia`). For teams maintaining several
+projects (or shared-flag monorepos), the same plugin ships as a reusable npm package
+in this repository (`npm/inertia-vite-hot-file`,
+`@wesleybritovlk/inertia-vite-hot-file` — `npm i` + `inertiaHotFile({ file: '../.hot-inertia' })`),
+consumable from any front-end to avoid copy-paste drift, with the flag path added to
+your `.gitignore`.
 
 It writes `.hot-inertia` on dev server boot and deletes it when the process closes
 gracefully. If a dev process dies hard (`kill -9`), remove the file manually.
@@ -64,7 +69,7 @@ gracefully. If a dev process dies hard (`kill -9`), remove the file manually.
 
 | Property | Default | Meaning |
 |---|---|---|
-| `inertia.vite-dev-hot` | `.hot-inertia` | Hot flag file path (relative to the back-end working directory). Empty disables dev mode entirely |
+| `inertia.vite-dev-hot` | `node_modules/.hot-inertia` | Hot flag file path (relative to the back-end working directory). While it exists pages render in dev mode; empty disables dev mode entirely. Keep it IDENTICAL on both sides (plugin option + this property) |
 | `inertia.vite-dev-url` | `http://localhost:5173` | Vite dev server origin |
 | `inertia.vite-entry` | _(empty)_ | Dev entry source path (e.g. `src/app.js`); empty probes `src/app.js` then `src/app.jsx` against the dev server on first render |
 | `inertia.vite-react-refresh` | `false` | Emit the React **Fast Refresh** preamble in dev mode (needed only when developing the React front-end) |

@@ -136,11 +136,12 @@ import fs from 'node:fs';
 // .hot-inertia = the flag the Spring adapter reads PER RENDER to switch the root
 // template to dev mode (HMR) - inertia-laravel public/hot parity; written on
 // `npm run dev`, removed on shutdown (kill -9 leaves it: delete manually).
+// node_modules/.hot-inertia never shows up in git status (node_modules is ignored).
 const inertiaHotFile = () => ({
     name: 'inertia-hot-file',
     configureServer(server) {
-        fs.writeFileSync('../.hot-inertia', String(server.config.server?.port ?? 5173));
-        server.httpServer?.on?.('close', () => fs.rmSync('../.hot-inertia', { force: true }));
+        fs.writeFileSync('node_modules/.hot-inertia', String(server.config.server?.port ?? 5173));
+        server.httpServer?.on?.('close', () => fs.rmSync('node_modules/.hot-inertia', { force: true }));
     },
 });
 
@@ -156,11 +157,21 @@ export default defineConfig({
 });
 ```
 
+Pair the flag path on the Spring side (both sides must be identical):
+
+```properties
+inertia.vite-dev-hot=node_modules/.hot-inertia
+```
+
 The dev loop then pairs `npm run dev` (writes the flag) with `spring-boot:run`
 (answers pages in dev mode, HMR live) — details in
 [dev-workflow.md](dev-workflow.md). If you maintain several projects, the same plugin
 ships as a reusable package: `npm/inertia-vite-hot-file` in this repository
-(`npm i @wesleybritovlk/inertia-vite-hot-file` once published).
+(`npm i @wesleybritovlk/inertia-vite-hot-file` once published). Confirm the single
+source-of-truth path on both sides (e.g. a shared flag like
+`inertiaHotFile('../.hot-inertia')` in the front and
+`inertia.vite-dev-hot=.hot-inertia` on the back) — or keep the node_modules default,
+which every JS project already ignores.
 
 ## 5. Front-end entrypoint
 
