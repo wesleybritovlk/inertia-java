@@ -13,8 +13,8 @@ of a hot flag file (the adapter equivalent of Laravel's `public/hot`, named here
 
 ```
  ┌── Terminal 1 ─────────────────┐   ┌── Terminal 2 ─────────────────────────────┐
- │  npm run dev                  │   │  mvn -pl inertia-demo spring-boot:run     │
- │  (Vite on :5173, HMR)         │   │  (Tomcat on :8800)                        │
+ │  npm run dev                  │   │  mvn -pl inertia-demo-spring spring-boot:run     │
+ │  (Vite on :5173, HMR)         │   │  (Tomcat on :8080)                        │
  │  writes .hot-inertia on boot, │   │                                           │
  │  deletes it on shutdown       │   │  per render: .hot-inertia exists?         │
  └───────────────────────────────┘   │    yes → dev mode (modules from :5173)    │
@@ -88,7 +88,7 @@ cd inertia-demo/frontend-demo-vue      # demo-react | demo-svelte
 npm install && npm run dev             # writes node_modules/.hot-inertia
 
 # terminal 2 (back-end — may run from the repo root or demo dir, detection is automatic)
-mvn -pl inertia-demo spring-boot:run   # → http://localhost:8800
+mvn -pl inertia-demo-spring spring-boot:run   # → http://localhost:8080
 ```
 
 React specifics (Fast Refresh):
@@ -97,7 +97,7 @@ React specifics (Fast Refresh):
 # react dev needs NO extra arguments — the preamble is auto-detected when the
 # react dev server is up (@vitejs/plugin-react mounts /@react-refresh);
 # force it with --inertia.vite-react-refresh=true if you prefer explicitness
-mvn -pl inertia-demo spring-boot:run
+mvn -pl inertia-demo-spring spring-boot:run
 ```
 
 Everything validated live (Boot 3.3.12): Vue page updated through HMR without reload,

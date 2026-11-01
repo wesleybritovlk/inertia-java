@@ -14,3 +14,6 @@ target/
 .DS_Store
 *.log
 .flattened-pom.xml
+
+# the Vite front-ends' shared build output feeding both demo apps
+inertia-demo/frontend-assets/

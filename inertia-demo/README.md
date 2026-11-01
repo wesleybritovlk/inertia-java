@@ -1,23 +1,25 @@
-# inertia-java
+# inertia-demo
 
-A Spring Boot adapter for [Inertia.js] with canonical **Vite** front-ends in any
-framework — Vue 3, React 19 or Svelte 5 (the layouts the Inertia docs prescribe, minus
-Laravel):
+The canonical demo of `inertia-java` in one folder: **three** Vite front-ends (Vue 3,
+React 19, Svelte 5) shared by **two** back-end apps — the Spring Boot adapter demo
+(`inertia-demo-spring`) and the Quarkus demo (`inertia-demo-quarkus`). The lists/pages/
+controllers mirror each other: same components (`Hello/Index`, `SimpleFormTodo/Index`),
+same props, same routes, one build output.
 
 ```
 inertia-demo/
 ├── frontend-demo-vue/                 # Vue 3 SFC pages (@inertiajs/vue3)
 ├── frontend-demo-react/               # React 19 pages (@inertiajs/react)
 ├── frontend-demo-svelte/              # Svelte 5 pages (@inertiajs/svelte)
-│   └── (each: src/app.(js|jsx) + src/Pages/Hello/Index.* + vite.config.js)
-└── src/main/...                       # Spring Boot back-end (controller only)
+│   └── (each: src/app.(js|jsx) + src/Pages/*/ + vite.config.js)
+├── frontend-assets/                   # `npm run build` output (git-ignored) — feeds BOTH apps
+├── inertia-demo-spring/               # Spring Boot back-end (adapter demo; mvn spring-boot:run)
+└── inertia-demo-quarkus/              # Quarkus back-end (adapter demo; mvn quarkus:dev)
 ```
 
-The three front-ends produce the SAME page (`Hello/Index`) — the Spring Boot
-back-end is shared, so pick the framework, build it, run. Each `vite.config.js`
-carries the dev-mode flag plugin **inline** (the copy-paste boilerplate from the
-[getting started](../docs/getting-started.md)); teams reusing it across projects +
-prefer the ready-to-publish package in `npm/inertia-vite-hot-file`.
+Each `vite.config.js` carries the dev-mode flag plugin **inline** (the copy-paste
+boilerplate from the [getting started](../docs/getting-started.md)); the npm package
+`npm/inertia-vite-hot-file` is the same code ready to publish.
 
 ## Run it
 
@@ -25,12 +27,14 @@ prefer the ready-to-publish package in `npm/inertia-vite-hot-file`.
 
 ```bash
 cd inertia-demo/frontend-demo-vue    # demo-react | demo-svelte
-npm install
-npm run dev                          # Vite on :5173, writes node_modules/.hot-inertia
+npm install && npm run dev           # Vite on :5173, writes node_modules/.hot-inertia
 ```
 
 ```bash
-mvn -pl inertia-demo spring-boot:run # from the repo root or demo dir → http://localhost:8800 (DEV MODE)
+# pick ONE back-end (both live on the default port 8080 and share the same pages):
+mvn -pl inertia-demo-spring spring-boot:run    # Spring Boot (Tomcat; devtools reload)
+mvn -pl inertia-demo-quarkus quarkus:dev       # Quarkus (Undertow/RESTEasy)
+# → http://localhost:8080
 ```
 
 Edits in the front-end source update the running page through HMR — no reloads, no
@@ -41,29 +45,29 @@ build mode). Full loop details: [../docs/dev-workflow.md](../docs/dev-workflow.m
 
 ```bash
 npm run build
-# → writes static/assets/app-<hash>.js (+ per-page chunks) and static/manifest.json
-#   (builds are NOT committed — every framework rebuilds into the same folder)
+# → writes ../frontend-assets/assets/app-<hash>.js (+ per-page chunks) and
+#   ../frontend-assets/manifest.json — ONE output both demo apps mount as classpath
+#   resources (builds are NOT committed; every framework rebuilds the same folder)
 
-mvn -pl inertia-demo spring-boot:run          # Boot 3.3.12
-mvn -Pboot4 -pl inertia-demo spring-boot:run  # Boot 4.0.5
+mvn -pl inertia-demo-spring spring-boot:run    # Boot 3.3.12 / 4.0.5 via -Pboot4
+mvn -pl inertia-demo-quarkus quarkus:dev       # or quarkus packaging: mvn package -pl inertia-demo-quarkus
 ```
 
 The whole back-end configuration for Vite is **one property**
-(`application.properties`):
+(`application.properties` in each demo):
 
 ```properties
-server.port=8800
-inertia.vite-manifest=src/main/resources/static/manifest.json
+inertia.vite-manifest=classpath:static/manifest.json
 ```
 
-With it the starter wires the `@vite` equivalent (hashed entry script + css injected
-from the manifest) AND the asset version hashing — no configuration classes.
+With it the adapter wires the `@vite` equivalent (hashed entry script + css from the
+manifest) AND the asset version hashing — no configuration classes.
 
 ## Pages + routes exercised
 
 | Route | What it shows | Method |
 |---|---|---|
-| `/` | `Hello/Index` hello page (all three front-ends) | GET |
+| `/` | `Hello/Index` hello page (all three front-ends, both back-ends) | GET |
 | `/form-todo` | `SimpleFormTodo/Index` CRUD list, in-memory | GET |
 | `/form-todo` | create with validation (empty title → shared `errors` bag) | POST |
 | `/form-todo/{id}` | toggle done — **the adapter filter upgrades this redirect to 303** | PATCH |
@@ -71,21 +75,20 @@ from the manifest) AND the asset version hashing — no configuration classes.
 
 The navbar renders through the Inertia `<Link>` in each framework, so navigating is
 SPA-internal (no full reloads) — including the 303 follow-ups after POST/PATCH/DELETE.
-All flows were validated live in the browser (Vue, React and Svelte built from the same
-back-end): create → toggle (303) → delete, empty-title error round trip, navbar
-navigation.
+All flows were validated live in the browser: create → toggle (303) → delete,
+empty-title error round trip, navbar navigation.
 
-The CRUD back-end is a single controller (`SimpleFormTodoController`) with an in-memory
-map — no service layer, it is a demo.
+The CRUD back-end is a single controller (one per demo flavor) with an in-memory map —
+no service layer, it is a demo.
 
 ### Dev mode rewards
 
-`npm run dev` (Vite) + Spring Boot pair exactly like `artisan serve` + Vite in Laravel:
-while the hot flag exists inside the front-end's own `node_modules/.hot-inertia`
-(written by the vite plugin, auto-detected by the starter from any working directory),
-every render answers with the dev modules and the HMR socket — your front edits update
-the running page without reloads, and the back-end keeps its own process. Full details:
-[dev-workflow.md](dev-workflow.md).
+`npm run dev` (Vite) + either back-end pairs exactly like `artisan serve` + Vite in
+Laravel: while the hot flag exists inside the front-end's own
+`node_modules/.hot-inertia` (written by the vite plugin, auto-detected by the adapter
+from any working directory), every render answers with the dev modules and the HMR
+socket — your front edits update the running page without reloads, and the back-end
+keeps its own process. Full details: [../docs/dev-workflow.md](../docs/dev-workflow.md).
 
 ### Framework notes (Inertia v3 client-side setup parity)
 
@@ -95,5 +98,7 @@ the running page without reloads, and the back-end keeps its own process. Full d
 | React | `app.jsx` + `createRoot(el).render(<App {...props} />)` | `usePage().props` | `<Head title>` component |
 | Svelte | `app.js` + `mount(App, { target: el, props })` | `usePage().props` (runes `$state`, reactive) | native `<svelte:head><title>` (the Svelte adapter has no `Head` component) |
 
-All three populate the identical page JSON from the back-end — proving the adapter is
-client-framework agnostic exactly like the Inertia protocol intends.
+All three populate the identical page JSON from either back-end — proving the adapter
+is client-framework agnostic exactly like the Inertia protocol intends, and the
+`Hello/Index`/`SimpleFormTodo/Index` component contracts work unchanged when you switch
+the back-end flavor.

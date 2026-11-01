@@ -11,61 +11,13 @@
     </parent>
 
     <artifactId>inertia-demo</artifactId>
+    <packaging>pom</packaging>
 
     <name>inertia-demo</name>
-    <description>Hello-world demo application for the inertia-spring-boot (Vue front-end over the bundled Thymeleaf root template).</description>
+    <description>Demos of inertia-java: the same canonical Vite front-ends (Vue 3, React 19, Svelte 5) served by both adapter flavors — the Spring Boot demo (inertia-demo-spring) and the Quarkus demo (inertia-demo-quarkus). One front build feeds both apps.</description>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring.boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
-    <dependencies>
-        <dependency>
-            <groupId>io.github.wesleybritovlk.inertia</groupId>
-            <artifactId>inertia-spring-boot</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-    </dependencies>
-
-    <properties>
-        <!-- the demo is an application, not a library: gates stay on the library modules -->
-        <jacoco.skip>true</jacoco.skip>
-        <spotbugs.skip>true</spotbugs.skip>
-        <!-- @PathVariable without explicit names needs reflection parameter names -->
-        <maven.compiler.parameters>true</maven.compiler.parameters>
-    </properties>
-
-    <build>
-        <finalName>inertia-demo</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring.boot.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>com.diffplug.spotless</groupId>
-                <artifactId>spotless-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
+    <modules>
+        <module>inertia-demo-spring</module>
+        <module>inertia-demo-quarkus</module>
+    </modules>
 </project>

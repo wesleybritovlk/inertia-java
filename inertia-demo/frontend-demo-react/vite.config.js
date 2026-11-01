@@ -15,17 +15,17 @@ const inertiaHotFile = (file = 'node_modules/.hot-inertia') => ({
     },
 });
 
-// Inertia canonical layout for non-Laravel stacks: the Spring static folder receives
+// Inertia canonical layout for non-Laravel stacks: the static folder receives
 // the hashed build plus the manifest, so the backend can (a) resolve assets and
 // (b) hash the manifest into the asset version.
 export default defineConfig({
     plugins: [inertiaHotFile(), react()],
     server: {
-        cors: { origin: 'http://localhost:8800' },
+        cors: { origin: 'http://localhost:8080' }, // the demos run on the default port
     },
     build: {
         manifest: 'manifest.json',
-        outDir: '../src/main/resources/static',
+        outDir: '../frontend-assets', // ONE build feeds both demo apps (spring + quarkus)
         emptyOutDir: true,
         rollupOptions: { input: { app: 'src/app.jsx' } },
     },

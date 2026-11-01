@@ -32,16 +32,17 @@ with Thymeleaf playing the role of Laravel's Blade.
 
 ## Try the demo
 
-`inertia-demo/` is a runnable Hello World with your framework of choice — canonical
-**Vite** layouts for **Vue 3**, **React 19** and **Svelte 5** (hashed assets, asset
-versioning live from the Vite manifest):
+`inertia-demo/` is a runnable Hello World + CRUD Todo app in **two back-end flavors**
+sharing your framework of choice without source duplication — canonical **Vite**
+layouts for **Vue 3**, **React 19** and **Svelte 5** (hashed assets, asset versioning
+live from the Vite manifest):
 
 ```bash
-cd inertia-demo/frontend-demo-vue && npm install && npm run build && cd ..   # or demo-react | demo-svelte
+cd inertia-demo/frontend-demo-vue && npm install && npm run build   # or demo-react | demo-svelte
 mvn install
-mvn -pl inertia-demo spring-boot:run          # Boot 3.3.12
-mvn -Pboot4 -pl inertia-demo spring-boot:run  # Boot 4.0.5
-# → http://localhost:8800
+mvn -pl inertia-demo-spring spring-boot:run   # Spring Boot demo (Boot 3.3.12; -Pboot4 for 4.0.5)
+mvn -pl inertia-demo-quarkus quarkus:dev      # Quarkus demo (Undertow + RESTEasy)
+# → http://localhost:8080
 ```
 
 See [inertia-demo/README.md](inertia-demo/README.md) for the per-framework notes.

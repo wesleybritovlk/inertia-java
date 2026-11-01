@@ -149,7 +149,7 @@ const inertiaHotFile = () => ({
 
 export default defineConfig({
     plugins: [inertiaHotFile(), vue()],
-    server: { cors: { origin: 'http://localhost:8800' } },
+    server: { cors: { origin: 'http://localhost:8080' } },
     build: {
         manifest: 'manifest.json',                    // drives hashing + versioning
         outDir: '../src/main/resources/static',       // served by Spring static handler

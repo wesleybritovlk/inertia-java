@@ -29,7 +29,7 @@ even the serialization and request ports runtime-neutral.
 | `io.github.wesleybritovlk.inertia:inertia-servlet` | The shared Jakarta Servlet glue: request adapter, protocol filter, result/page writers, Thymeleaf + Vite root renderers and version providers. |
 | `io.github.wesleybritovlk.inertia:inertia-spring-boot` | Spring Boot integration (3.x and 4.x): request-scoped engine, protocol filter, return value support and the Thymeleaf root template. |
 | `io.github.wesleybritovlk.inertia:inertia-quarkus` | Quarkus integration: CDI wiring over the same servlet glue, Undertow filter registration, RESTEasy return value writer, SmallRye config. |
-| `inertia-demo` | Runnable Hello World with the canonical **Vite + Vue 3** frontend (asset versioning wired to the Vite manifest) — see [inertia-demo/README.md](inertia-demo/README.md). |
+| `io.github.wesleybritovlk.inertia:inertia-demo` | Demos: three canonical Vite front-ends (Vue 3, React 19, Svelte 5) serving the same pages from **both** back-ends — `inertia-demo-spring` (Spring Boot, `mvn spring-boot:run`) and `inertia-demo-quarkus` (Quarkus, `mvn quarkus:dev`); one `npm run build` feeds both — see [inertia-demo/README.md](inertia-demo/README.md). |
 
 ```xml
 <dependency>

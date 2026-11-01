@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.wesleybritovlk.inertia</groupId>
+        <artifactId>inertia-demo</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>inertia-demo-spring</artifactId>
+
+    <name>inertia-demo-spring</name>
+    <description>Hello-world demo over the Spring adapter: the canonical Vite front-ends (Vue 3, React 19, Svelte 5) served by the Spring Boot back-end with the bundled Thymeleaf root template.</description>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.wesleybritovlk.inertia</groupId>
+            <artifactId>inertia-spring-boot</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+    </dependencies>
+
+    <properties>
+        <!-- the demo is an application, not a library: gates stay on the library modules -->
+        <jacoco.skip>true</jacoco.skip>
+        <spotbugs.skip>true</spotbugs.skip>
+        <!-- @PathVariable without explicit names needs reflection parameter names -->
+        <maven.compiler.parameters>true</maven.compiler.parameters>
+    </properties>
+
+    <build>
+        <finalName>inertia-demo-spring</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <!-- the canonical Vite front-ends build into ../frontend-assets (single source:
+                 one `npm run build` feeds this app AND the Quarkus demo) -->
+            <resource>
+                <directory>${project.basedir}/../frontend-assets</directory>
+                <targetPath>static</targetPath>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
