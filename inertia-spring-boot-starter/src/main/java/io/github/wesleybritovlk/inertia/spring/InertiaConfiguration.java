@@ -5,14 +5,19 @@ import java.util.List;
 import io.github.wesleybritovlk.inertia.core.Inertia;
 import io.github.wesleybritovlk.inertia.core.PageSerializer;
 import io.github.wesleybritovlk.inertia.core.PlainJsonPageSerializer;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-
 import io.github.wesleybritovlk.inertia.core.ReflectiveJacksonPageSerializer;
+import io.github.wesleybritovlk.inertia.core.InertiaSharedPropsCustomizer;
 import io.github.wesleybritovlk.inertia.core.VersionProvider;
+
+import io.github.wesleybritovlk.inertia.servlet.FileVersionProvider;
+import io.github.wesleybritovlk.inertia.servlet.HotAwareVersionProvider;
+import io.github.wesleybritovlk.inertia.servlet.HotFileScanner;
+import io.github.wesleybritovlk.inertia.servlet.InertiaFilter;
+import io.github.wesleybritovlk.inertia.servlet.InertiaPageWriter;
+import io.github.wesleybritovlk.inertia.servlet.InertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.servlet.ServletInertiaRequest;
+import io.github.wesleybritovlk.inertia.servlet.ThymeleafInertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.servlet.ViteInertiaRootTemplateRenderer;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.ObjectProvider;
@@ -114,71 +119,18 @@ public class InertiaConfiguration {
     }
 
     /**
-     * Hot flag candidates: empty (default) runs the auto-scan (frontends keep the flag
-     * inside their OWN node_modules — universally git-ignored); one or more comma-separated
-     * paths override the scan; the value {@code off} yields no candidates (dev-mode
-     * detection disabled).
+     * Hot flag candidates come from the shared scanner: empty (default) runs the auto-scan
+     * (frontends keep the flag inside their OWN node_modules — universally git-ignored);
+     * one or more comma-separated paths override the scan; the value {@code off} yields no
+     * candidates (dev-mode detection disabled).
      */
-    static List<Path> hotCandidates(InertiaProperties properties) {
-        String override = properties.getViteDevHot();
-        if (override == null || override.isBlank()) {
-            return hotAutoScan();
-        }
-        if ("off".equalsIgnoreCase(override.trim())) {
-            return List.of();
-        }
-        List<Path> explicit = new ArrayList<>();
-        for (String part : override.split(",")) {
-            if (!part.isBlank()) {
-                explicit.add(Path.of(part.trim()));
-            }
-        }
-        return explicit.isEmpty() ? hotAutoScan() : List.copyOf(explicit);
+    static List<java.nio.file.Path> hotCandidates(InertiaProperties properties) {
+        return HotFileScanner.candidates(properties.getViteDevHot());
     }
 
     /** {@code devHotOff} mirrors the value {@code off}: the whole detection stack is skipped. */
     static boolean devHotOff(InertiaProperties properties) {
-        String value = properties.getViteDevHot();
-        return value != null && "off".equalsIgnoreCase(value.trim());
-    }
-
-    private static List<Path> hotAutoScan() {
-        List<Path> auto = new ArrayList<>();
-        auto.add(Path.of("node_modules", ".hot-inertia"));
-        auto.add(Path.of(".hot-inertia"));
-        collectDeepScan(Path.of(""), 3, auto);
-        return List.copyOf(auto);
-    }
-
-    private static final List<String> SKIP_DIRS =
-            List.of("node_modules", "target", "build", "dist", ".git", ".idea", "src", "docs");
-
-    private static void collectDeepScan(Path dir, int depth, List<Path> out) {
-        if (depth <= 0) {
-            return;
-        }
-        try (var stream = Files.newDirectoryStream(dir)) {
-            for (java.util.Iterator<Path> it = stream.iterator(); ; ) {
-                Path child;
-                try {
-                    child = it.next();
-                } catch (java.util.NoSuchElementException exhausted) {
-                    break;
-                }
-                if (child == null || child.getFileName() == null) {
-                    continue; // directory stream contract allows null entries
-                }
-                if (SKIP_DIRS.contains(child.getFileName().toString())) {
-                    continue;
-                }
-                out.add(child.resolve("node_modules").resolve(".hot-inertia"));
-                if (Files.isDirectory(child)) {
-                    collectDeepScan(child, depth - 1, out);
-                }
-            }
-        } catch (IOException ignored) {
-            // not a readable directory: stop scanning this branch
-        }
+        return HotFileScanner.off(properties.getViteDevHot());
     }
 
     @Bean

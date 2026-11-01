@@ -1,6 +1,7 @@
 package io.github.wesleybritovlk.inertia.spring;
 
 import io.github.wesleybritovlk.inertia.core.InertiaPage;
+import io.github.wesleybritovlk.inertia.servlet.InertiaPageWriter;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.web.context.request.NativeWebRequest;

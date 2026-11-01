@@ -6,6 +6,26 @@ All notable changes of this project are documented here. Format based on
 
 ## [Unreleased]
 
+### Added — `inertia-core`
+- **Once props** and **Scroll props** (infinite scroll): protocol parity for the Inertia.js
+  v3 once + scroll metadata, wire shapes verified against the v3 docs and the
+  `@inertiajs` 3.10 client (composer options `as()/until()/fresh()/deferred()/merged()`
+  and `page()/pageName()/wrapper()/metadata()/deferred()`), available on both adapters.
+
+### Added — architecture
+- **`inertia-servlet` module**: the framework-neutral Jakarta Servlet glue previously
+  buried inside the Spring starter (request adapter, protocol filter, result/page
+  writers, Thymeleaf/Vite root renderers, version/hot providers, bundled root template).
+  The Spring starter delegates to it; every servlet-based stack can too.
+
+### Added — `inertia-quarkus`
+- Full Quarkus adapter over the same protocol and the same shared glue: CDI producers
+  (version provider → hot-aware, hybrid serializer, Thymeleaf+Vite renderer), the protocol
+  filter registered through Undertow (`@WebFilter` CDI bean with a request attachment that
+  scopes the engine per request), typed RESTEasy `MessageBodyWriter`s for `InertiaPage`/
+  `InertiaResult` returns, SmallRye config mapping mirroring every Spring `inertia.*`
+  property, and a `ValidationErrors` helper on jakarta Bean Validation.
+
 ### Added — `inertia-spring-boot-starter`
 - **Vite dev mode (HMR)** parity with the Laravel `artisan serve + npm run dev` loop:
   while the hot flag file (`.hot-inertia`, written by the shipped vite plugin) exists,

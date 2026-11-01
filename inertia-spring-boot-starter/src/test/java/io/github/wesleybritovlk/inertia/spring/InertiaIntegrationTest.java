@@ -10,10 +10,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 
+
 import io.github.wesleybritovlk.inertia.core.Inertia;
+import io.github.wesleybritovlk.inertia.core.InertiaResult;
+import io.github.wesleybritovlk.inertia.core.InertiaSharedPropsCustomizer;
 import io.github.wesleybritovlk.inertia.core.InertiaHeaders;
 import io.github.wesleybritovlk.inertia.core.InertiaPage;
-import io.github.wesleybritovlk.inertia.core.InertiaResult;
+
+import io.github.wesleybritovlk.inertia.servlet.InertiaFilter;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

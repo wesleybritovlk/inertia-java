@@ -17,6 +17,13 @@ import io.github.wesleybritovlk.inertia.core.Inertia;
 import io.github.wesleybritovlk.inertia.core.InertiaHeaders;
 import io.github.wesleybritovlk.inertia.core.InertiaPage;
 import io.github.wesleybritovlk.inertia.core.InertiaResult;
+import io.github.wesleybritovlk.inertia.servlet.FileVersionProvider;
+import io.github.wesleybritovlk.inertia.servlet.InertiaFilter;
+import io.github.wesleybritovlk.inertia.servlet.InertiaPageWriter;
+import io.github.wesleybritovlk.inertia.servlet.InertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.servlet.ServletInertiaRequest;
+import io.github.wesleybritovlk.inertia.servlet.ThymeleafInertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.servlet.ViteInertiaRootTemplateRenderer;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -184,7 +191,7 @@ class StarterUnitsTest {
             }
         };
 
-        filter.doFilterInternal(request, response, chain);
+        filter.doFilter(request, response, chain);
 
         assertTrue(response.isCommitted());
         assertNull(response.getHeader(InertiaHeaders.INERTIA), "no page headers were written by the post-chain pass");

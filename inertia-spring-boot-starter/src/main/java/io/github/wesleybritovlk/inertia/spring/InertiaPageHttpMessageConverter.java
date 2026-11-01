@@ -9,6 +9,8 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.http.server.ServletServerHttpResponse;
 
+import io.github.wesleybritovlk.inertia.servlet.InertiaPageWriter;
+
 /**
  * Custom message converter for {@code InertiaPage}/{@code InertiaResult} controller returns.
  *

@@ -34,8 +34,9 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.thymeleaf</groupId>
-            <artifactId>thymeleaf</artifactId>
+            <groupId>io.github.wesleybritovlk.inertia</groupId>
+            <artifactId>inertia-servlet</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- compile-only: the app provides these at runtime -->

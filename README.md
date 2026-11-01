@@ -26,7 +26,9 @@ even the serialization and request ports runtime-neutral.
 | Artifact | Purpose |
 |---|---|
 | `io.github.wesleybritovlk.inertia:inertia-core` | The Inertia protocol engine. **Zero dependencies** (JDK 17 only). Any framework can plug in via the ports. |
+| `io.github.wesleybritovlk.inertia:inertia-servlet` | The shared Jakarta Servlet glue: request adapter, protocol filter, result/page writers, Thymeleaf + Vite root renderers and version providers. |
 | `io.github.wesleybritovlk.inertia:inertia-spring-boot-starter` | Spring Boot integration (3.x and 4.x): request-scoped engine, protocol filter, return value support and the Thymeleaf root template. |
+| `io.github.wesleybritovlk.inertia:inertia-quarkus` | Quarkus integration: CDI wiring over the same servlet glue, Undertow filter registration, RESTEasy return value writer, SmallRye config. |
 | `inertia-demo` | Runnable Hello World with the canonical **Vite + Vue 3** frontend (asset versioning wired to the Vite manifest) — see [inertia-demo/README.md](inertia-demo/README.md). |
 
 ```xml
@@ -37,7 +39,9 @@ even the serialization and request ports runtime-neutral.
 </dependency>
 ```
 
-Only the pieces you need: use `inertia-core` alone when bringing your own framework adapter (Quarkus, plain servlets, WS).
+Only the pieces you need: use `inertia-core` (or the servlet glue) alone when bringing
+your own framework adapter, or the Quarkus starter
+([docs/inertia-quarkus.md](docs/inertia-quarkus.md)).
 
 ## Spring Boot 4
 
@@ -60,7 +64,8 @@ Complete usage documentation lives in [`docs/`](docs/index.md):
 | [Shared props](docs/shared-props.md) | request-scoped shared props + customizer beans |
 | [Serialization](docs/serialization.md) | the hybrid Jackson 2/3/bundled strategy and the `PageSerializer` SPI |
 | [Configuration](docs/configuration.md) | all `inertia.*` properties and bean overrides |
-| [Other frameworks](docs/other-frameworks.md) | raw-servlet usage of `inertia-core` (the future Quarkus path) |
+| [Other frameworks](docs/other-frameworks.md) | the shared `inertia-servlet` glue + raw-servlet usage of `inertia-core` |
+| [Quarkus adapter](docs/inertia-quarkus.md) | `inertia-quarkus`: CDI setup, config mapping, RESTEasy return handling, Vite parity |
 | [Differences from inertia-laravel](docs/differences-from-inertia-laravel.md) | every behavior that is not a 1:1 port |
 
 ## Quick start (Spring Boot)
@@ -194,7 +199,7 @@ Notes: JSON object key order is not part of the Inertia protocol; only the bundl
 | `clearHistory` / `preserveFragment` / `encryptHistory` | ✅ |
 | Root template (Thymeleaf, overridable) | ✅ |
 | SSR (Node render server client + `@inertiaHead` fragment) | roadmap (módulo separado) |
-| Quarkus integration | roadmap (same core ports) |
+| Quarkus integration (CDI + Undertow + RESTEasy over the shared glue) | ✅ |
 
 ## Building from source
 

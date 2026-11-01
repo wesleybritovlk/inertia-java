@@ -1,0 +1,23 @@
+{
+  "src/vendor.js": {
+    "file": "assets/vendor-Xy123.js",
+    "name": "vendor",
+    "src": "src/vendor.js",
+    "css": ["assets/vendor-abc123.css"],
+    "isEntry": false
+  },
+  "src/app.js": {
+    "file": "assets/app-Hx987.js",
+    "name": "app",
+    "src": "src/app.js",
+    "imports": ["Pages/Hello/Index.vue", "src/vendor.js"],
+    "css": ["assets/app-def456.css"],
+    "isEntry": true
+  },
+  "Pages/Hello/Index.vue": {
+    "file": "assets/Index-Ab987.js",
+    "name": "Index",
+    "src": "Pages/Hello/Index.vue",
+    "css": ["assets/Index-vW234.css"]
+  }
+}

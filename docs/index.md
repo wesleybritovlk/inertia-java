@@ -1,8 +1,8 @@
 # Documentation index
 
 `inertia-java-bean` is a framework-agnostic server adapter for [Inertia.js](https://inertiajs.com).
-It never hosts a server: integrations register it as a plain bean (Spring Boot MVC today,
-Quarkus via the same SPI later), and the core manipulates only the HTTP request/response
+It never hosts a server: integrations register it as a plain bean — Spring Boot MVC and
+Quarkus are shipped adapters, and the core manipulates only the HTTP request/response
 exchange and the HTML root page — the same architecture as [`inertia-laravel`](https://github.com/inertiajs/inertia-laravel),
 with Thymeleaf playing the role of Laravel's Blade.
 
@@ -12,14 +12,15 @@ with Thymeleaf playing the role of Laravel's Blade.
 |---|---|
 | [Getting started (Spring Boot)](getting-started.md) | Everything needed to run Inertia for the first time: dependencies, a working controller, the root template, the front-end entrypoint, validation flow, and a catch-all for SPA routes |
 | [Development workflow](dev-workflow.md) | `npm run dev` + Spring Boot pairing (HMR): hot flag file, Vite client injection, Fast Refresh, spring-boot-devtools |
-| [Pages and props](pages-and-props.md) | `inertia.render`, every prop builder (`with`, `withLazy`, `withAlways`, `withDeferred`, `withDeferredRescued`, `withMerged`), dot-key nesting and `withViewData` |
+| [Pages and props](pages-and-props.md) | `inertia.render`, every prop builder (`with`, `withLazy`, `withAlways`, `withDeferred`, `withDeferredRescued`, `withMerged`, `withOnce`, `withScroll`), dot-key nesting and `withViewData` |
 | [Partial reloads](partial-reloads.md) | `X-Inertia-Partial-*` semantics, subtree cutting inside object props, deferred groups, merge metadata and `X-Inertia-Reset` |
 | [Redirects and versioning](redirects-and-versioning.md) | Internal 302/303 rules, external `X-Inertia-Location` 409s, fragment redirects, and the asset-version guard |
 | [Flash and validation](flash-and-validation.md) | One-shot session flash, `ValidationErrors.store`, error-bag renaming, and page flags (`clearHistory`, `preserveFragment`) |
-| [Shared props](shared-props.md) | Request-scoped shared props, customizer beans, `sharedProps` page metadata |
+| [Shared props](shared-props.md) | Request-scoped shared props (`shared`/`sharedAlways`/`sharedOnce`), customizer beans, `sharedProps` page metadata |
 | [Serialization](serialization.md) | The hybrid serializer chain (user bean → application mapper → Jackson 2/3 → bundled zero-dependency writer) and the `PageSerializer` SPI |
 | [Configuration](configuration.md) | Every `inertia.*` property, root template override, Thymeleaf variables, filter ordering |
-| [Other frameworks](other-frameworks.md) | Running the core without Spring: the request/response ports, a raw-servlet example, and what the Quarkus module will plug into |
+| [Quarkus adapter](inertia-quarkus.md) | `inertia-quarkus`: CDI wiring over the shared servlet glue, Undertow + RESTEasy, SmallRye config, validation, overrides |
+| [Other frameworks](other-frameworks.md) | Running the core without Spring: the shared `inertia-servlet` glue, the request/response ports, a raw-servlet example |
 | [Differences from inertia-laravel](differences-from-inertia-laravel.md) | Every behavior that is not a 1:1 port, and why |
 
 ## The adapter in one request
