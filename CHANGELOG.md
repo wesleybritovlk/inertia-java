@@ -65,6 +65,10 @@ All notable changes of this project are documented here. Format based on
   keeps only the Jakarta Servlet-specific pieces and delegates the rest.
 
 ### Added — demos
+- **`inertia-demo-spring-boot2`**: the Hello World + CRUD demo running on the legacy
+  Spring Boot 2.7 / javax / Java 8 stack — same pages, routes and props as the Boot 3
+  demo (one `npm run build` feeds all three apps), proof that the Boot 2 adapter serves
+  the whole flow end to end (smoke-tested against the packaged jar).
 - `inertia-demo` became an aggregator with **two adapter flavors sharing ONE copy of the
   canonical front-ends**: `inertia-demo-spring` (the Spring Boot app) and
   `inertia-demo-quarkus` (the Quarkus app). The three Vite front-ends (Vue 3, React 19,

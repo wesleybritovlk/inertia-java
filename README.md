@@ -22,7 +22,7 @@ Jackson 3, the case that breaks other Java adapters.
 | `inertia-spring-boot` | Spring Boot integration (3.x and 4.x). |
 | `inertia-spring-boot2` | The legacy Boot 2 twin (2.7 line, javax + Java 8): same auto-configuration via `META-INF/spring.factories`, same properties. |
 | `inertia-quarkus` | Quarkus integration (Undertow + RESTEasy + CDI). |
-| `inertia-demo` | Runnable demo: three canonical Vite front-ends (Vue 3, React 19, Svelte 5) served by both back-ends. |
+| `inertia-demo` | Runnable demo: three canonical Vite front-ends (Vue 3, React 19, Svelte 5) served by three back-ends (Boot 3/4, Boot 2.7 legacy, Quarkus). |
 
 ```xml
 <dependency>

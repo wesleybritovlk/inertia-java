@@ -1,10 +1,11 @@
 # inertia-demo
 
 The canonical demo of `inertia-java` in one folder: **three** Vite front-ends (Vue 3,
-React 19, Svelte 5) shared by **two** back-end apps — the Spring Boot adapter demo
-(`inertia-demo-spring`) and the Quarkus demo (`inertia-demo-quarkus`). The lists/pages/
-controllers mirror each other: same components (`Hello/Index`, `SimpleFormTodo/Index`),
-same props, same routes, one build output.
+React 19, Svelte 5) shared by **three** back-end apps — the Spring Boot adapter demo
+(`inertia-demo-spring`), its legacy Spring Boot 2 twin (`inertia-demo-spring-boot2`)
+and the Quarkus demo (`inertia-demo-quarkus`). The lists/pages/controllers mirror each
+other: same components (`Hello/Index`, `SimpleFormTodo/Index`), same props, same routes,
+one build output.
 
 ```
 inertia-demo/
@@ -12,8 +13,9 @@ inertia-demo/
 ├── frontend-demo-react/               # React 19 pages (@inertiajs/react)
 ├── frontend-demo-svelte/              # Svelte 5 pages (@inertiajs/svelte)
 │   └── (each: src/app.(js|jsx) + src/Pages/*/ + vite.config.js)
-├── frontend-assets/                   # `npm run build` output (git-ignored) — feeds BOTH apps
+├── frontend-assets/                   # `npm run build` output (git-ignored) — feeds ALL apps
 ├── inertia-demo-spring/               # Spring Boot back-end (adapter demo; mvn spring-boot:run)
+├── inertia-demo-spring-boot2/         # same demo on Spring Boot 2.7 / javax / Java 8
 └── inertia-demo-quarkus/              # Quarkus back-end (adapter demo; mvn quarkus:dev)
 ```
 
@@ -31,9 +33,10 @@ npm install && npm run dev           # Vite on :5173, writes node_modules/.hot-i
 ```
 
 ```bash
-# pick ONE back-end (both live on the default port 8080 and share the same pages):
-mvn -pl :inertia-demo-spring spring-boot:run    # Spring Boot (Tomcat; devtools reload)
-mvn -pl :inertia-demo-quarkus quarkus:dev       # Quarkus (Undertow/RESTEasy)
+# pick ONE back-end (all live on the default port 8080 and share the same pages):
+mvn -pl :inertia-demo-spring spring-boot:run       # Spring Boot (Tomcat; devtools reload)
+mvn -pl :inertia-demo-spring-boot2 spring-boot:run # same app on Spring Boot 2.7 / javax / Java 8
+mvn -pl :inertia-demo-quarkus quarkus:dev          # Quarkus (Undertow/RESTEasy)
 # → http://localhost:8080
 ```
 
@@ -50,6 +53,7 @@ npm run build
 #   resources (builds are NOT committed; every framework rebuilds the same folder)
 
 mvn -pl :inertia-demo-spring spring-boot:run    # Boot 3.3.12 / 4.0.5 via -Pboot4
+mvn -pl :inertia-demo-spring-boot2 spring-boot:run # Boot 2.7.18 demo (same assets, javax line)
 mvn -pl :inertia-demo-quarkus quarkus:dev       # add a leading `clean` if the demo seems stale (e.g. after npm builds)
 ```
 

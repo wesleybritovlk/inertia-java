@@ -18,6 +18,7 @@
 
     <modules>
         <module>inertia-demo-spring</module>
+        <module>inertia-demo-spring-boot2</module>
         <module>inertia-demo-quarkus</module>
     </modules>
     <build>
