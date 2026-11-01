@@ -6,7 +6,12 @@
 
     <groupId>io.github.wesleybritovlk.inertia</groupId>
     <artifactId>inertia-java</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <!-- CI-friendly single-source version: property interpolation in parent/version
+         blocks accepts ONLY ${revision}/${changelist}/${sha1} (Maven 3.5+), so a
+         release version bump edits this property and the whole reactor follows.
+         If a future Central publication needs pre-resolved poms, add the
+         flatten-maven-plugin at release time. -->
+    <version>${revision}</version>
     <packaging>pom</packaging>
 
     <name>inertia-java</name>
@@ -30,6 +35,8 @@
     </modules>
 
     <properties>
+        <!-- the ONE place a reactor version bump touches -->
+        <revision>0.1.0-SNAPSHOT</revision>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring.boot.version>3.3.12</spring.boot.version>

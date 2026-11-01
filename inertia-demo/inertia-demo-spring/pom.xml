@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.github.wesleybritovlk.inertia</groupId>
         <artifactId>inertia-demo</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>inertia-demo-spring</artifactId>
