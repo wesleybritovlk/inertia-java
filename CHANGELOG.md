@@ -7,6 +7,11 @@ All notable changes of this project are documented here. Format based on
 ## [Unreleased]
 
 ### Changed
+- **Documentation restructured around two stack guides**: `getting-started` became the
+  concepts page (protocol flow, module map, root template, the any-stack front-end
+  boilerplate, dev vs build mode) and two zero-to-package guides were added —
+  `getting-started-spring` and `getting-started-quarkus` (pom, application/controller,
+  front-end, dev loop, build mode, validation, packaging, SPA catch-all).
 - **Quarkus engine ergonomics = Spring/laravel parity**: resources inject the engine
   directly — `@Inject Inertia inertia` (a request-scoped CDI bean produced by the
   adapter; CDI commands the client proxy) — replacing the `InertiaProvider` wrapper.

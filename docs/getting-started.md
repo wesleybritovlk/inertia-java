@@ -1,133 +1,79 @@
-# Getting started (Spring Boot)
+# Getting started — the concepts
 
-This guide builds a complete Inertia application with Spring Boot MVC: backed-up pages,
-dev-time partial reloads and a validation round trip. Everything here works on **Boot 3.x
-and 4.x** (Servlet 6.x, Thymeleaf 3.1). A ready-to-run version of every step lives in the
-demo tree ([inertia-demo](../inertia-demo/README.md)) — including the Quarkus flavor
-running the same pages.
+`inertia-java` is the server adapter of the [Inertia.js](https://inertiajs.com) protocol
+for the JVM. Your controllers return **page objects**, the client-side router renders
+them, and plain HTTP carries everything — no API layer, no server hosted by the library.
+The adapter is a plain, registerable bean: **Spring Boot MVC** and **Quarkus** are the
+shipped integrations, with Thymeleaf playing the role of Laravel's Blade.
 
-## 1. Dependencies
+This page explains how everything fits together and owns the front-end boilerplate
+(identical for every stack). The per-stack guides then take a **new project** from an
+empty folder to a packaged app:
 
-```xml
-<dependency>
-    <groupId>io.github.wesleybritovlk.inertia</groupId>
-    <artifactId>inertia-spring-boot</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
-</dependency>
-```
+- [Getting started with Spring Boot](getting-started-spring.md)
+- [Getting started with Quarkus](getting-started-quarkus.md)
+- A ready-to-run proof of both flavors lives in the [demo tree](../inertia-demo/README.md)
 
-The starter brings:
+## How an Inertia request flows
 
-- `inertia-core` (the protocol engine, zero third-party dependencies),
-- `inertia-servlet` (the shared Jakarta Servlet glue: filter, request adapter, writers,
-  Thymeleaf root template and the Vite/versioning providers — `org.thymeleaf:thymeleaf`
-  rides only inside this glue; the core never sees it),
-- a `FilterRegistrationBean`, a request-scoped `Inertia` bean, a return-value bridge for
-  controllers, and the root template renderer.
+1. **Before the handler** — the protocol filter compares `X-Inertia-Version` against the
+   current asset version. A stale browser visit gets `409` + `X-Inertia-Location` so the
+   client performs a full page visit with fresh assets.
+2. **Your controller** — builds an `InertiaPage` (`inertia.render("Users/Index")` plus
+   props). The request-scoped engine resolves props against the request: partial
+   filtering, deferred groups, merge metadata, shared props, flash and error bags.
+3. **The response** — two shapes, same URL:
+   - a plain browser visit receives the **root HTML page**: the layout (bundled inside
+     the library) embeds the page object in a `<script data-page="app" type="application/json">`
+     block — the `@inertia` Blade directive equivalent — and loads your app script;
+   - an `X-Inertia: true` visit from the Inertia client receives the **page object as
+     JSON** (`component`, `props`, `url`, `version` + optional metadata) with
+     `X-Inertia: true` + `Vary: X-Inertia` headers.
+4. **After the handler** — the filter adds `Vary: X-Inertia` and upgrades redirects
+   (`302 → 303` on PUT/PATCH/DELETE, fragment redirects to `409` + `X-Inertia-Redirect`).
 
-Nothing else is required. If your application already uses Spring Boot's Jackson
-(`spring-boot-starter-web` does), the starter reuses **your** mapper for serialization —
-see [serialization.md](serialization.md).
+The client never re-renders the whole document after boot: navigation happens through
+its own router, and the server answers each visit with just the page object.
 
-## 2. Minimal application
+## The modules
 
-```java
-@SpringBootApplication
-public class App {
-    public static void main(String[] args) {
-        SpringApplication.run(App.class, args);
-    }
-}
-```
+| Module | What it is |
+|---|---|
+| `inertia-core` | The protocol engine. **Zero dependencies** (JDK 17 only): page/props resolution, partial matching, redirects, version guard, the serializer SPI. |
+| `inertia-servlet` | The shared Jakarta Servlet glue: request adapter, protocol filter, result/page writers, the Thymeleaf + Vite root renderers, version/hot providers and the bundled root template. |
+| `inertia-spring-boot` | The Spring Boot integration (3.x and 4.x): auto-configuration, request-scoped `Inertia` bean, return-value bridges, properties. |
+| `inertia-quarkus` | The Quarkus integration: CDI wiring over the same glue, Undertow registration, RESTEasy writers, SmallRye config. |
+| `inertia-demo` | A runnable demo (Hello World + CRUD Todo) with three canonical front-ends served by both back-ends. |
 
-Sensible defaults apply (`root-id: app`, static `version: "1"`); the one property you
-will usually touch is the version — any string that changes when your front-end assets
-change (see [configuration.md](configuration.md) for the complete list):
+Protocol details live in their own pages — every prop builder in
+[pages-and-props.md](pages-and-props.md), the partial rules in
+[partial-reloads.md](partial-reloads.md), redirects/versioning in
+[redirects-and-versioning.md](redirects-and-versioning.md), flash and validation in
+[flash-and-validation.md](flash-and-validation.md), shared props in
+[shared-props.md](shared-props.md), JSON binding in [serialization.md](serialization.md).
 
-```yaml
-inertia:
-  version: b39c07f   # any value that changes when the front-end assets change
-  root-id: app       # must match the client-side createInertiaApp id
-```
-
-> For real applications prefer `inertia.version-file` pointing at your build manifest
-> (Vite/Rollup): its SHA-256 becomes the version, so stale assets trigger the standard
-> 409 full-page-visit flow automatically.
-
-## 3. Controller
-
-Both `@Controller` and `@RestController` work. Convention here mirrors Laravel's
-`Inertia::render` return style:
-
-```java
-@Controller
-class DashboardController {
-
-    private final Inertia inertia; // request-scoped bean from the starter
-
-    DashboardController(Inertia inertia) {
-        this.inertia = inertia;
-    }
-
-    @GetMapping("/dashboard")
-    InertiaPage dashboard() {
-        return inertia.render("Dashboard/Index")
-            .with("stats", () -> statsService.today())          // evaluated per response
-            .withLazy("history", () -> statsService.history())  // partial reloads only
-            .withDeferred("insights", () -> insights.calc());   // client resolves later
-    }
-}
-```
-
-What each method does per HTTP call:
-
-- `GET /dashboard` from a browser (no `X-Inertia` header): the resolved page object is
-  embedded into the root template and returned as `text/html;charset=UTF-8` with
-  `Vary: X-Inertia`.
-- `GET /dashboard` from the Inertia client (`X-Inertia: true`, `Accept:
-  text/html, application/xhtml+xml`): `application/json` page object with
-  `X-Inertia: true` + `Vary: X-Inertia` headers.
-- `GET /dashboard` requesting `users` for the same component (`X-Inertia-Partial-Data:
-  stats`, `X-Inertia-Partial-Component: Dashboard/Index`): only `stats` (plus the always
-  and deferred-matching props) are evaluated and returned.
-
-## 4. The root template (usually you do not need one)
+## The root template (usually you do not need one)
 
 The layout ships **inside the library** (`inertia-servlet`): the head machinery (Vite
 entry script, lazy-chunk css, dev-mode blocks), the root `<div id="app">` mount and the
-`<script data-page="app">` payload — the `@inertia` Blade directive equivalent — all
-live in the bundled `META-INF/inertia/templates/root.html`. No template file, no
-boilerplate: the served page already works in build mode AND dev mode.
+`<script data-page>` payload all live in the bundled
+`META-INF/inertia/templates/root.html`. No template file, no boilerplate: the served
+page already works in build mode AND dev mode.
 
 When the application wants its own head bits (title, meta, fonts, CDN scripts), ship a
-**head fragment** — one or two lines, nothing else:
-
-`src/main/resources/templates/inertia.html`
+**head fragment** — one or two lines, nothing else — at
+`src/main/resources/templates/inertia.html`:
 
 ```html
 <title>Task Log</title>
 <!-- fonts / CDN libraries / meta tags, as plain head content: -->
 <!-- <link rel="stylesheet" href="https://cdn.example/fonts.css" /> -->
-<!-- <script src="https://cdn.example/analytics.js"></script> -->
 ```
 
 The fragment (detected because it does not compose a full `<html>` document) renders
 with the same variables as the layout and is injected inside the bundled `<head>` —
-the machinery stays untouched.
-
-Advanced escape hatch: a **whole document** applies only when the template composes the
-full page, replacing the bundled layout — then your file wires everything itself:
-
-```html
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <th:block th:utext="${inertiaUserHead}" />
-    <!-- ...your own head wiring (scripts, root mount, data-page payload)... -->
-  </head>
-</html>
-```
+the machinery stays untouched. Advanced escape hatch: a **whole document** (a file with
+`<html>`) replaces the bundled layout and wires the machinery variables itself.
 
 Variables available in both modes:
 
@@ -139,19 +85,41 @@ Variables available in both modes:
 | `viteDevMode` / `viteClient` / `viteAppJs` / `viteCss` / `viteReactRefresh` | The Vite wiring (dev client, hashed entry, chunks css, react preamble) |
 | *any extra* | Whatever your controller added with `InertiaPage.withViewData(...)` |
 
-The `<script data-page>` block is what `@inertiajs/*` reads on boot — this is the
-`@inertia` Blade directive equivalent, already emitted by the bundled layout. After
-hydration the client replaces the tab title through its own `<Head>` component
-(per-framework), so the fragment's `<title>` only paints the pre-hydration instant.
-Full details: [configuration.md](configuration.md#root-template-override); the demo
-projects use the two-line fragment form.
+After hydration the client replaces the tab title through its own `<Head>` component
+(per framework), so the fragment's `<title>` only paints the pre-hydration instant.
+Full details: [configuration.md](configuration.md#root-template-override).
 
-## 4b. The vite.config.js boilerplate (includes dev mode)
+## The front-end boilerplate (any stack)
 
-Front-end production builds AND the live dev loop need the flag plugin; it is small
-enough to be copied **inline** — the boilerplate below is the Vue variant the demo's
-configs use (React: `react()` + `'src/app.jsx'`; Svelte: `svelte()` with pages
-resolving `./Pages/${name}.svelte`):
+The front-end is a standard [Vite](https://vite.dev) application — the same files,
+commands and layout for Spring Boot and Quarkus, and the same structure for Vue, React
+or Svelte. For a new project:
+
+```
+your-app/
+├── pom.xml                       # your stack's build (per-stack guide)
+├── src/main/resources/
+│   └── static/                   # ← npm run build lands here (hashed assets + manifest)
+├── src/main/java/...             # your controllers (per-stack guide)
+└── src/frontend/
+    ├── package.json
+    ├── vite.config.js
+    └── src/
+        ├── app.js                # the @inertiajs entrypoint
+        └── Pages/
+            └── Hello/Index.vue   # one folder per component name
+```
+
+Install (Vue variant; React: `@inertiajs/react` + `@vitejs/plugin-react` + `app.jsx`;
+Svelte: `@inertiajs/svelte` + `@sveltejs/vite-plugin-svelte` + `.svelte` pages):
+
+```bash
+npm init -y
+npm i vite @vitejs/plugin-vue @inertiajs/vue3 vue
+```
+
+The only non-standard bit is the **hot-file plugin** — small enough to be copied
+**inline** into `vite.config.js`. It is what makes dev mode work (next section):
 
 ```js
 import { defineConfig } from 'vite';
@@ -172,116 +140,56 @@ const inertiaHotFile = () => ({
 
 export default defineConfig({
     plugins: [inertiaHotFile(), vue()],
-    server: { cors: { origin: 'http://localhost:8080' } },
+    server: { cors: { origin: 'http://localhost:8080' } }, // where your back-end listens
     build: {
-        manifest: 'manifest.json',                    // drives hashing + versioning
-        outDir: '../src/main/resources/static',       // served by Spring static handler
+        manifest: 'manifest.json',                     // drives hashing + versioning
+        outDir: '../src/main/resources/static',        // the back-end serves this folder
         emptyOutDir: true,
         rollupOptions: { input: { app: 'src/app.js' } },
     },
 });
 ```
 
-The flag writes `node_modules/.hot-inertia` and both adapters auto-scan for it (the
-`inertia.vite-dev-hot` default is empty = auto-scan: three levels inside the working
-directory plus one bounded parent level — the Quarkus `quarkus:dev` line and the demo
-`spring-boot:run` line pair from the layouts they ship with), so no path pairing is
-required at all — node_modules is git-ignored, so the flag never shows in `git status`
-either. In production set `inertia.vite-dev-hot=off`. The dev loop then pairs
-`npm run dev` (writes the flag) with the back-end's dev run (answers pages in dev
-mode, HMR live) — details in [dev-workflow.md](dev-workflow.md). If you maintain
-several projects, the same plugin ships as a reusable package:
-`npm/inertia-vite-hot-file` in this repository
-(`npm i @wesleybritovlk/inertia-vite-hot-file` once published). Exotic layouts only:
-point the plugin at a custom path (`inertiaHotFile('../.hot-inertia')`) and mirror it
-on the Spring side with the same `inertia.vite-dev-hot` value relative to the
-`mvn` working directory — or turn detection off with `inertia.vite-dev-hot=off`.
-
-> The demo tree writes its build to one shared `frontend-assets/` folder both demo
-> back-ends mount (`outDir: '../frontend-assets'`). For a single application, the
-> `../src/main/resources/static` outDir above is the canonical layout — the manifest
-> property then reads `classpath:static/manifest.json`.
-
-## 5. Front-end entrypoint
-
-Standard `@inertiajs` setup (Vue 3 example):
+The entrypoint is the canonical `@inertiajs` setup (Vue shown):
 
 ```js
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 
 createInertiaApp({
-  id: 'app', // must match inertia.root-id
-  resolve: (name) => import(`./Pages/${name}.vue`),
-  setup({ el, App, props, plugin }) {
-    createApp({ render: () => h(App, props) })
-      .use(plugin)
-      .mount(el);
-  },
+    id: 'app', // must match inertia.root-id (default: app)
+    resolve: (name) => import(`./Pages/${name}.vue`),
+    setup({ el, App, props, plugin }) {
+        createApp({ render: () => h(App, props) }).use(plugin).mount(el);
+    },
 });
 ```
 
-> Prefer the **live dev loop** (`npm run dev` + HMR while Spring serves the pages)? That
-> is the documented [development workflow](dev-workflow.md) — one property, one hot-file
-> flag, exactly the `artisan serve` + `npm run dev` pairing of the Laravel adapter.
+No path pairing is ever needed between the plugin and the back-end: the adapter
+**auto-scans** for `node_modules/.hot-inertia` around its working directory. If you
+maintain several projects, the same plugin ships as a reusable package
+(`npm/inertia-vite-hot-file` in this repository,
+`@wesleybritovlk/inertia-vite-hot-file` once published).
 
-## 6. SPA routing (catch-all endpoint)
+## Dev mode vs build mode
 
-When the SPA has client-side routes, back them with one server mapping so first visits
-render the right component:
+The two programs — your JVM process and the Vite dev server — talk through one cheap
+channel: the flag file the plugin above writes.
 
-```java
-@GetMapping("/{*path}")
-InertiaPage anyPath(@PathVariable("path") String path) {
-    return inertia.render(pageComponentFor(path))
-        .with("path", path);
-}
-```
+- **Dev mode** (`npm run dev` running): the adapter detects the flag per render and
+  serves pages with the Vite client + your **source** entry — HMR socket live, edits
+  appear without reloads. The page version goes `null` (Laravel parity: no versioned
+  `409`s while HMR owns the changes; nothing needs a prior build).
+- **Build mode** (no flag): the adapter resolves the hashed assets of the last
+  `npm run build` from the manifest and hashes that manifest into the asset version —
+  stale clients get the standard `409` full-page-visit flow.
 
-Register specific controllers as needed — the catch-all must not swallow them (Spring
-resolves exact mappings before capture-all patterns, so explicit `@GetMapping("/users")`
-always wins).
+The same back-end serves both; nothing changes in code or properties. The full loop —
+commands, React Fast Refresh specifics, security notes — is in
+[dev-workflow.md](dev-workflow.md). In production (and native builds), set
+`inertia.vite-dev-hot=off` to disable detection entirely.
 
-## 7. Validation round trip
+## Pick your stack
 
-```java
-@PostMapping("/users")
-InertiaResult create(UserForm form, BindingResult binding) {
-    if (binding.hasErrors()) {
-        ValidationErrors.store(inertia, binding, "default");
-        return inertia.redirect("/users/create");
-    }
-    service.create(form);
-    return inertia.redirect("/users");
-}
-```
-
-On the redirect target next render the `errors` prop carries the bag; the client
-resolves it (Laravel-compatible shape). Detailed behaviors — bag renaming through
-`X-Inertia-Error-Bag`, first-message-per-field defaults, persistence across redirects —
-are in [flash-and-validation.md](flash-and-validation.md).
-
-## 8. Running
-
-```bash
-mvn install        # installs the (local) artifacts
-mvn spring-boot:run -f your-app-module
-```
-
-Quality gates run on every commit once you enable the repository hook:
-
-```bash
-git config core.hooksPath .githooks
-```
-
-`mvn verify` then enforces Spotless formatting, JaCoCo coverage (75% instruction/branch)
-and a zero-findings SpotBugs analysis (effort Max). `mvn spotless:apply` fixes formatting
-before a commit.
-
-## 9. What to read next
-
-- Every prop builder: [pages-and-props.md](pages-and-props.md)
-- The redirect/version behavior: [redirects-and-versioning.md](redirects-and-versioning.md)
-- The same protocol on Quarkus: [inertia-quarkus.md](inertia-quarkus.md)
-- Running this outside Spring Boot: [other-frameworks.md](other-frameworks.md)
-- What is *not* a 1:1 port of the Laravel adapter: [differences-from-inertia-laravel.md](differences-from-inertia-laravel.md)
+- [Spring Boot 3.x / 4.x — from empty folder to packaged app](getting-started-spring.md)
+- [Quarkus — from empty folder to packaged app](getting-started-quarkus.md)

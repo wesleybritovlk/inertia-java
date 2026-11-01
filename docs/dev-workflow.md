@@ -39,7 +39,7 @@ of a hot flag file (the adapter equivalent of Laravel's `public/hot`, named here
 The dev loop needs something to tell the Spring process that the Vite dev server is
 running — the Laravel adapter equivalent of `laravel-vite-plugin` writing `public/hot`.
 The canonical way here is the **inline plugin** inside the boilerplate
-[`vite.config.js`](getting-started.md#4b-the-viteconfigjs-boilerplate-includes-dev-mode)
+[`vite.config.js`](getting-started.md#the-front-end-boilerplate-any-stack)
 (~10 lines, zero dependencies, written on dev boot, removed on shutdown):
 
 ```js

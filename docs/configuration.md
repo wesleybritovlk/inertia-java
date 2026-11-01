@@ -67,7 +67,7 @@ Variables injected into the engine for every render (fragment and whole document
 `inertiaPageJson`, `inertiaRootId`, `inertiaUserHead` (the fragment's processed output,
 empty when absent), `viteDevMode`/`viteClient`/`viteAppJs`/`viteCss`/`viteReactRefresh`
 (dev/vite objects), plus each `InertiaPage.withViewData(...)` value (see
-[getting-started.md](getting-started.md#4-the-root-template)).
+[getting-started.md](getting-started.md#the-root-template-usually-you-do-not-need-one)).
 
 ## Filter behavior
 

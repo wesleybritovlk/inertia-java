@@ -56,7 +56,9 @@ Complete usage documentation lives in [`docs/`](docs/index.md):
 
 | Doc | Topic |
 |---|---|
-| [Getting started](docs/getting-started.md) | First run on Spring Boot end to end (controller, root template, front-end wiring, validation flow, catch-all SPA routes) |
+| [Getting started — concepts](docs/getting-started.md) | The protocol, the modules, the root template and the front-end boilerplate (any stack) |
+| [Getting started (Spring Boot)](docs/getting-started-spring.md) | New project zero-to-package: pom, controller, front-end, dev/build modes, validation, `mvn package` |
+| [Getting started (Quarkus)](docs/getting-started-quarkus.md) | The same zero-to-package path on Quarkus (`@Inject Inertia`, `quarkus:dev`, `quarkus-run.jar`) |
 | [Pages and props](docs/pages-and-props.md) | `render` + every prop builder incl. deferred groups, merge, once and scroll options |
 | [Partial reloads](docs/partial-reloads.md) | the `X-Inertia-Partial-*` protocol, subtree cutting, `X-Inertia-Reset` |
 | [Redirects and versioning](docs/redirects-and-versioning.md) | 303/409 redirect rules and the asset-version guard |
