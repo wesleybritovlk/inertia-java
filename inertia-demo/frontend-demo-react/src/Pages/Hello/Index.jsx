@@ -22,12 +22,14 @@ export default function Index() {
     const { greeting, builtWith } = usePage().props;
 
     return (
-        <div style={card}>
+        <>
             <Navbar />
-            <Head title="Hello" />
-            <h1 style={title}>{greeting}</h1>
-            <p style={badge}>{builtWith}</p>
-            <p style={hint}>React 19 · built by Vite · asset versioning wired to the Vite manifest</p>
-        </div>
+            <div style={card}>
+                <Head title="Hello" />
+                <h1 style={title}>{greeting}</h1>
+                <p style={badge}>{builtWith}</p>
+                <p style={hint}>React 19 · built by Vite · asset versioning wired to the Vite manifest</p>
+            </div>
+        </>
     );
 }
