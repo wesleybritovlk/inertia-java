@@ -33,7 +33,7 @@ nothing at all is needed when you only run in build mode.
 | Difference | Meaning |
 |---|---|
 | Flag file name | Laravel writes `public/hot`; here `node_modules/.hot-inertia`, detected automatically (`inertia.vite-dev-hot` empty by default = auto-scan; `off` disables detection; explicit paths override) |
-| React refresh preamble | driven by the `inertia.vite-react-refresh` property instead of a known-file-type heuristic |
+| React refresh preamble | auto-detected from the dev server (`/@react-refresh` probe only `@vitejs/plugin-react` serves) instead of a known-file-type heuristic; `inertia.vite-react-refresh`= `auto` (default)/`true`/`false` overrides |
 | **Version guard** | same parity — while hot, the page version is `null` and no `409` version checks fire (HMR owns the changes); stale-reload stays a build-mode concern |
 
 ## Compatibilities that ARE 1:1

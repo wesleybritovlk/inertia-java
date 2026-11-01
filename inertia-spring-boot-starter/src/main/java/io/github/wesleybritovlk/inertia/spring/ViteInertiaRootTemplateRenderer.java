@@ -70,7 +70,7 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
         if (System.currentTimeMillis() - lastFailedProbeAt < PROBE_TTL_MS) {
             return false;
         }
-        if (!hot.probe(hot.devUrl() + "/@vite/client")) {
+        if (!probe(locateDevServer().devUrl() + "/@vite/client")) {
             lastFailedProbeAt = System.currentTimeMillis();
             return false;
         }
@@ -78,42 +78,108 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
     }
 
     private Map<String, Object> hotVariables() {
-        String devUrl = hot.devUrl();
-        String entry = resolveDevEntry();
+        DevServer server = locateDevServer();
+        String entry = resolveDevEntry(server);
         LinkedHashMap<String, Object> variables = new LinkedHashMap<>();
         variables.put("viteDevMode", Boolean.TRUE);
-        variables.put("viteClient", devUrl + "/@vite/client");
-        variables.put("viteAppJs", devUrl + "/" + entry);
-        if (hot.reactRefresh()) {
-            variables.put("viteReactRefresh", devUrl + "/@react-refresh");
+        variables.put("viteClient", server.devUrl() + "/@vite/client");
+        variables.put("viteAppJs", server.devUrl() + "/" + entry);
+        if (reactRefreshOn(server)) {
+            variables.put("viteReactRefresh", server.devUrl() + "/@react-refresh");
         }
         return variables;
+    }
+
+    /**
+     * The dev server actually in use: the hot flag content wins over the configured
+     * {@code devUrl} — the companion plugin stores either the real dev port (Vite
+     * auto-increments when the configured port is busy, so front-ends each get their
+     * own) or a full URL, Laravel {@code public/hot} style. The {@code identity} pins
+     * the matched flag file plus its content: front-end switches (another front's flag
+     * serving another entry/plugin on the same origin) must invalidate the per-process
+     * probe caches.
+     */
+    private record DevServer(String devUrl, String identity) {
+    }
+
+    private DevServer locateDevServer() {
+        for (Path candidate : hot.hotFiles()) {
+            if (!java.nio.file.Files.isRegularFile(candidate)) {
+                continue;
+            }
+            try {
+                String content = java.nio.file.Files.readString(candidate).trim();
+                if (content.isEmpty()) {
+                    continue;
+                }
+                String url;
+                if (content.startsWith("http")) {
+                    url = content.endsWith("/") ? content.substring(0, content.length() - 1) : content;
+                } else {
+                    Integer.parseInt(content); // a bare port: overlay it on the configured origin
+                    url = hot.devUrl().replaceFirst(":\\d+", ":" + content);
+                }
+                return new DevServer(url, candidate + "#" + content);
+            } catch (java.io.IOException | NumberFormatException unreadable) {
+                break; // missing/unparsable flag: the configured devUrl stands
+            }
+        }
+        return new DevServer(hot.devUrl(), "(no flag)");
+    }
+
+    /**
+     * React Fast Refresh preamble decision: forced by {@code true}/{@code false}; the
+     * {@code auto} default probes the dev server for the {@code /@react-refresh} module
+     * that only {@code @vitejs/plugin-react} mounts (404 from any other front-end), so
+     * the React page gets its preamble with zero configuration. Cached per dev-server
+     * identity (the plugin presence does not flip mid-session of the same front).
+     */
+    private final java.util.concurrent.ConcurrentHashMap<String, Boolean> reactRefreshCache =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    private boolean reactRefreshOn(DevServer server) {
+        String setting = hot.reactRefresh();
+        if (setting != null) {
+            setting = setting.trim().toLowerCase();
+        }
+        if ("true".equals(setting)) {
+            return true;
+        }
+        if ("false".equals(setting)) {
+            return false;
+        }
+        return reactRefreshCache.computeIfAbsent(
+                server.identity(), id -> probe(server.devUrl() + "/@react-refresh"));
     }
 
     /**
      * Zero-config dev entry: use the configured key when set; otherwise probe the common
      * Inertia entry names on the dev server (first 200 wins, cached for the process).
      */
-    private volatile String cachedDevEntry;
+    private final java.util.concurrent.ConcurrentHashMap<String, String> devEntryCache =
+            new java.util.concurrent.ConcurrentHashMap<>();
     private static final String[] DEV_ENTRY_CANDIDATES = { "src/app.js", "src/app.jsx" };
 
-    private String resolveDevEntry() {
-        if (cachedDevEntry != null) {
-            return cachedDevEntry;
-        }
+    /**
+     * Zero-config dev entry: use the configured key when set; otherwise probe the common
+     * Inertia entry names on THIS dev server (first 200 wins). Cached per dev-server
+     * identity — switching front-ends (React entry {@code .jsx} vs Vue/Svelte
+     * {@code .js}), or the same front restarting on an auto-incremented port, must not
+     * reuse the previous server's entry.
+     */
+    private String resolveDevEntry(DevServer server) {
         String configured = hot.entry();
         if (configured != null && !configured.isBlank()) {
-            cachedDevEntry = configured;
             return configured;
         }
-        for (String candidate : DEV_ENTRY_CANDIDATES) {
-            if (probe(devUrl() + '/' + candidate)) {
-                cachedDevEntry = candidate;
-                return candidate;
+        return devEntryCache.computeIfAbsent(server.identity(), id -> {
+            for (String candidate : DEV_ENTRY_CANDIDATES) {
+                if (probe(server.devUrl() + '/' + candidate)) {
+                    return candidate;
+                }
             }
-        }
-        cachedDevEntry = "src/app.js";
-        return cachedDevEntry; // the vite console will surface any 404 loudly
+            return "src/app.js"; // the vite console will surface any 404 loudly
+        });
     }
 
     private boolean probe(String url) {
@@ -133,21 +199,20 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
         }
     }
 
-    private String devUrl() {
-        return hot.devUrl();
-    }
-
     /** Manifest settings for build (production) mode. */
     public record ManifestSource(String manifestLocation, String entry, String base) {
     }
 
     /**
-     * Dev-mode settings. {@code hotFile()} relative to the process working directory;
-     * {@code enabled()} checks existence per render (Laravel {@code public/hot} parity).
-     * {@code probe()} guards against stale flags: with the file present but the dev
-     * server unreachable, the renderer falls back to build mode.
+     * Dev-mode settings. {@code hotFiles()} — flag candidates checked per render (Laravel
+     * {@code public/hot} parity); {@code devUrl()} — configured origin, overridden by the
+     * flag content (port or full URL) at render time; {@code entry()} — configured entry,
+     * otherwise probed; {@code reactRefresh} — {@code true}/{@code false} force, anything
+     * else probes the {@code @react-refresh} module (auto). Existence is checked per
+     * render; the renderer probes the dev server so a stale flag (dev server dead) falls
+     * back to build mode.
      */
-    public record HotMode(List<Path> hotFiles, String devUrl, String entry, boolean reactRefresh) {
+    public record HotMode(List<Path> hotFiles, String devUrl, String entry, String reactRefresh) {
 
         public HotMode {
             hotFiles = List.copyOf(hotFiles);
@@ -155,23 +220,6 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
 
         boolean isEnabled() {
             return hotFiles.stream().anyMatch(java.nio.file.Files::exists);
-        }
-
-        boolean probe(String url) {
-            java.net.HttpURLConnection connection;
-            try {
-                connection = (java.net.HttpURLConnection) new java.net.URI(url).toURL().openConnection();
-            } catch (java.net.URISyntaxException | java.io.IOException malformed) {
-                return false;
-            }
-            try {
-                connection.setConnectTimeout(250);
-                connection.setReadTimeout(250);
-                connection.setRequestMethod("GET");
-                return connection.getResponseCode() == 200;
-            } catch (java.io.IOException io) {
-                return false;
-            }
         }
     }
 }

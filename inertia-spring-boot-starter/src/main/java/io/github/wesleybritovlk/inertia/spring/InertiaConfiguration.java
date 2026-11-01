@@ -193,7 +193,7 @@ public class InertiaConfiguration {
                 properties.getViteManifest(), properties.getViteEntry(), properties.getViteBase());
         ViteInertiaRootTemplateRenderer.HotMode hot = devHotOff(properties) ? null
                 : new ViteInertiaRootTemplateRenderer.HotMode(hotCandidates(properties),
-                        properties.getViteDevUrl(), properties.getViteEntry(), properties.isViteReactRefresh());
+                        properties.getViteDevUrl(), properties.getViteEntry(), properties.getViteReactRefresh());
         return new ViteInertiaRootTemplateRenderer(base, manifest, hot);
     }
 

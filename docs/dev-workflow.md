@@ -75,7 +75,7 @@ gracefully. If a dev process dies hard (`kill -9`), remove the file manually.
 | `inertia.vite-dev-hot` | _(auto-scan)_ | Hot flag detection. Empty (default) scans the working directory for `node_modules/.hot-inertia` (per front-end, three levels deep). One or more comma-separated paths override the scan; the value `off` disables dev-mode detection entirely |
 | `inertia.vite-dev-url` | `http://localhost:5173` | Vite dev server origin |
 | `inertia.vite-entry` | _(empty)_ | Dev entry source path (e.g. `src/app.js`); empty probes `src/app.js` then `src/app.jsx` against the dev server on first render |
-| `inertia.vite-react-refresh` | `false` | Emit the React **Fast Refresh** preamble in dev mode (needed only when developing the React front-end) |
+| `inertia.vite-react-refresh` | `auto` | React **Fast Refresh** preamble in dev mode. `auto` probes the dev server for `/@react-refresh` (only `@vitejs/plugin-react` mounts it) — the React front needs no property; `true`/`false` force it on and off |
 | `inertia.vite-manifest` | _(empty)_ | Build manifest — used in build mode (and as version source when nothing else is configured) |
 
 ## Running the demo
@@ -91,12 +91,13 @@ npm install && npm run dev             # writes node_modules/.hot-inertia
 mvn -pl inertia-demo spring-boot:run   # → http://localhost:8800
 ```
 
-React specifics (Fast Refresh needs the preamble + the .jsx entry):
+React specifics (Fast Refresh):
 
 ```bash
-# force the react-refresh preamble + dev entry on the Spring side:
-mvn -pl inertia-demo spring-boot:run \
-  -Dspring-boot.run.arguments="--inertia.vite-react-refresh=true --inertia.vite-entry=src/app.jsx"
+# react dev needs NO extra arguments — the preamble is auto-detected when the
+# react dev server is up (@vitejs/plugin-react mounts /@react-refresh);
+# force it with --inertia.vite-react-refresh=true if you prefer explicitness
+mvn -pl inertia-demo spring-boot:run
 ```
 
 Everything validated live (Boot 3.3.12): Vue page updated through HMR without reload,
@@ -124,8 +125,9 @@ renderer resolves assets per render.
   detects `node_modules/.hot-inertia` (written by the shipped plugin) via the
   `inertia.vite-dev-hot` setting — empty by default, meaning the auto-scan; `off`
   disables detection and one or more paths override it.
-- The React refresh preamble + dev client emission is driven by the
-  `inertia.vite-react-refresh` property instead of the known-file-type heuristic.
+- The React refresh preamble is auto-detected from the dev server (`/ @react-refresh`
+  module probe, `inertia.vite-react-refresh` as `auto`/`true`/`false` override) instead
+  of a known-file-type heuristic.
 - **Version guard**: same parity — while hot, the page version is `null` and no `409`
   version checks fire (the Laravel adapter's dev mode precedent). Stale-asset reloads
   are a build-mode concern.

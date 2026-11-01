@@ -43,9 +43,10 @@ auto-scans the working directory for `node_modules/.hot-inertia` of each front-e
 from the repo root. `inertia.vite-dev-hot=off` disables detection entirely; one or
 more comma-separated paths override the scan (exotic layouts only).
 
-Vue, React and Svelte work the same way; for React Fast Refresh also set
-`inertia.vite-react-refresh=true` and `inertia.vite-entry=src/app.jsx` on the Spring
-side (details in `docs/dev-workflow.md`).
+Vue, React and Svelte work the same way. For React Fast Refresh nothing is needed:
+when the React dev server is running, the starter detects the plugin's
+`/@react-refresh` module automatically; `inertia.vite-react-refresh=true|false`
+forces it explicitly (details in `docs/dev-workflow.md`).
 
 ## Options
 

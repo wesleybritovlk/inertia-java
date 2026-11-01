@@ -43,8 +43,13 @@ public class InertiaProperties {
      */
     private String viteDevHot = "";
 
-    /** Emits the React refresh preamble while in dev mode (needed only for React HMR). */
-    private boolean viteReactRefresh = false;
+    /**
+     * React **Fast Refresh** preamble in dev mode. {@code auto} (default) probes the dev
+     * server for {@code /@react-refresh}: present (the @vitejs/plugin-react plugin) &rarr;
+     * emitted, otherwise not &mdash; so the React front-end needs no property at all.
+     * {@code true} and {@code false} force the behavior on and off.
+     */
+    private String viteReactRefresh = "auto";
 
     /** Inertia filter order (outermost by default, so security redirects also upgrade). */
     private int filterOrder = org.springframework.core.Ordered.HIGHEST_PRECEDENCE + 50;
@@ -121,11 +126,11 @@ public class InertiaProperties {
         this.viteDevHot = viteDevHot;
     }
 
-    public boolean isViteReactRefresh() {
+    public String getViteReactRefresh() {
         return viteReactRefresh;
     }
 
-    public void setViteReactRefresh(boolean viteReactRefresh) {
+    public void setViteReactRefresh(String viteReactRefresh) {
         this.viteReactRefresh = viteReactRefresh;
     }
 

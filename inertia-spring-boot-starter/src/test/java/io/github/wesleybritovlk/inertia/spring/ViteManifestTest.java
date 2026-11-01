@@ -136,7 +136,7 @@ class ViteManifestTest {
     @Test
     void staleFlagWithDeadDevServerSelfHealsToBuildMode() throws Exception {
         Path stale = tempDir.resolve(".hot-inertia");
-        java.nio.file.Files.writeString(stale, "5173"); // dev server was killed -9, file left behind
+        java.nio.file.Files.writeString(stale, "55599"); // dev server was killed -9, file left behind
 
         LinkedHashMap<String, Object> captured = new LinkedHashMap<>();
         ViteInertiaRootTemplateRenderer renderer = new ViteInertiaRootTemplateRenderer(
@@ -145,7 +145,7 @@ class ViteManifestTest {
                     return "<html/>";
                 },
                 new ViteInertiaRootTemplateRenderer.ManifestSource(FIXTURE, "", "/"),
-                new ViteInertiaRootTemplateRenderer.HotMode(List.of(stale), "http://localhost:55599", "", false));
+                new ViteInertiaRootTemplateRenderer.HotMode(List.of(stale), "http://localhost:55599", "", "auto"));
 
         String html = renderer.render("{}", Map.of());
 
@@ -242,7 +242,7 @@ class ViteManifestTest {
             int devPort = server.getAddress().getPort();
             String devUrl = "http://localhost:" + devPort;
             Path hot = tempDir.resolve(".hot-inertia");
-            java.nio.file.Files.writeString(hot, String.valueOf(devPort));
+            java.nio.file.Files.writeString(hot, String.valueOf(devPort)); // flag carries the real port
             LinkedHashMap<String, Object> captured = new LinkedHashMap<>();
             ViteInertiaRootTemplateRenderer renderer = new ViteInertiaRootTemplateRenderer(
                     (pageJson, viewData) -> {
@@ -250,7 +250,7 @@ class ViteManifestTest {
                         return "<html/>";
                     },
                     new ViteInertiaRootTemplateRenderer.ManifestSource(FIXTURE, "", "/"),
-                    new ViteInertiaRootTemplateRenderer.HotMode(List.of(hot), devUrl, "", true));
+                    new ViteInertiaRootTemplateRenderer.HotMode(List.of(hot), devUrl, "", "auto"));
 
             String html = renderer.render("{}", Map.of());
 
@@ -290,5 +290,201 @@ class ViteManifestTest {
         renderer.render("{}", Map.of());
         assertNull(captured.get("viteDevMode"));
         assertEquals("/assets/app-Hx987.js", captured.get("viteAppJs"));
+    }
+
+    @Test
+    void forcedFalseBlocksTheReactPreambleEvenWithThePluginPresent() throws java.io.IOException {
+        var server = com.sun.net.httpserver.HttpServer.create(
+                new java.net.InetSocketAddress(java.net.InetAddress.getLoopbackAddress(), 0), 0);
+        server.createContext("/", exchange -> {
+            byte[] body = "ok".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
+        server.start();
+        try {
+            String devUrl = "http://localhost:" + server.getAddress().getPort();
+            LinkedHashMap<String, Object> captured = new LinkedHashMap<>();
+            ViteInertiaRootTemplateRenderer renderer = new ViteInertiaRootTemplateRenderer(
+                    (pageJson, viewData) -> {
+                        captured.putAll(viewData);
+                        return "<html/>";
+                    },
+                    new ViteInertiaRootTemplateRenderer.ManifestSource(FIXTURE, "", "/"),
+                    new ViteInertiaRootTemplateRenderer.HotMode(
+                            List.of(tempDir.resolve(".hot-inertia")), devUrl, "", "false"));
+
+            java.nio.file.Files.writeString(tempDir.resolve(".hot-inertia"), String.valueOf(server.getAddress().getPort()));
+            renderer.render("{}", Map.of());
+
+            assertNull(captured.get("viteReactRefresh"), "false must force the preamble off");
+            assertEquals(Boolean.TRUE, captured.get("viteDevMode"));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void autoReactRefreshStaysSilentWithoutThePluginMounted() throws java.io.IOException {
+        // a Vue/Svelte dev server: @vite/client answers, /@react-refresh does not exist
+        var server = com.sun.net.httpserver.HttpServer.create(
+                new java.net.InetSocketAddress(java.net.InetAddress.getLoopbackAddress(), 0), 0);
+        byte[] ok = "export default {}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        server.createContext("/@vite/client", exchange -> {
+            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, ok.length);
+            exchange.getResponseBody().write(ok);
+            exchange.close();
+        });
+        server.createContext("/src/app.js", exchange -> {
+            exchange.sendResponseHeaders(200, ok.length);
+            exchange.getResponseBody().write(ok);
+            exchange.close();
+        });
+        server.start();
+        try {
+            String devUrl = "http://localhost:" + server.getAddress().getPort();
+            LinkedHashMap<String, Object> captured = new LinkedHashMap<>();
+            ViteInertiaRootTemplateRenderer renderer = new ViteInertiaRootTemplateRenderer(
+                    (pageJson, viewData) -> {
+                        captured.putAll(viewData);
+                        return "<html/>";
+                    },
+                    new ViteInertiaRootTemplateRenderer.ManifestSource(FIXTURE, "", "/"),
+                    new ViteInertiaRootTemplateRenderer.HotMode(
+                            List.of(tempDir.resolve(".hot-inertia")), devUrl, "", "auto"));
+            java.nio.file.Files.writeString(tempDir.resolve(".hot-inertia"), String.valueOf(server.getAddress().getPort()));
+
+            String html = renderer.render("{}", Map.of());
+
+            assertEquals("<html/>", html);
+            assertEquals(Boolean.TRUE, captured.get("viteDevMode"));
+            assertNull(captured.get("viteReactRefresh"), "non-react dev server must not get the preamble");
+            assertEquals(devUrl + "/src/app.js", captured.get("viteAppJs"));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void flagPortOverlaysTheConfiguredDevUrl() throws java.io.IOException {
+        // devUrl property points at a dead port; the flag carries the ACTUAL dev port
+        var server = com.sun.net.httpserver.HttpServer.create(
+                new java.net.InetSocketAddress(java.net.InetAddress.getLoopbackAddress(), 0), 0);
+        byte[] ok = "export default {}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        server.createContext("/@vite/client", exchange -> {
+            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, ok.length);
+            exchange.getResponseBody().write(ok);
+            exchange.close();
+        });
+        server.createContext("/src/app.js", exchange -> {
+            exchange.sendResponseHeaders(200, ok.length);
+            exchange.getResponseBody().write(ok);
+            exchange.close();
+        });
+        server.start();
+        try {
+            int realPort = server.getAddress().getPort();
+            LinkedHashMap<String, Object> captured = new LinkedHashMap<>();
+            ViteInertiaRootTemplateRenderer renderer = new ViteInertiaRootTemplateRenderer(
+                    (pageJson, viewData) -> {
+                        captured.putAll(viewData);
+                        return "<html/>";
+                    },
+                    new ViteInertiaRootTemplateRenderer.ManifestSource(FIXTURE, "", "/"),
+                    new ViteInertiaRootTemplateRenderer.HotMode(
+                            List.of(tempDir.resolve(".hot-inertia")),
+                            "http://localhost:1" /* misconfigured origin */, "", "auto"));
+            java.nio.file.Files.writeString(tempDir.resolve(".hot-inertia"), String.valueOf(realPort));
+
+            String html = renderer.render("{}", Map.of());
+
+            assertEquals("<html/>", html);
+            assertEquals(Boolean.TRUE, captured.get("viteDevMode"));
+            assertEquals("http://localhost:" + realPort + "/@vite/client", captured.get("viteClient"));
+            assertEquals("http://localhost:" + realPort + "/src/app.js", captured.get("viteAppJs"));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void switchingFrontendsInvalidatesTheDevProbeCaches() throws java.io.IOException {
+        // front A (svelte-like: src/app.js, no react plugin) then front B (react-like)
+        byte[] ok = "export default {}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        var frontA = com.sun.net.httpserver.HttpServer.create(
+                new java.net.InetSocketAddress(java.net.InetAddress.getLoopbackAddress(), 0), 0);
+        frontA.createContext("/@vite/client", exchange -> {
+            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, ok.length);
+            exchange.getResponseBody().write(ok);
+            exchange.close();
+        });
+        frontA.createContext("/src/app.js", exchange -> {
+            exchange.sendResponseHeaders(200, ok.length);
+            exchange.getResponseBody().write(ok);
+            exchange.close();
+        });
+        var frontB = com.sun.net.httpserver.HttpServer.create(
+                new java.net.InetSocketAddress(java.net.InetAddress.getLoopbackAddress(), 0), 0);
+        frontB.createContext("/@vite/client", exchange -> {
+            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, ok.length);
+            exchange.getResponseBody().write(ok);
+            exchange.close();
+        });
+        frontB.createContext("/src/app.jsx", exchange -> {
+            exchange.sendResponseHeaders(200, ok.length);
+            exchange.getResponseBody().write(ok);
+            exchange.close();
+        });
+        frontB.createContext("/@react-refresh", exchange -> {
+            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, ok.length);
+            exchange.getResponseBody().write(ok);
+            exchange.close();
+        });
+        frontA.start();
+        frontB.start();
+        try {
+            Path flagA = tempDir.resolve("front-a").resolve("node_modules").resolve(".hot-inertia");
+            Path flagB = tempDir.resolve("front-b").resolve("node_modules").resolve(".hot-inertia");
+            java.nio.file.Files.createDirectories(flagA.getParent());
+            java.nio.file.Files.createDirectories(flagB.getParent());
+            java.nio.file.Files.writeString(flagA, String.valueOf(frontA.getAddress().getPort()));
+            java.nio.file.Files.writeString(flagB, String.valueOf(frontB.getAddress().getPort()));
+
+            // ONE renderer instance serves both switches, like a long-lived Spring process
+            LinkedHashMap<String, Object> viewData = new LinkedHashMap<>();
+            ViteInertiaRootTemplateRenderer renderer = new ViteInertiaRootTemplateRenderer(
+                    (json, data) -> {
+                        viewData.clear();
+                        viewData.putAll(data);
+                        return "<html/>";
+                    },
+                    new ViteInertiaRootTemplateRenderer.ManifestSource(FIXTURE, "", "/"),
+                    new ViteInertiaRootTemplateRenderer.HotMode(
+                            List.of(flagA, flagB), "http://localhost:1", "", "auto"));
+
+            renderer.render("{}", Map.of());
+            assertTrue(viewData.get("viteAppJs").toString().endsWith("/src/app.js"),
+                    "front A wins by scan order: " + viewData.get("viteAppJs"));
+            assertNull(viewData.get("viteReactRefresh"), "front A has no react plugin");
+
+            // front A's process dies gracefully (flag removed), front B takes the app
+            java.nio.file.Files.delete(flagA);
+            renderer.render("{}", Map.of());
+            assertTrue(viewData.get("viteAppJs").toString().endsWith("/src/app.jsx"),
+                    "entry re-probed for the new front (cache keyed by flag identity): "
+                            + viewData.get("viteAppJs"));
+            assertEquals("http://localhost:" + frontB.getAddress().getPort() + "/@react-refresh",
+                    viewData.get("viteReactRefresh"),
+                    "preamble auto-probed for the react front after the switch");
+        } finally {
+            frontA.stop(0);
+            frontB.stop(0);
+        }
     }
 }
