@@ -1,11 +1,14 @@
 # The servlet glue (inertia-servlet)
 
 `inertia-servlet` is the framework-neutral Jakarta Servlet layer of the project: ALL the
-request/response machinery lives here, and both shipped adapters
+transport machinery lives here (protocol filter, request adapter, result/page writers),
+and both shipped adapters
 ([inertia-spring-boot](getting-started-spring.md), [inertia-quarkus](getting-started-quarkus.md))
-are thin configuration layers on top of it. Any servlet-based stack — **plain Tomcat,
-Jetty, Undertow, Jakarta EE 9+ WAR applications** — reuses the same glue with zero
-framework code, via [the pure-servlet guide](getting-started-servlet.md).
+are thin configuration layers on top of it. The **document machinery — Thymeleaf + Vite
+root renderers, version/hot providers, the bundled `root.html` template — lives in
+[inertia-web](inertia-web.md)** (Java 8, servlet-free); any servlet-based stack —
+**plain Tomcat, Jetty, Undertow, Jakarta EE 9+ WAR applications** — reuses the whole
+chain with zero framework code, via [the pure-servlet guide](getting-started-servlet.md).
 
 ## What the module contains
 
@@ -14,14 +17,19 @@ framework code, via [the pure-servlet guide](getting-started-servlet.md).
 | `InertiaFilter` | The protocol middleware: asset-version guard **before** the chain (stale GET → `409` + `X-Inertia-Location`), `Vary: X-Inertia` and redirect upgrades **after** it (`302 → 303` on PUT/PATCH/DELETE, fragment → `409` + `X-Inertia-Redirect`). A plain `jakarta.servlet.Filter`. |
 | `InertiaFilter.InertiaRequestAttachment` | Optional hook the filter calls per request — `bind(request, response, adapter)` / `unbind(...)` — so the host can scope the engine per request (the Quarkus module builds its CDI engine here). |
 | `ServletInertiaRequest` | The `InertiaRequest` port over `HttpServletRequest` (path + query string, headers, visit detection) — **including the session-backed `InertiaFlashStore`** (flash data, error bags, page flags ride `HttpSession`). |
-| `InertiaPageWriter` | The one-call response writer: give it an `InertiaPage` (it resolves the page and renders JSON for Inertia visits / the root template for browsers) or an `InertiaResult` (redirects, locations) — headers, status and body are written for you. |
+| `InertiaPageWriter` | The one-call response writer: give it an `InertiaPage` (it resolves the page and renders JSON for Inertia visits / the root template for browsers) or an `InertiaResult` (redirects, locations) — headers, status and body are written for you. Root-page rendering is whatever `InertiaRootTemplateRenderer` you hand it — the bundled [inertia-web](inertia-web.md) renderers behind the adapters. |
 | `InertiaResultWriter` | Writes bare `InertiaResult`s (filter-level results) without rendering. |
-| `ThymeleafInertiaRootTemplateRenderer` | The root template renderer over an isolated Thymeleaf engine: the bundled `META-INF/inertia/templates/root.html` layout (or your override path) with the `data-page` payload (`@inertia` Blade equivalent). |
-| `ViteInertiaRootTemplateRenderer` | Wraps the Thymeleaf renderer with the `@vite` equivalent: build mode resolves the hashed entry + lazy-chunk css from the manifest; dev mode (hot flag present) injects the Vite client + source entry + React preamble. Configured with a `ManifestSource(manifestLocation, entry, base)` and a `HotMode(hotFiles, devUrl, entry, reactRefresh)`. |
-| `FileVersionProvider` | Asset version = SHA-256 of a file (the Vite manifest). |
-| `HotAwareVersionProvider` | Wraps a source and goes **dark** (version `null`) while the hot flag exists — Laravel parity: no versioned `409`s during HMR. |
-| `HotFileScanner` | Locates the `.hot-inertia` flags (auto-scan three levels inside the working directory + one bounded parent level, per front-end `node_modules`; `off` and explicit paths supported). |
-| `InertiaResources` | Location reader for `classpath:` (jar-safe, cwd-independent) and filesystem paths. |
+
+## What comes from inertia-web
+
+The root-page machinery below is **not in this module** — it is the Java-8,
+servlet-free [inertia-web](inertia-web.md) layer that this glue (and every other
+servlet-based stack) reuses unchanged: `ThymeleafInertiaRootTemplateRenderer` (the
+bundled `root.html` layout with the `data-page` payload), `ViteInertiaRootTemplateRenderer`
+(the `@vite` equivalent: manifest hashing, hot-flag dev mode, React preamble),
+`FileVersionProvider` (SHA-256 of the manifest), `HotAwareVersionProvider` (version goes
+`null` during HMR — Laravel parity), `HotFileScanner` (`.hot-inertia` flag discovery) and
+`InertiaResources` (jar-safe `classpath:` reading).
 
 ## What stays out of it
 

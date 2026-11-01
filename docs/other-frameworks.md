@@ -1,9 +1,11 @@
 # Other frameworks (the shared servlet glue + inertia-core without Spring)
 
-The Spring Boot starter and the Quarkus module are full integrations, but everything
-protocol-level they share now lives in **`inertia-servlet`** (the Jakarta Servlet port
-implementations: request adapter, protocol filter, result/page writers, Thymeleaf/Vite
-root renderers and the version providers). Any servlet-based stack — **plain Tomcat,
+The Spring Boot starter and the Quarkus module are full integrations, but the
+protocol-level and web-level machinery they share has a home of its own: the rules in
+**`inertia-core`** (pure Java, zero dependencies), the root-document/rendering machinery
+in **`inertia-web`** (Thymeleaf/Vite renderers, version providers the bundled `root.html`
+template — Java 8, servlet-free) and the **`inertia-servlet`** Jakarta glue (request
+adapter, protocol filter, result/page writers). Any servlet-based stack — **plain Tomcat,
 Jetty, JavaEE-era WAR apps, WS containers** — reuses them with zero framework code, and
 non-servlet stacks keep dropping to `inertia-core` + the two ports:
 
@@ -48,9 +50,11 @@ writer.write(returnValue, response);
 
 `ServletInertiaRequest.of(request)` is the ready-made request port; `InertiaResultWriter`
 writes bare results (the filter's guard/escalations build them). The Thymeleaf root
-template and its Vite dev-mode support are inside the same module
-([configuration.md](configuration.md) describes the `inertia.vite-*` properties on the
-Spring side; the Quarkus module mirrors them as `inertia.*` config entries). For a full
+template and its Vite dev-mode support come from [inertia-web](inertia-web.md) — the
+same artifact chain (`inertia-servlet` depends on it), one constructor each. The
+`inertia.vite-*` properties of that story are host-side
+([configuration.md](configuration.md) describes them on the Spring side; the Quarkus
+module mirrors them as `inertia.*` config entries). For a full
 zero-to-WAR walkthrough — bootstrap listener, filter wiring with the engine-scoping
 attachment, page servlets — see [the pure-servlet guide](getting-started-servlet.md).
 
@@ -105,7 +109,8 @@ through its optional `InertiaRequestAttachment` (the Quarkus module uses that ho
 
 | Concern | Lives in | Type |
 |---|---|---|
-| Protocol rules (props, partials, redirects, version guard) | `inertia-core` | pure Java |
+| Protocol rules (props, partials, redirects, version guard) | `inertia-core` | pure Java (8+) |
+| Root document, rendering and toolchain story | `inertia-web` | pure Java (8+), servlet-free |
 | Servlet-shaped request/response wiring | `inertia-servlet` | plain Jakarta Servlet glue |
 | CDI/Welding/properties per framework | adapter modules | Spring Boot auto-config / Quarkus CDI |
 | Flash storage mechanics | the host | `InertiaFlashStore` |

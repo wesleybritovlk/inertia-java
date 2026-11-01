@@ -42,7 +42,7 @@ Any of these beans can be replaced by defining your own (auto-configuration uses
 
 ## Root template override
 
-The bundled layout inside `inertia-servlet` carries ALL the machinery (dev-mode vite
+The bundled layout inside `inertia-web` carries ALL the machinery (dev-mode vite
 blocks, entry script, lazy-chunk css and the `data-page` payload) — by default you ship
 no template at all. When you want the application's own head bits (title, meta, fonts,
 analytics), override with a **head fragment** — the simple case, one or two lines:

@@ -39,8 +39,9 @@ its own router, and the server answers each visit with just the page object.
 
 | Module | What it is |
 |---|---|
-| `inertia-core` | The protocol engine. **Zero dependencies** (JDK 17 only): page/props resolution, partial matching, redirects, version guard, the serializer SPI. |
-| `inertia-servlet` | The shared Jakarta Servlet glue: request adapter, protocol filter, result/page writers, the Thymeleaf + Vite root renderers, version/hot providers and the bundled root template. |
+| `inertia-core` | The protocol engine. **Zero dependencies** (Java 8+): page/props resolution, partial matching, redirects, version guard, the serializer SPI. |
+| `inertia-web` | The web layer (Java 8+, servlet-free): the Thymeleaf + Vite root renderers, version/hot providers and the bundled root template. |
+| `inertia-servlet` | The shared Jakarta Servlet glue: request adapter, protocol filter, result/page writers — rendering delegates to `inertia-web`. |
 | `inertia-spring-boot` | The Spring Boot integration (3.x and 4.x): auto-configuration, request-scoped `Inertia` bean, return-value bridges, properties. |
 | `inertia-quarkus` | The Quarkus integration: CDI wiring over the same glue, Undertow registration, RESTEasy writers, SmallRye config. |
 | `inertia-demo` | A runnable demo (Hello World + CRUD Todo) with three canonical front-ends served by both back-ends. |
@@ -54,7 +55,7 @@ Protocol details live in their own pages — every prop builder in
 
 ## The root template (usually you do not need one)
 
-The layout ships **inside the library** (`inertia-servlet`): the head machinery (Vite
+The layout ships **inside the library** (`inertia-web`): the head machinery (Vite
 entry script, lazy-chunk css, dev-mode blocks), the root `<div id="app">` mount and the
 `<script data-page>` payload all live in the bundled
 `META-INF/inertia/templates/root.html`. No template file, no boilerplate: the served

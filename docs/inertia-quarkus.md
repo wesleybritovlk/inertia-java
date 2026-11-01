@@ -1,7 +1,8 @@
 # Quarkus adapter (inertia-quarkus)
 
 The same protocol on Quarkus: a CDI adapter over the shared servlet glue
-([inertia-servlet](other-frameworks.md)), running on Undertow + RESTEasy.
+([inertia-servlet](other-frameworks.md), which delegates rendering to
+[inertia-web](inertia-web.md)), running on Undertow + RESTEasy.
 
 ## Getting started
 
@@ -120,7 +121,8 @@ is also a plain-map overload for any other validation backend.
 | Concern | Where |
 |---|---|
 | Protocol engine (the ports `Inertia`/`InertiaPage`/etc. hang on) | `inertia-core` (zero deps) |
-| Servlet glue (filter/request adapter/writers/renderers) | `inertia-servlet` (Jakarta Servlet only) |
+| Web layer (renderers/version providers/bundled root.html) | `inertia-web` (Java 8, servlet-free) |
+| Servlet glue (filter/request adapter/writers) | `inertia-servlet` (Jakarta Servlet only) |
 | Quarkus wiring (CDI beans, config, Undertow registration, RESTEasy writer) | `inertia-quarkus` (this module) |
 
 Everything else — getting started content, prop types, partial reloads — is identical

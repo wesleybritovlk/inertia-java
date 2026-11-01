@@ -5,7 +5,8 @@ No Spring, no Quarkus — the Inertia protocol on any servlet container: plain T
 Servlet 6.0, whose port APIs used here are stable back to 5.0 — EE 10+ recommended).
 Java 17+, Maven, Node 20+. The concepts:
 [getting-started.md](getting-started.md). The machinery you are wiring:
-[inertia-servlet.md](inertia-servlet.md).
+[inertia-servlet.md](inertia-servlet.md) (transport) + [inertia-web.md](inertia-web.md)
+(ROOT documents, renderers, versions).
 
 ## 1. The pom.xml
 
@@ -55,9 +56,10 @@ A WAR application with one library dependency:
 </project>
 ```
 
-`inertia-servlet` brings `inertia-core` (zero dependencies) and Thymeleaf (for the
-bundled root template) transitively. No Jackson needed: the bundled
-`PlainJsonPageSerializer` serializes the page; swap it later if you want
+`inertia-servlet` brings the whole chain transitively: `inertia-core` (zero
+dependencies), `inertia-web` (the bundled root template + renderers + version
+providers) and Thymeleaf (the template engine behind them). No Jackson needed: the
+bundled `PlainJsonPageSerializer` serializes the page; swap it later if you want
 (see [serialization.md](serialization.md)).
 
 ## 2. The bootstrap (one listener)
@@ -307,7 +309,7 @@ pass a path to `ThymeleafInertiaRootTemplateRenderer`) —
 
 ## What to read next
 
-- What each glue class does: [inertia-servlet.md](inertia-servlet.md)
+- What each glue class does: [inertia-servlet.md](inertia-servlet.md) · [inertia-web.md](inertia-web.md)
 - Running with the engines you already have: [getting-started-spring.md](getting-started-spring.md) · [getting-started-quarkus.md](getting-started-quarkus.md)
 - Every prop builder: [pages-and-props.md](pages-and-props.md)
 - The redirect/version behavior: [redirects-and-versioning.md](redirects-and-versioning.md)
