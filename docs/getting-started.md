@@ -44,6 +44,7 @@ its own router, and the server answers each visit with just the page object.
 | `inertia-servlet` | The shared Jakarta Servlet glue: request adapter, protocol filter, result/page writers — rendering delegates to `inertia-web`. |
 | `inertia-servlet-javax` | The legacy javax twin (Java EE 8 / Tomcat 9 era): the same glue on `javax.servlet`, Java 8, sharing `inertia-core` + `inertia-web` unchanged. |
 | `inertia-spring-boot` | The Spring Boot integration (3.x and 4.x): auto-configuration, request-scoped `Inertia` bean, return-value bridges, properties. |
+| `inertia-spring-boot2` | The legacy Boot 2 twin (2.7, Spring 5.3, javax, Java 8): the same auto-configuration through `spring.factories`, on the javax servlet glue. |
 | `inertia-quarkus` | The Quarkus integration: CDI wiring over the same glue, Undertow registration, RESTEasy writers, SmallRye config. |
 | `inertia-demo` | A runnable demo (Hello World + CRUD Todo) with three canonical front-ends served by both back-ends. |
 

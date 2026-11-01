@@ -225,6 +225,9 @@ visits of client-side routes working the same way as any other page.
 ## What to read next
 
 - The same guide for Quarkus: [getting-started-quarkus.md](getting-started-quarkus.md)
+- On a pre-Jakarta Spring Boot 2.7 app: the same properties and beans come from
+  [`inertia-spring-boot2`](../inertia-spring-boot2) (javax + Java 8, auto-configuration
+  via `spring.factories`) — swap only the dependency coordinates.
 - Every prop builder: [pages-and-props.md](pages-and-props.md)
 - The redirect/version behavior: [redirects-and-versioning.md](redirects-and-versioning.md)
 - A runnable proof: the [demo tree](../inertia-demo/README.md)

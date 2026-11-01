@@ -44,6 +44,12 @@ All notable changes of this project are documented here. Format based on
   and `page()/pageName()/wrapper()/metadata()/deferred()`), available on both adapters.
 
 ### Added — architecture
+- **`inertia-spring-boot2` module**: the legacy Spring Boot 2 twin of the starter (2.7 /
+  Spring 5.3 / javax, Java 8) — the same auto-configuration registered via
+  `META-INF/spring.factories`, the same `inertia.*` properties, request-scoped engine and
+  MVC bridges, riding the javax servlet glue (`inertia-servlet-javax`) and the shared
+  Java-8 core/web; 32 mirrored tests (18 units + 14 MockMvc integration) run on the Boot
+  2.7.18 toolchain inside the same reactor.
 - **`inertia-servlet-javax` module**: the legacy javax twin of the Jakarta servlet glue —
   the same request adapter, protocol filter and writers compiled against `javax.servlet`
   4.0.1 on Java 8, for Java EE 8 / Tomcat 9- / Spring Boot 2-era containers, reusing
