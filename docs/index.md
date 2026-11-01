@@ -34,6 +34,23 @@ with Thymeleaf playing the role of Laravel's Blade.
 3. **Response** — `X-Inertia` visits answer `application/json` with the page object and `X-Inertia: true`; other visits render the root Thymeleaf template with the page embedded in a `<script data-page="app" type="application/json">` block (the `@inertia` Blade equivalent).
 4. **After the handler** — the filter adds `Vary: X-Inertia`, upgrades redirect statuses (302 → 303 for method changes, fragment redirects to `409` + `X-Inertia-Redirect`).
 
+## Protocol status
+
+| Feature | State |
+|---|---|
+| Page JSON (`component`/`props`/`url`+query/`version`) | ✅ |
+| Asset versioning + 409 full-page-visit escalation | ✅ |
+| Partial reloads (`only`/`except`/`reset`, component match) | ✅ |
+| Redirects: 302, method upgrades to 303, external 409 `X-Inertia-Location`, fragment 409 `X-Inertia-Redirect` | ✅ |
+| Shared props + always/lazy/deferred (groups + rescue) + merge metadata | ✅ |
+| Once props (`X-Inertia-Except-Once-Props`, `fresh`, `until`, `as`, compose) | ✅ |
+| Scroll props (infinite scroll: `mergeProps` label + `scrollProps` cursor, reset, deferred) | ✅ |
+| Flash + validation error bags over session | ✅ |
+| `clearHistory` / `preserveFragment` / `encryptHistory` | ✅ |
+| Root template (Thymeleaf, overridable) | ✅ |
+| Quarkus integration (CDI + Undertow + RESTEasy over the shared glue) | ✅ |
+| SSR (Node render server client + `@inertiaHead` fragment) | roadmap (separate module) |
+
 ## Try the demo
 
 `inertia-demo/` is a runnable Hello World + CRUD Todo app in **two back-end flavors**

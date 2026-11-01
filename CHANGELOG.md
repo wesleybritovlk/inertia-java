@@ -15,7 +15,10 @@ All notable changes of this project are documented here. Format based on
   servlet glue gained its own module page (`inertia-servlet.md`) and a pure-servlet
   getting-started (`getting-started-servlet.md`) for Jakarta EE 9+ / plain Tomcat/Jetty
   deployments: bootstrap listener, protocol filter with the engine-scoping attachment
-  hook, page servlets and WAR packaging.
+  hook, page servlets and WAR packaging. The README became a minimal card (pitch, module
+  map, dependency snippet, doc links, build) like the inertia4j reference — the quick
+  start, property/prop/serialization tables and the protocol-status matrix moved into
+  the documentation (`docs/index.md` keeps the protocol status).
 - **Quarkus engine ergonomics = Spring/laravel parity**: resources inject the engine
   directly — `@Inject Inertia inertia` (a request-scoped CDI bean produced by the
   adapter; CDI commands the client proxy) — replacing the `InertiaProvider` wrapper.
