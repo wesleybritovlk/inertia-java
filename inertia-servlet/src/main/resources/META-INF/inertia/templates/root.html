@@ -20,6 +20,8 @@
     <th:block th:unless="${viteDevMode}" th:each="css : ${viteCss}">
       <link rel="stylesheet" th:href="${css}" />
     </th:block>
+    <!-- the application's own head content (head-fragment override: title, meta, fonts, analytics) -->
+    <th:block th:utext="${inertiaUserHead}"></th:block>
   </head>
   <body>
     <div th:id="${inertiaRootId}" id="app"></div>

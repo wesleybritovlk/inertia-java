@@ -32,6 +32,18 @@ public class Inertia {
         this.request = request;
     }
 
+    /**
+     * CDI/Quarkus client-proxy support: normal-scoped beans ({@code @RequestScoped}
+     * producers) get injected through generated subclasses, which need a no-arg
+     * constructor to instantiate. Never call it manually — built through
+     * {@link #Inertia(VersionProvider, PageSerializer, InertiaRequest)}.
+     */
+    protected Inertia() {
+        this.versionProvider = null;
+        this.serializer = null;
+        this.request = null;
+    }
+
     public InertiaRequest request() {
         return request;
     }

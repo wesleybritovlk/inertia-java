@@ -17,6 +17,7 @@ import io.github.wesleybritovlk.inertia.servlet.ViteInertiaRootTemplateRenderer;
 
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
@@ -30,7 +31,7 @@ import jakarta.inject.Inject;
  *
  * <p>Applications override any of them with their own CDI beans annotated {@code @Alternative}
  * + {@code @Priority}; the {@link Inertia} instance itself is request-scoped work and lives
- * behind {@link InertiaProvider#current()}.</p>
+ * behind the request-scoped CDI bean <code>Inertia</code> (see the producers).</p>
  */
 @ApplicationScoped
 class InertiaBeans {
@@ -128,4 +129,17 @@ class InertiaBeans {
         return beanManager.getReference(bean, mapperClass, context);
     }
 
+    /**
+     * THE engine resources inject — the same name and ergonomics as the Spring bean and
+     * inertia-laravel's {@code Inertia}: request-scoped, built by the protocol filter's
+     * attachment so the shared props customizers and flash state run through it. CDI injects
+     * normal-scoped beans as client proxies, so the field works on any resource scope and
+     * resolves the CURRENT request's engine per invocation; outside the filter chain it
+     * fails fast (the registry throws).
+     */
+    @Produces
+    @RequestScoped
+    Inertia inertia() {
+        return CurrentInertia.current().engine();
+    }
 }

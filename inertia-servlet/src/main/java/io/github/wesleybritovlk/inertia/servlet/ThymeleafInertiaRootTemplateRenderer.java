@@ -14,42 +14,78 @@ import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.StringTemplateResolver;
 
 /**
- * Root template renderer (the adapter's "{@code app.blade.php + @inertia}"): its own isolated
- * Thymeleaf engine with a bundled template, overridable by a classpath resource so the
- * application can ship its own root HTML and keep using Thymeleaf features (fragments,
- * layouts, whatever).
+ * Root template renderer (the adapter's "{@code app.blade.php + @inertia}"): the bundled
+ * layout carries ALL the machinery (vite dev blocks, the hash entry script, lazy-chunk css
+ * and the {@code data-page} payload script), so applications usually do NOT ship a template
+ * at all. When they do (classpath {@code templates/inertia.html}), the file can be:
  *
- * <p>The bundled template exposes two variables: {@code inertiaPageJson} (serialized page
- * object) and {@code inertiaRootId}, plus every {@code withViewData} variable of the page.</p>
+ * <ul>
+ *   <li>a <strong>head fragment</strong> &mdash; the simple case: only the application's own
+ *       head content (title, meta, fonts, analytics), rendered with the same variables and
+ *       injected into the bundled layout's {@code <head>};</li>
+ *   <li>a <strong>whole document</strong> &mdash; advanced case: replaces the entire layout,
+ *       wiring the same variables itself ({@code inertiaPageJson}, {@code inertiaRootId},
+ *       {@code inertiaUserHead}, {@code viteDevMode}, {@code viteClient}, {@code viteAppJs},
+ *       {@code viteCss}, {@code viteReactRefresh} plus every {@code withViewData} entry).</li>
+ * </ul>
  */
 public final class ThymeleafInertiaRootTemplateRenderer implements InertiaRootTemplateRenderer {
 
     static final String BUNDLED_TEMPLATE = "META-INF/inertia/templates/root.html";
 
     private final String rootId;
-    private final String cachedTemplate;
+    private final String layoutTemplate;
+    private final String headFragment;
     private final TemplateEngine engine;
 
     public ThymeleafInertiaRootTemplateRenderer(String rootId, String overrideTemplatePath) {
         this.rootId = rootId;
-        this.cachedTemplate = loadTemplate(overrideTemplatePath);
+        String override = loadTemplate(overrideTemplatePath);
+        if (override == null) {
+            this.layoutTemplate = readResource("classpath:" + BUNDLED_TEMPLATE);
+            this.headFragment = null;
+            if (layoutTemplate == null) {
+                throw new IllegalStateException("Inertia bundled root template missing: " + BUNDLED_TEMPLATE);
+            }
+        } else if (isWholeDocument(override)) {
+            this.layoutTemplate = override;
+            this.headFragment = null;
+        } else {
+            this.layoutTemplate = readResource("classpath:" + BUNDLED_TEMPLATE);
+            this.headFragment = override;
+        }
         this.engine = createEngine();
     }
 
     @Override
     public String render(String pageJson, Map<String, Object> viewData) {
-        Context context = new Context(Locale.getDefault());
         LinkedHashMap<String, Object> variables = new LinkedHashMap<>();
         variables.put("inertiaPageJson", pageJson);
         variables.put("inertiaRootId", rootId);
         if (viewData != null) {
             variables.putAll(viewData);
         }
+        variables.put("inertiaUserHead", headFragment == null ? "" : process(headFragment, variables));
+        Context context = new Context(Locale.getDefault());
         context.setVariables(variables);
         StringWriter out = new StringWriter();
         // StringTemplateResolver treats the process() name as the template source content
-        engine.process(cachedTemplate, context, out);
+        engine.process(layoutTemplate, context, out);
         return out.toString();
+    }
+
+    private String process(String templateSource, Map<String, Object> variables) {
+        Context context = new Context(Locale.getDefault());
+        context.setVariables(variables);
+        StringWriter out = new StringWriter();
+        engine.process(templateSource, context, out);
+        return out.toString();
+    }
+
+    /** Whole document when it composes the full page ({@code <html>}/doctype); otherwise a head fragment. */
+    private static boolean isWholeDocument(String override) {
+        String lowered = override.toLowerCase(Locale.ROOT);
+        return lowered.contains("<!doctype html") || lowered.contains("<html");
     }
 
     private static TemplateEngine createEngine() {
@@ -64,16 +100,7 @@ public final class ThymeleafInertiaRootTemplateRenderer implements InertiaRootTe
         String override = overrideTemplatePath == null || overrideTemplatePath.isBlank()
                 ? "classpath:templates/inertia.html"
                 : overrideTemplatePath;
-        String content = readResource(override);
-        if (content != null) {
-            return content;
-        }
-        content = readResource("classpath:" + BUNDLED_TEMPLATE);
-        if (content != null) {
-            return content;
-        }
-        throw new IllegalStateException(
-                "Inertia root template not found: override " + override + " and bundled " + BUNDLED_TEMPLATE);
+        return readResource(override);
     }
 
     private static String readResource(String classpathLocation) {

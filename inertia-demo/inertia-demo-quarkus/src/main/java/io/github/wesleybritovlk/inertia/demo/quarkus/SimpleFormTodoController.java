@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import io.github.wesleybritovlk.inertia.core.Inertia;
 import io.github.wesleybritovlk.inertia.core.InertiaPage;
 import io.github.wesleybritovlk.inertia.core.InertiaResult;
-import io.github.wesleybritovlk.inertia.quarkus.InertiaProvider;
 import io.github.wesleybritovlk.inertia.quarkus.ValidationErrors;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -36,19 +35,19 @@ public class SimpleFormTodoController {
 
     private static final String ROUTE = "/form-todo";
 
-    private final InertiaProvider inertiaProvider;
+    private final Inertia inertia;
 
     private final Map<Long, Todo> store = new ConcurrentHashMap<>();
     private final AtomicLong ids = new AtomicLong();
 
     @Inject
-    SimpleFormTodoController(InertiaProvider inertiaProvider) {
-        this.inertiaProvider = inertiaProvider;
+    SimpleFormTodoController(Inertia inertia) {
+        this.inertia = inertia;
     }
 
     @GET
     public InertiaPage index() {
-        return inertiaProvider.current().render("SimpleFormTodo/Index", page -> page
+        return inertia.render("SimpleFormTodo/Index", page -> page
                 .with("todos", all()));
     }
 
@@ -57,12 +56,11 @@ public class SimpleFormTodoController {
     public InertiaResult create(Map<String, String> body) {
         String title = body == null ? null : body.get("title");
         if (title == null || title.isBlank()) {
-            Inertia inertia = inertiaProvider.current();
             ValidationErrors.store(inertia, Map.of("title", "The todo title is required."), "default");
             return inertia.redirect(ROUTE);
         }
         add(title.trim());
-        return inertiaProvider.current().redirect(ROUTE);
+        return inertia.redirect(ROUTE);
     }
 
     @PATCH
@@ -73,7 +71,7 @@ public class SimpleFormTodoController {
             throw new java.util.NoSuchElementException("Todo " + id + " not found");
         }
         store.put(id, new Todo(id, todo.title(), !todo.done()));
-        return inertiaProvider.current().redirect(ROUTE);
+        return inertia.redirect(ROUTE);
     }
 
     @DELETE
@@ -82,7 +80,7 @@ public class SimpleFormTodoController {
         if (store.remove(id) == null) {
             throw new java.util.NoSuchElementException("Todo " + id + " not found");
         }
-        return inertiaProvider.current().redirect(ROUTE);
+        return inertia.redirect(ROUTE);
     }
 
     private List<Todo> all() {

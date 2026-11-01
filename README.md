@@ -120,7 +120,13 @@ class UsersController {
 </html>
 ```
 
-The bundled Thymeleaf template ships inside the starter; override it with your own layout by creating `templates/inertia.html` in your application (`inertia.template-path`). Variables available: `inertiaPageJson`, `inertiaRootId`, plus any page-level `withViewData` values.
+The bundled Thymeleaf root template ships inside the library — machinery (vite script/css,
+dev blocks, root mount, data-page payload) all internalized. Override by creating
+`templates/inertia.html` in your application as a **head fragment** (title, meta, fonts,
+CDN scripts — injected into the bundled head) or, advanced, a whole document wiring the
+same variables yourself. Variables available: `inertiaPageJson`, `inertiaRootId`,
+the Vite wiring and any page-level `withViewData` values — details in
+[docs/configuration.md](docs/configuration.md#root-template-override).
 
 ### Validation errors
 

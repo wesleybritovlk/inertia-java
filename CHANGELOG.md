@@ -6,6 +6,18 @@ All notable changes of this project are documented here. Format based on
 
 ## [Unreleased]
 
+### Changed
+- **Quarkus engine ergonomics = Spring/laravel parity**: resources inject the engine
+  directly — `@Inject Inertia inertia` (a request-scoped CDI bean produced by the
+  adapter; CDI commands the client proxy) — replacing the `InertiaProvider` wrapper.
+  The core `Inertia` class gains a protected no-arg constructor for the Arc proxying.
+- **Root template override became optional and tiny**: the bundled layout inside
+  `inertia-servlet` internalizes ALL the machinery (vite script/css, dev blocks, root
+  mount, data-page payload). The optional override is a **head fragment** — title,
+  meta, fonts, CDN scripts — injected into the bundled head (`inertiaUserHead`);
+  a whole-document template remains supported for full control. Demos ship the
+  two-line fragment.
+
 ### Added — `inertia-core`
 - **Once props** and **Scroll props** (infinite scroll): protocol parity for the Inertia.js
   v3 once + scroll metadata, wire shapes verified against the v3 docs and the

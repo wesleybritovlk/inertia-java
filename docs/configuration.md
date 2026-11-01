@@ -39,14 +39,31 @@ Any of these beans can be replaced by defining your own (auto-configuration uses
 
 ## Root template override
 
-Two ways to own the root page (the `app.blade.php + @inertia` equivalent):
+The bundled layout inside `inertia-servlet` carries ALL the machinery (dev-mode vite
+blocks, entry script, lazy-chunk css and the `data-page` payload) — by default you ship
+no template at all. When you want the application's own head bits (title, meta, fonts,
+analytics), override with a **head fragment** — the simple case, one or two lines:
+
+```html
+<!-- classpath: templates/inertia.html (default location) -->
+<title>my app</title>
+```
+
+The fragment renders with the same variables and is injected into the bundled layout's
+`<head>` (`inertiaUserHead`). Full control stays available: a **whole document** (a file
+composing the full `<html>` page) replaces the layout itself and wires the machinery
+variables directly — advanced use, and the historical behavior.
+
+Two ways to own it:
 
 1. the default property: `classpath:templates/inertia.html` — ship your file there;
 2. a different path via `inertia.template-path` — useful for testing overrides or
    version-specific layouts.
 
-Variables injected into the engine for every render: `inertiaPageJson`,
-`inertiaRootId`, plus each `InertiaPage.withViewData(...)` value (see
+Variables injected into the engine for every render (fragment and whole document):
+`inertiaPageJson`, `inertiaRootId`, `inertiaUserHead` (the fragment's processed output,
+empty when absent), `viteDevMode`/`viteClient`/`viteAppJs`/`viteCss`/`viteReactRefresh`
+(dev/vite objects), plus each `InertiaPage.withViewData(...)` value (see
 [getting-started.md](getting-started.md#4-the-root-template)).
 
 ## Filter behavior

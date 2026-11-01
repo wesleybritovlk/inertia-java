@@ -91,40 +91,60 @@ What each method does per HTTP call:
   stats`, `X-Inertia-Partial-Component: Dashboard/Index`): only `stats` (plus the always
   and deferred-matching props) are evaluated and returned.
 
-## 4. The root template
+## 4. The root template (usually you do not need one)
 
-The bundled template is intentionally minimal — the payload hook with no frontend
-scripts. Override it once your SPA has assets:
+The layout ships **inside the library** (`inertia-servlet`): the head machinery (Vite
+entry script, lazy-chunk css, dev-mode blocks), the root `<div id="app">` mount and the
+`<script data-page="app">` payload — the `@inertia` Blade directive equivalent — all
+live in the bundled `META-INF/inertia/templates/root.html`. No template file, no
+boilerplate: the served page already works in build mode AND dev mode.
+
+When the application wants its own head bits (title, meta, fonts, CDN scripts), ship a
+**head fragment** — one or two lines, nothing else:
 
 `src/main/resources/templates/inertia.html`
+
+```html
+<title>Task Log</title>
+<!-- fonts / CDN libraries / meta tags, as plain head content: -->
+<!-- <link rel="stylesheet" href="https://cdn.example/fonts.css" /> -->
+<!-- <script src="https://cdn.example/analytics.js"></script> -->
+```
+
+The fragment (detected because it does not compose a full `<html>` document) renders
+with the same variables as the layout and is injected inside the bundled `<head>` —
+the machinery stays untouched.
+
+Advanced escape hatch: a **whole document** applies only when the template composes the
+full page, replacing the bundled layout — then your file wires everything itself:
 
 ```html
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script type="module" src="/assets/app.js"></script>
+    <th:block th:utext="${inertiaUserHead}" />
+    <!-- ...your own head wiring (scripts, root mount, data-page payload)... -->
   </head>
-  <body>
-    <div th:id="${inertiaRootId}"></div>
-    <script th:attr="data-page=${inertiaRootId}" type="application/json"
-            th:utext="${inertiaPageJson}"></script>
-  </body>
 </html>
 ```
 
-Variables available inside every render (yours or the bundled one):
+Variables available in both modes:
 
 | Variable | Meaning |
 |---|---|
 | `inertiaPageJson` | The serialized page object (already tag-safe escaped) |
 | `inertiaRootId` | The `inertia.root-id` property value |
+| `inertiaUserHead` | The fragment's processed output (empty when absent) |
+| `viteDevMode` / `viteClient` / `viteAppJs` / `viteCss` / `viteReactRefresh` | The Vite wiring (dev client, hashed entry, chunks css, react preamble) |
 | *any extra* | Whatever your controller added with `InertiaPage.withViewData(...)` |
 
 The `<script data-page>` block is what `@inertiajs/*` reads on boot — this is the
-`@inertia` Blade directive equivalent. Keep exactly one, and keep `data-page` equal to
-`root-id`.
+`@inertia` Blade directive equivalent, already emitted by the bundled layout. After
+hydration the client replaces the tab title through its own `<Head>` component
+(per-framework), so the fragment's `<title>` only paints the pre-hydration instant.
+Full details: [configuration.md](configuration.md#root-template-override); the demo
+projects use the two-line fragment form.
 
 ## 4b. The vite.config.js boilerplate (includes dev mode)
 

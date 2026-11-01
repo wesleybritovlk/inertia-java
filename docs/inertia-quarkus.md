@@ -22,20 +22,14 @@ Spring's side — a bean + `render(...)`:
 
 ```java
 @Path("/users")
-@ApplicationScoped
 public class UsersController {
 
-    private final InertiaProvider inertiaProvider;
-
+    // the request-scoped engine, exactly the Spring bean's ergonomics
     @Inject
-    UsersController(InertiaProvider inertiaProvider) {
-        this.inertiaProvider = inertiaProvider;
-    }
+    Inertia inertia;
 
-    /** Resolves THE request-attached engine of the current request. */
     @GET
     public InertiaPage index() {
-        Inertia inertia = inertiaProvider.current();
         return inertia.render("Users/Index", page -> page
                 .with("users", () -> repository.findAll())
                 .withLazy("stats", () -> repository.stats()));
@@ -43,8 +37,8 @@ public class UsersController {
 
     @POST
     public InertiaResult create(@Valid User user) {
-        ValidationErrors.store(inertiaProvider.current(), violations, "default");
-        return inertiaProvider.current().redirect("/users");
+        ValidationErrors.store(inertia, violations, "default");
+        return inertia.redirect("/users");
     }
 }
 ```
@@ -54,6 +48,11 @@ Resource methods may return `InertiaPage` (pages + root renders) or `InertiaResu
 Inertia visits and the root HTML for plain visits. The protocol middleware rules identical
 to the Spring side (the same `InertiaFilter` runs under both): version 409s, `Vary`
 header and redirect upgrades.
+
+The injected `Inertia` is a request-scoped CDI bean (the protocol filter's attachment
+builds it, shared props customizers included) — CDI injects it through a client proxy,
+so the field resolves the CURRENT request's engine on an `@ApplicationScoped` resource
+just like Spring's request-scoped bean resolves per request.
 
 ## Configuration
 

@@ -132,5 +132,19 @@ class ServletUnitsTest {
         assertTrue(override.contains("data-override=\"yes\""));
     }
 
+    @Test
+    void headFragmentOverrideKeepsTheMachineryAndInjectsTheApplicationHead() {
+        String html = new ThymeleafInertiaRootTemplateRenderer("mount", "classpath:head-fragment.html")
+                .render("{\"component\":\"X\"}", java.util.Map.of("greeting", "hey"));
+
+        // the application's own head bits from the minimal fragment
+        assertTrue(html.contains("<title>fragment-demo</title>"));
+        assertTrue(html.contains("content=\"head-fragment-test\""));
+        // the bundled machinery is untouched: payload script + root mount
+        assertTrue(html.contains("data-page=\"mount\""));
+        assertTrue(html.contains("{\"component\":\"X\"}"), "page payload from the bundled layout");
+        assertTrue(html.contains("id=\"mount\""));
+    }
+
 
 }

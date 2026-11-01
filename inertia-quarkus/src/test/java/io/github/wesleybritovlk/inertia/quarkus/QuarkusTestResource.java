@@ -6,6 +6,7 @@ import java.util.Map;
 import io.github.wesleybritovlk.inertia.core.Inertia;
 import io.github.wesleybritovlk.inertia.core.InertiaPage;
 import io.github.wesleybritovlk.inertia.core.InertiaResult;
+import io.github.wesleybritovlk.inertia.core.InertiaSharedPropsCustomizer;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -24,7 +25,7 @@ public class QuarkusTestResource {
      * (spring customizer parity).
      */
     @ApplicationScoped
-    public static class BannerCustomizer implements io.github.wesleybritovlk.inertia.core.InertiaSharedPropsCustomizer {
+    public static class BannerCustomizer implements InertiaSharedPropsCustomizer {
 
         @Override
         public void customize(Inertia inertia) {
@@ -32,23 +33,20 @@ public class QuarkusTestResource {
         }
     }
 
-    private final InertiaProvider inertiaProvider;
-
+    /** Request-scoped resource: exercises the request-scoped {@code Inertia} injection. */
     @Inject
-    QuarkusTestResource(InertiaProvider inertiaProvider) {
-        this.inertiaProvider = inertiaProvider;
-    }
+    Inertia inertia;
 
     @GET
     @Path("/")
     public InertiaPage index() {
-        return inertiaProvider.current().render("Home/Index");
+        return inertia.render("Home/Index");
     }
 
     @GET
     @Path("/users")
     public InertiaPage users() {
-        return inertiaProvider.current().render("Users/Index", p -> p
+        return inertia.render("Users/Index", p -> p
                 .with("users", List.of("ana", "wei"))
                 .withLazy("secret", () -> "only-on-demand"));
     }
@@ -56,7 +54,7 @@ public class QuarkusTestResource {
     @GET
     @Path("/feed")
     public InertiaPage feed() {
-        return inertiaProvider.current().render("Feed", p -> p
+        return inertia.render("Feed", p -> p
                 .withOnce("plans", () -> List.of("basic", "pro"))
                 .withScroll("posts", () -> List.of(), o -> o.page(1, true)));
     }
@@ -64,7 +62,7 @@ public class QuarkusTestResource {
     @Path("/users-flash")
     @POST
     public InertiaResult create() {
-        Inertia inertia = inertiaProvider.current();
+        Inertia inertia = this.inertia;
         ValidationErrors.store(inertia, Map.of("name", "is required"), "default");
         return inertia.redirect("/users");
     }
@@ -72,18 +70,18 @@ public class QuarkusTestResource {
     @Path("/external")
     @GET
     public InertiaResult external() {
-        return inertiaProvider.current().location("https://sso.example/sign");
+        return inertia.location("https://sso.example/sign");
     }
 
     @Path("/fragment")
     @GET
     public InertiaResult fragment() {
-        return inertiaProvider.current().redirect("/docs#pricing");
+        return inertia.redirect("/docs#pricing");
     }
 
     @Path("/update")
     @PUT
     public InertiaResult update() {
-        return inertiaProvider.current().redirect("/users");
+        return inertia.redirect("/users");
     }
 }
