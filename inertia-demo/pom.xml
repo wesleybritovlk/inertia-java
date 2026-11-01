@@ -6,14 +6,14 @@
 
     <parent>
         <groupId>io.github.wesleybritovlk.inertia</groupId>
-        <artifactId>inertia-java-bean</artifactId>
+        <artifactId>inertia-java</artifactId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>inertia-demo</artifactId>
 
     <name>inertia-demo</name>
-    <description>Hello-world demo application for the inertia-spring-boot-starter (Vue front-end over the bundled Thymeleaf root template).</description>
+    <description>Hello-world demo application for the inertia-spring-boot (Vue front-end over the bundled Thymeleaf root template).</description>
 
     <dependencyManagement>
         <dependencies>
@@ -30,7 +30,7 @@
     <dependencies>
         <dependency>
             <groupId>io.github.wesleybritovlk.inertia</groupId>
-            <artifactId>inertia-spring-boot-starter</artifactId>
+            <artifactId>inertia-spring-boot</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

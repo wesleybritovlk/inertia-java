@@ -1,4 +1,4 @@
-# inertia-java-bean
+# inertia-java
 
 A Spring Boot adapter for [Inertia.js] with canonical **Vite** front-ends in any
 framework — Vue 3, React 19 or Svelte 5 (the layouts the Inertia docs prescribe, minus

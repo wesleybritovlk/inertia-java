@@ -9,7 +9,7 @@ and 4.x** (Servlet 6.x, Thymeleaf 3.1).
 ```xml
 <dependency>
     <groupId>io.github.wesleybritovlk.inertia</groupId>
-    <artifactId>inertia-spring-boot-starter</artifactId>
+    <artifactId>inertia-spring-boot</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 </dependency>
 ```
@@ -17,7 +17,9 @@ and 4.x** (Servlet 6.x, Thymeleaf 3.1).
 The starter brings:
 
 - `inertia-core` (the protocol engine, zero third-party dependencies),
-- `org.thymeleaf:thymeleaf` (only inside the starter; the core never sees it),
+- `inertia-servlet` (the shared Jakarta Servlet glue: filter, request adapter, writers,
+  Thymeleaf root template and the Vite/versioning providers — `org.thymeleaf:thymeleaf`
+  rides only inside this glue; the core never sees it),
 - a `FilterRegistrationBean`, a request-scoped `Inertia` bean, a return-value bridge for
   controllers, and the root template renderer.
 

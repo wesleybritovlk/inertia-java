@@ -6,7 +6,7 @@ import { createRoot } from 'react-dom/client';
 const pages = import.meta.glob('./Pages/**/*.jsx');
 
 await createInertiaApp({
-    title: (title) => (title ? `${title} — inertia-java-bean demo` : 'inertia-java-bean demo'),
+    title: (title) => (title ? `${title} — inertia-java demo` : 'inertia-java demo'),
     resolve: (name) => {
         const loader = pages[`./Pages/${name}.jsx`];
         if (loader === undefined) {

@@ -1,6 +1,6 @@
 # Differences from inertia-laravel
 
-`inertia-java-bean` ported the Laravel adapter's **protocol semantics** file-by-file (the
+`inertia-java` ported the Laravel adapter's **protocol semantics** file-by-file (the
 resolver, response shape, metadata, redirect ids and flash rules were verified against
 the actual PHP sources), but Java ≠ PHP. This page lists every behavior that is not a
 1:1 port. Read each: they are intentional consequences of being framework-agnostic, not

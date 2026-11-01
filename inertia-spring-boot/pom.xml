@@ -6,14 +6,14 @@
 
     <parent>
         <groupId>io.github.wesleybritovlk.inertia</groupId>
-        <artifactId>inertia-java-bean</artifactId>
+        <artifactId>inertia-java</artifactId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>inertia-spring-boot-starter</artifactId>
+    <artifactId>inertia-spring-boot</artifactId>
 
-    <name>inertia-spring-boot-starter</name>
-    <description>Spring Boot auto-configuration for inertia-java-bean: request-scoped Inertia bean, protocol filter, page return value handling and Thymeleaf root template.</description>
+    <name>inertia-spring-boot</name>
+    <description>Spring Boot auto-configuration for inertia-java: request-scoped Inertia bean, protocol filter, page return value handling and Thymeleaf root template.</description>
 
     <dependencyManagement>
         <dependencies>

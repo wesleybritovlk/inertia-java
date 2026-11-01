@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.wesleybritovlk.inertia</groupId>
-    <artifactId>inertia-java-bean</artifactId>
+    <artifactId>inertia-java</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>inertia-java-bean</name>
+    <name>inertia-java</name>
     <description>Framework-agnostic Inertia.js adapter for Java: server-side driving layer that plugs into Spring Boot (3 and 4) or Quarkus as a plain bean, manipulating only HTTP requests and responses.</description>
 
     <licenses>
@@ -23,7 +23,7 @@
     <modules>
         <module>inertia-core</module>
         <module>inertia-servlet</module>
-        <module>inertia-spring-boot-starter</module>
+        <module>inertia-spring-boot</module>
         <module>inertia-quarkus</module>
         <module>inertia-demo</module>
     </modules>

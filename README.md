@@ -1,8 +1,8 @@
-# inertia-java-bean
+# inertia-java
 
 Framework-agnostic server adapter for [Inertia.js](https://inertiajs.com) applications.
 
-Inertia lets you build single-page apps without a separate API: controllers return page metadata, the client-side router renders, and the Inertia protocol carries page objects over plain HTTP. **inertia-java-bean** implements the server side the way [`inertia-laravel`](https://github.com/inertiajs/inertia-laravel) does — by *manipulating the HTTP requests and the HTML* — but built for the Java ecosystem: no embedded server, no framework lock-in. The library is a plain, registerable bean that adapts to whatever serves the HTTP requests.
+Inertia lets you build single-page apps without a separate API: controllers return page metadata, the client-side router renders, and the Inertia protocol carries page objects over plain HTTP. **inertia-java** implements the server side the way [`inertia-laravel`](https://github.com/inertiajs/inertia-laravel) does — by *manipulating the HTTP requests and the HTML* — but built for the Java ecosystem: no embedded server, no framework lock-in. The library is a plain, registerable bean that adapts to whatever serves the HTTP requests.
 
 ## Why another Java adapter?
 
@@ -27,14 +27,14 @@ even the serialization and request ports runtime-neutral.
 |---|---|
 | `io.github.wesleybritovlk.inertia:inertia-core` | The Inertia protocol engine. **Zero dependencies** (JDK 17 only). Any framework can plug in via the ports. |
 | `io.github.wesleybritovlk.inertia:inertia-servlet` | The shared Jakarta Servlet glue: request adapter, protocol filter, result/page writers, Thymeleaf + Vite root renderers and version providers. |
-| `io.github.wesleybritovlk.inertia:inertia-spring-boot-starter` | Spring Boot integration (3.x and 4.x): request-scoped engine, protocol filter, return value support and the Thymeleaf root template. |
+| `io.github.wesleybritovlk.inertia:inertia-spring-boot` | Spring Boot integration (3.x and 4.x): request-scoped engine, protocol filter, return value support and the Thymeleaf root template. |
 | `io.github.wesleybritovlk.inertia:inertia-quarkus` | Quarkus integration: CDI wiring over the same servlet glue, Undertow filter registration, RESTEasy return value writer, SmallRye config. |
 | `inertia-demo` | Runnable Hello World with the canonical **Vite + Vue 3** frontend (asset versioning wired to the Vite manifest) — see [inertia-demo/README.md](inertia-demo/README.md). |
 
 ```xml
 <dependency>
     <groupId>io.github.wesleybritovlk.inertia</groupId>
-    <artifactId>inertia-spring-boot-starter</artifactId>
+    <artifactId>inertia-spring-boot</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 </dependency>
 ```
@@ -141,7 +141,7 @@ Requests declaring `X-Inertia-Error-Bag: create` reshapes it as `{ "create": { "
 ```java
 @Bean
 InertiaSharedPropsCustomizer globalProps() {
-    return inertia -> inertia.shared("banner", "Connected to inertia-java-bean")
+    return inertia -> inertia.shared("banner", "Connected to inertia-java")
                              .sharedAlways("auth.user", this::currentUser);
 }
 ```
@@ -207,8 +207,8 @@ Notes: JSON object key order is not part of the Inertia protocol; only the bundl
 # one-time per clone: enables the repository pre-commit hook
 git config core.hooksPath .githooks
 
-mvn test          # the full suite: 51 core + 16 starter integration, 67 total
-mvn install       # installs both artifacts locally
+mvn test          # the full suite: 70 core + 35 servlet glue + 32 spring + 17 quarkus, 154 total
+mvn install       # installs all six modules locally
 ```
 
 The pre-commit hook (`mvn verify`) enforces three quality gates on every commit:

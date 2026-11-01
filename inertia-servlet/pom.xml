@@ -6,14 +6,14 @@
 
     <parent>
         <groupId>io.github.wesleybritovlk.inertia</groupId>
-        <artifactId>inertia-java-bean</artifactId>
+        <artifactId>inertia-java</artifactId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>inertia-servlet</artifactId>
 
     <name>inertia-servlet</name>
-    <description>Framework-neutral servlet glue of inertia-java-bean: the Jakarta Servlet implementation of the core HTTP ports (request adapter, protocol filter, result/page writers) plus the Thymeleaf/Vite root renderers and version providers. Shared by every servlet-based adapter (Spring Boot, Quarkus, plain containers).</description>
+    <description>Framework-neutral servlet glue of inertia-java: the Jakarta Servlet implementation of the core HTTP ports (request adapter, protocol filter, result/page writers) plus the Thymeleaf/Vite root renderers and version providers. Shared by every servlet-based adapter (Spring Boot, Quarkus, plain containers).</description>
 
     <dependencies>
         <dependency>

@@ -1,6 +1,6 @@
 # @wesleybritovlk/inertia-vite-hot-file
 
-The `public/hot` parity plugin for **[inertia-java-bean](../../README.md)**.
+The `public/hot` parity plugin for **[inertia-java](../../README.md)**.
 
 It gives your Vite dev server the ability to **tell the Spring Boot process that you
 are developing right now**: while `npm run dev` is running, the plugin touches the

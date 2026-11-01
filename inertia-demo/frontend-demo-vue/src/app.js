@@ -6,7 +6,7 @@ import { createInertiaApp } from '@inertiajs/vue3';
 const pages = import.meta.glob('./Pages/**/*.vue');
 
 createInertiaApp({
-    title: (title) => (title ? `${title} — inertia-java-bean demo` : 'inertia-java-bean demo'),
+    title: (title) => (title ? `${title} — inertia-java demo` : 'inertia-java demo'),
     resolve: (name) => {
         const loader = pages[`./Pages/${name}.vue`];
         if (loader === undefined) {

@@ -6,7 +6,7 @@ import { mount } from 'svelte';
 const pages = import.meta.glob('./Pages/**/*.svelte');
 
 createInertiaApp({
-    title: (title) => (title ? `${title} — inertia-java-bean demo` : 'inertia-java-bean demo'),
+    title: (title) => (title ? `${title} — inertia-java demo` : 'inertia-java demo'),
     resolve: (name) => {
         const loader = pages[`./Pages/${name}.svelte`];
         if (loader === undefined) {

@@ -1,6 +1,6 @@
 # Documentation index
 
-`inertia-java-bean` is a framework-agnostic server adapter for [Inertia.js](https://inertiajs.com).
+`inertia-java` is a framework-agnostic server adapter for [Inertia.js](https://inertiajs.com).
 It never hosts a server: integrations register it as a plain bean — Spring Boot MVC and
 Quarkus are shipped adapters, and the core manipulates only the HTTP request/response
 exchange and the HTML root page — the same architecture as [`inertia-laravel`](https://github.com/inertiajs/inertia-laravel),

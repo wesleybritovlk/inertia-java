@@ -6,14 +6,14 @@
 
     <parent>
         <groupId>io.github.wesleybritovlk.inertia</groupId>
-        <artifactId>inertia-java-bean</artifactId>
+        <artifactId>inertia-java</artifactId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>inertia-quarkus</artifactId>
 
     <name>inertia-quarkus</name>
-    <description>Quarkus adapter of inertia-java-bean: CDI wiring over the shared servlet glue (same HTTP ports as the Spring adapter), protocol filter via Undertow web filter and page rendering through RESTEasy return value writers.</description>
+    <description>Quarkus adapter of inertia-java: CDI wiring over the shared servlet glue (same HTTP ports as the Spring adapter), protocol filter via Undertow web filter and page rendering through RESTEasy return value writers.</description>
 
     <dependencyManagement>
         <dependencies>

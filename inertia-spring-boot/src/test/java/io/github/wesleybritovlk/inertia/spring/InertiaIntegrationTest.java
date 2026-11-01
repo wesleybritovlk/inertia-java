@@ -179,7 +179,7 @@ class InertiaIntegrationTest {
     @Test
     void sharedPropsCustomizerRunsOnEveryRender() throws Exception {
         mvc.perform(get("/users").header(InertiaHeaders.INERTIA, INERTIA))
-                .andExpect(jsonPath("$.props.banner").value("inertia-java-bean"))
+                .andExpect(jsonPath("$.props.banner").value("inertia-java"))
                 .andExpect(jsonPath("$.sharedProps").exists());
     }
 
@@ -332,7 +332,7 @@ class InertiaIntegrationTest {
     static class SharedPropsConfig {
         @Bean
         InertiaSharedPropsCustomizer banner() {
-            return inertia -> inertia.shared("banner", "inertia-java-bean");
+            return inertia -> inertia.shared("banner", "inertia-java");
         }
     }
 }

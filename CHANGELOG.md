@@ -26,7 +26,7 @@ All notable changes of this project are documented here. Format based on
   `InertiaResult` returns, SmallRye config mapping mirroring every Spring `inertia.*`
   property, and a `ValidationErrors` helper on jakarta Bean Validation.
 
-### Added — `inertia-spring-boot-starter`
+### Added — `inertia-spring-boot`
 - **Vite dev mode (HMR)** parity with the Laravel `artisan serve + npm run dev` loop:
   while the hot flag file (`.hot-inertia`, written by the shipped vite plugin) exists,
   pages render with the Vite client + source entry module; React Fast Refresh preamble
@@ -53,7 +53,7 @@ Initial protocol engine and Spring Boot integration.
 - Dependency-free `PlainJsonPageSerializer` plus the `PageSerializer` SPI.
 - Ports: `InertiaRequest`, `InertiaFlashStore`, `InertiaResponseShell`, `VersionProvider`.
 
-### Added — `inertia-spring-boot-starter`
+### Added — `inertia-spring-boot`
 - `@AutoConfiguration` compatible with Spring Boot 3.x and 4.x (Jakarta Servlet 6.x).
 - Request-scoped `Inertia` bean (no thread-locals inside the core), shared props customizers.
 - `InertiaFilter`: version guard before the chain, `Vary`/303/fragment upgrades after it.

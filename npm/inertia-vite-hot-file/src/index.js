@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /**
- * inertia-laravel public/hot parity for inertia-java-bean.
+ * inertia-laravel public/hot parity for inertia-java.
  *
  * While `npm run dev` is running this Vite plugin touches the hot flag file
  * (default `node_modules/.hot-inertia` — node_modules is universally git-ignored and

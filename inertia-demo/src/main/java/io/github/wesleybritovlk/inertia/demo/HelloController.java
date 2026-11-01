@@ -21,7 +21,7 @@ class HelloController {
     @GetMapping("/")
     InertiaPage hello() {
         return inertia.render("Hello/Index")
-                .with("greeting", "Hello World from inertia-java-bean")
+                .with("greeting", "Hello World from inertia-java")
                 .with("builtWith", "Spring Boot + Vite + Inertia");
     }
 }
