@@ -94,6 +94,12 @@ public class SimpleFormTodoController {
         store.put(id, new Todo(id, title, false));
     }
 
+    /**
+     * Store entry: prop value travels through the application Jackson mapper, which needs
+     * this record registered in the native binary (Quarkus' agent-equivalent — the
+     * [native doc](../docs/compile-native.md) teaches the general rule for exotic types).
+     */
+    @io.quarkus.runtime.annotations.RegisterForReflection
     record Todo(Long id, String title, boolean done) {
     }
 }

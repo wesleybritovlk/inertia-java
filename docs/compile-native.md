@@ -126,8 +126,10 @@ travel through serialization, so:
   the framework's own AOT; the library closes the one real gap: the reflective bridge
   into it (the registrations described above — validated in the lab binaries).
 - **Rich prop types** (`records`/POJOs returned by your suppliers) ride the framework's
-  mapper registration; when you add exotic types, let the tracing agent confirm:
-  run the agent on the JVM-mode app
+  mapper registration; when you add exotic types: Quarkus apps put
+  `@RegisterForReflection` on the type (the demo's `Todo` record carries it — the failing
+  shape is Jackson's "No serializer found ... This appears to be a native image"), Spring
+  apps register a hint or run the tracing agent
   (`-agentlib:native-image-agent=config-output-dir=src/main/resources/native-image`,
   exercise your pages, commit the generated `config/` files).
 - **The bundled `PlainJsonPageSerializer`** (fallback when no Jackson exists) reads
