@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>inertia-java demo</title>
+    <!-- inertia-laravel @vite parity: dev mode turns on while the hot flag file exists -->
+    <th:block th:if="${viteDevMode}">
+      <script type="module" th:src="${viteClient}"></script>
+      <th:block th:if="${viteReactRefresh}">
+        <script type="module" th:inline="javascript">
+          import RefreshRuntime from "[(${viteReactRefresh})]";
+          RefreshRuntime.injectIntoGlobalHook(window);
+          window.$RefreshReg$ = () => {};
+          window.$RefreshSig$ = () => {};
+          window.__vite_plugin_react_preamble_installed__ = true;
+        </script>
+      </th:block>
+    </th:block>
+    <script type="module" th:src="${viteAppJs}"></script>
+    <th:block th:unless="${viteDevMode}" th:each="css : ${viteCss}">
+      <link rel="stylesheet" th:href="${css}" />
+    </th:block>
+  </head>
+  <body>
+    <div th:id="${inertiaRootId}"></div>
+    <script th:attr="data-page=${inertiaRootId}" type="application/json" th:utext="${inertiaPageJson}"></script>
+  </body>
+</html>

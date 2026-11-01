@@ -50,7 +50,7 @@ npm run build
 #   resources (builds are NOT committed; every framework rebuilds the same folder)
 
 mvn -pl inertia-demo-spring spring-boot:run    # Boot 3.3.12 / 4.0.5 via -Pboot4
-mvn -pl inertia-demo-quarkus quarkus:dev       # or quarkus packaging: mvn package -pl inertia-demo-quarkus
+mvn -pl inertia-demo-quarkus quarkus:dev       # packaged runs bake resources: mvn package -pl inertia-demo-quarkus
 ```
 
 The whole back-end configuration for Vite is **one property**
