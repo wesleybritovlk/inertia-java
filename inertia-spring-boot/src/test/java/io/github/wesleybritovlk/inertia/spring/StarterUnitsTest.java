@@ -209,6 +209,7 @@ class StarterUnitsTest {
 
         InertiaProperties staticProps = new InertiaProperties();
         staticProps.setVersion("static-v");
+        staticProps.setViteDevHot("off"); // no ambient flags in this assertion: static version wins
         var fromStatic = new InertiaConfiguration().inertiaVersionProvider(staticProps);
         assertEquals("static-v", fromStatic.version());
     }
@@ -218,6 +219,7 @@ class StarterUnitsTest {
         // one property: the Vite manifest becomes BOTH the template source and the version
         InertiaProperties viteOnly = new InertiaProperties();
         viteOnly.setViteManifest("src/test/resources/vite-test/manifest.json");
+        viteOnly.setViteDevHot("off"); // no ambient flags in this assertion
         var fromVite = new InertiaConfiguration().inertiaVersionProvider(viteOnly);
         var expected = new FileVersionProvider("src/test/resources/vite-test/manifest.json");
         assertEquals(expected.version(), fromVite.version());
@@ -225,6 +227,7 @@ class StarterUnitsTest {
         // an explicit version file still wins over the Vite manifest
         InertiaProperties explicitFile = new InertiaProperties();
         explicitFile.setViteManifest("src/test/resources/vite-test/manifest.json");
+        explicitFile.setViteDevHot("off");
         explicitFile.setVersionFile(tempDir.resolve("explicit.json").toString());
         var fromExplicit = new InertiaConfiguration().inertiaVersionProvider(explicitFile);
         var explicitExpected = new FileVersionProvider(tempDir.resolve("explicit.json").toString());
@@ -236,6 +239,7 @@ class StarterUnitsTest {
         nulls.setViteManifest(null);
         nulls.setViteEntry(null);
         nulls.setViteBase(null);
+        nulls.setViteDevHot("off"); // ambient flags must not flip the static version
         assertEquals("1", new InertiaConfiguration().inertiaVersionProvider(nulls).version());
         assertEquals(null, nulls.getViteManifest());
         assertEquals(null, nulls.getViteBase());

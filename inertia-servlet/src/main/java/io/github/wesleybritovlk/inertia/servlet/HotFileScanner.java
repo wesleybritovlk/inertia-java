@@ -25,12 +25,17 @@ public final class HotFileScanner {
     private HotFileScanner() {
     }
 
-    /** Default auto-scan candidates (working directory, three levels deep). */
+    /** Default auto-scan candidates (working directory three levels deep + one parent level). */
     public static List<Path> autoScan() {
         List<Path> auto = new ArrayList<>();
         auto.add(Path.of("node_modules", ".hot-inertia"));
         auto.add(Path.of(".hot-inertia"));
+        auto.add(Path.of("..", "node_modules", ".hot-inertia"));
         collect(Path.of(""), MAX_DEPTH, auto);
+        // one bounded parent level: runtime forks (quarkus:dev etc) may execute from the
+        // MODULE dir while the front-ends live in the PARENT folder — covers the sibling
+        // layout without roaming the machine
+        collect(Path.of(".."), MAX_DEPTH - 1, auto);
         return List.copyOf(auto);
     }
 

@@ -3,11 +3,12 @@
 
     const page = usePage();
     const isActive = (href) => page.url === href || (href !== '/' && page.url.startsWith(href));
+    const navClass = (href) => (isActive(href) ? 'active' : '');
 </script>
 
 <nav class="nav">
-    <a href="/" class:active={isActive('/')}>Hello</a>
-    <a href="/form-todo" class:active={isActive('/form-todo')}>Simple Form Todo</a>
+    <Link href="/" class={navClass('/')}>Hello</Link>
+    <Link href="/form-todo" class={navClass('/form-todo')}>Simple Form Todo</Link>
 </nav>
 
 <style>

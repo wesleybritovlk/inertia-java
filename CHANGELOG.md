@@ -39,6 +39,21 @@ All notable changes of this project are documented here. Format based on
   port 8080 (they are never run together). Beans of `inertia-quarkus` are discoverable
   by external Quarkus applications via a `META-INF/beans.xml` bean-archive marker.
 
+### Fixed — demo SPA + dev mode on both stacks
+- The Svelte demo navbar used plain `<a href>` (`Link` was imported but never rendered):
+  every page change was a full document load; it now uses inertia's `Link` (`/form-todo`
+  navigates in-place like Vue/React).
+- Quarkus page/response `Content-Type` negotiation now produces `text/html` /
+  `application/json` correctly (the writers declare their `@Produces` and route the
+  protocol result's own `Content-Type` through `setContentType`), instead of the
+  octet-stream default RESTEasy applied when no provider declared media types.
+- Hot-flag discovery covers the layout `quarkus:dev` runs in (fork from the module dir):
+  the auto-scan also descends one bounded parent level (`../`); the Spring demo pins
+  `spring-boot:run` at the repository root via the plugin's `workingDirectory`.
+- Demo quarkus tests pin `inertia.vite-dev-hot=off` via a test profile so the suite
+  cannot be broken by a live dev session on the develop machine (hot flags darken the
+  asset version by design). Test isolation is now standard practice in both adapters.
+
 ### Added — `inertia-quarkus`
 - Full Quarkus adapter over the same protocol and the same shared glue: CDI producers
   (version provider → hot-aware, hybrid serializer, Thymeleaf+Vite renderer), the protocol

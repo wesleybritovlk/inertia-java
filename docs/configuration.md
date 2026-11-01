@@ -12,6 +12,8 @@ are sane; `inertia.version-file` is the one you will usually set.
 | `inertia.vite-manifest` | _(empty)_ | **Vite integration switch**: location of the produced `manifest.json` — classpath: locations (jar-safe, cwd-independent, recommended for build outputs) or filesystem paths. Activates the `@vite` equivalent renderer (`viteAppJs`/`viteCss` template variables, entry detection + lazy-chunk css) and — when no explicit version source is set — doubles as the asset version source (same SHA-256) |
 | `inertia.vite-base` | `/` | URL prefix for Vite asset files |
 | `inertia.vite-entry` | _(empty)_ | Vite entry key override; default resolves the first `"isEntry": true` entry |
+| `inertia.vite-dev-hot` | _(auto-scan)_ | Hot flag discovery (dev mode). Empty scans around the working directory — three levels inside plus one bounded parent level (`../`) — per front-end `node_modules`; comma-separated paths override; `off` disables detection (**recommended for production servers** so a stale flag cannot darken the version) |
+| `inertia.vite-react-refresh` | `auto` | React Fast Refresh preamble in dev mode (`auto` probes `/@react-refresh`) |
 | `inertia.root-id` | `app` | DOM mount id — must equal the client's `createInertiaApp({ id })` and is used for both `data-page` and `div#id` in the root template |
 | `inertia.template-path` | `classpath:templates/inertia.html` | Classpath resource for your root template override; missing → bundled template |
 | `inertia.filter-order` | `Ordered.HIGHEST_PRECEDENCE + 50` | Filter registration order (outermost-outermost, letting security filters' redirects also get the 303/409 upgrades) |

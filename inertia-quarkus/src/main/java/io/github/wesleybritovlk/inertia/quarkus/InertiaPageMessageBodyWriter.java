@@ -15,6 +15,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.ext.MessageBodyWriter;
@@ -33,6 +34,7 @@ import jakarta.ws.rs.ext.Provider;
  */
 @Provider
 @ApplicationScoped
+@Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML})
 public class InertiaPageMessageBodyWriter implements MessageBodyWriter<InertiaPage> {
 
     private final InertiaRootTemplateRenderer renderer;
@@ -55,7 +57,11 @@ public class InertiaPageMessageBodyWriter implements MessageBodyWriter<InertiaPa
         Map<String, Object> viewData = entity.view();
         InertiaResult result = CurrentInertia.current().engine().result(entity);
         for (var header : result.headers().entrySet()) {
-            response.setHeader(header.getKey(), header.getValue());
+            if ("Content-Type".equalsIgnoreCase(header.getKey())) {
+                response.setContentType(header.getValue());
+            } else {
+                response.setHeader(header.getKey(), header.getValue());
+            }
         }
         response.setStatus(result.status());
         if (result.kind() == InertiaResult.Kind.PAGE_JSON) {

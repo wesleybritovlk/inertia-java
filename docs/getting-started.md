@@ -181,13 +181,16 @@ export default defineConfig({
 });
 ```
 
-The flag writes `node_modules/.hot-inertia` and the Spring side auto-scans for it
-(its `inertia.vite-dev-hot` default is empty = auto-scan), so no path pairing is
+The flag writes `node_modules/.hot-inertia` and both adapters auto-scan for it (the
+`inertia.vite-dev-hot` default is empty = auto-scan: three levels inside the working
+directory plus one bounded parent level — the Quarkus `quarkus:dev` line and the demo
+`spring-boot:run` line pair from the layouts they ship with), so no path pairing is
 required at all — node_modules is git-ignored, so the flag never shows in `git status`
-either. The dev loop then pairs `npm run dev` (writes the flag) with `spring-boot:run`
-(answers pages in dev mode, HMR live) — details in
-[dev-workflow.md](dev-workflow.md). If you maintain several projects, the same plugin
-ships as a reusable package: `npm/inertia-vite-hot-file` in this repository
+either. In production set `inertia.vite-dev-hot=off`. The dev loop then pairs
+`npm run dev` (writes the flag) with the back-end's dev run (answers pages in dev
+mode, HMR live) — details in [dev-workflow.md](dev-workflow.md). If you maintain
+several projects, the same plugin ships as a reusable package:
+`npm/inertia-vite-hot-file` in this repository
 (`npm i @wesleybritovlk/inertia-vite-hot-file` once published). Exotic layouts only:
 point the plugin at a custom path (`inertiaHotFile('../.hot-inertia')`) and mirror it
 on the Spring side with the same `inertia.vite-dev-hot` value relative to the

@@ -55,13 +55,19 @@ const inertiaHotFile = () => ({
 Default location **`node_modules/.hot-inertia`**: `node_modules` is universally
 git-ignored, so the flag never shows in `git status` and cannot leak into a packaged
 Java artifact. The Spring side needs nothing: the empty `inertia.vite-dev-hot` default
-**auto-scans** the working directory for the flag inside each project's own
-`node_modules` (up to three levels deep), so `mvn` may run from the repository root,
-from the demo folder or anywhere else — both sides are already paired. Set
-`inertia.vite-dev-hot` to one or more comma-separated paths (relative to the working
-directory) only for exotic layouts (e.g. one shared flag file for the whole repo), and
-`inertia.vite-dev-hot=off` to disable dev-mode detection entirely. For teams maintaining
-several projects, the same plugin ships as a reusable npm package in this repository
+**auto-scans** for the flag around the working directory — three levels deep inside it
+PLUS one bounded parent level (`../`) — covering the runtime layout where the backend
+process executes from a module directory and the front-ends live in a sibling folder
+(Quarkus `quarkus:dev` forks do exactly that). Spring's `spring-boot:run` may pin the
+anchor with the plugin's `workingDirectory` option (the demo does, pointing at the
+repository root). Set `inertia.vite-dev-hot` to one or more comma-separated paths
+(relative to the working directory) only for exotic layouts (one shared flag file for
+the whole repo), and `inertia.vite-dev-hot=off` to disable dev-mode detection entirely —
+**production servers should always set `off`** (or run away from any `node_modules`
+directory), because a stale flag file left by a killed dev session keeps the asset
+version dark (no 409s). The renderer re-probes per request, so deleting a stale flag
+restores build mode without a restart. For teams maintaining several projects, the same
+plugin ships as a reusable npm package in this repository
 (`npm/inertia-vite-hot-file`, `@wesleybritovlk/inertia-vite-hot-file` — `npm i` +
 `inertiaHotFile()`), consumable from any front-end to avoid copy-paste drift.
 
@@ -72,7 +78,7 @@ gracefully. If a dev process dies hard (`kill -9`), remove the file manually.
 
 | Property | Default | Meaning |
 |---|---|---|
-| `inertia.vite-dev-hot` | _(auto-scan)_ | Hot flag detection. Empty (default) scans the working directory for `node_modules/.hot-inertia` (per front-end, three levels deep). One or more comma-separated paths override the scan; the value `off` disables dev-mode detection entirely |
+| `inertia.vite-dev-hot` | _(auto-scan)_ | Hot flag detection. Empty (default) scans around the working directory — three levels deep inside it plus one bounded parent level (`../`), per front-end `node_modules`. One or more comma-separated paths override the scan; the value `off` disables dev-mode detection (recommended for production servers) |
 | `inertia.vite-dev-url` | `http://localhost:5173` | Vite dev server origin |
 | `inertia.vite-entry` | _(empty)_ | Dev entry source path (e.g. `src/app.js`); empty probes `src/app.js` then `src/app.jsx` against the dev server on first render |
 | `inertia.vite-react-refresh` | `auto` | React **Fast Refresh** preamble in dev mode. `auto` probes the dev server for `/@react-refresh` (only `@vitejs/plugin-react` mounts it) — the React front needs no property; `true`/`false` force it on and off |

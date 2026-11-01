@@ -41,7 +41,8 @@ import org.springframework.web.context.WebApplicationContext;
  * bean so the suite compiles across Boot majors (Boot 4 moved the MockMvc auto
  * configuration to a dedicated starter). Uses only spring-test APIs.</p>
  */
-@SpringBootTest(classes = InertiaIntegrationTest.TestApp.class, properties = "inertia.version=v-test")
+@SpringBootTest(classes = InertiaIntegrationTest.TestApp.class,
+        properties = { "inertia.version=v-test", "inertia.vite-dev-hot=off" })
 class InertiaIntegrationTest {
 
     private static final String INERTIA = "true";

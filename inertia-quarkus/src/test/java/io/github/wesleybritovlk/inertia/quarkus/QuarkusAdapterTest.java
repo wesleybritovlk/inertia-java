@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.QuarkusTestProfile;
+import io.quarkus.test.junit.TestProfile;
 
 
 /**
@@ -24,7 +26,20 @@ import io.quarkus.test.junit.QuarkusTest;
  * resources, the JAX-RS writer kinds and the once/scroll wire shapes.
  */
 @QuarkusTest
+@TestProfile(QuarkusAdapterTest.DevHotOffProfile.class)
 class QuarkusAdapterTest {
+
+    /**
+     * Deterministic adapter behavior for the suite: version hashing + guard rules must not
+     * depend on whether a Vite dev session happens to be running on this machine (its hot
+     * flag would put the version provider to dark, killing the 409 expectations).
+     */
+    public static class DevHotOffProfile implements QuarkusTestProfile {
+        @Override
+        public java.util.Map<String, String> getConfigOverrides() {
+            return java.util.Map.of("inertia.vite-dev-hot", "off");
+        }
+    }
 
     @TestHTTPResource
     URI baseUri;
