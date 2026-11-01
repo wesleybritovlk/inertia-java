@@ -80,4 +80,22 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- GraalVM native build of the demo: mvn package -Dnative (helpers: container build
+             via -Dquarkus.native.container-build=true); the adapter registrations travel
+             inside the inertia-quarkus jar -->
+        <profile>
+            <id>native</id>
+            <activation>
+                <property>
+                    <name>native</name>
+                </property>
+            </activation>
+            <properties>
+                <skipITs>true</skipITs>
+                <quarkus.native.enabled>true</quarkus.native.enabled>
+            </properties>
+        </profile>
+    </profiles>
 </project>

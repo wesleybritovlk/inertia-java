@@ -93,4 +93,53 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- GraalVM native build of the demo: mvn -pl :inertia-demo-spring -Pnative package
+             (needs GraalVM 17+ with native-image); the AOT renders per-boot beans and the
+             registrar hints of the starter come along -->
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>process-aot</id>
+                                <goals>
+                                    <goal>process-aot</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <!-- pin: the Boot 3.3 line's own version (unpinned resolves to
+                             1.1.18, whose reachability-metadata schema requires a newer
+                             GraalVM than 17). Bound to the VERIFY phase on purpose: at
+                             package the Boot repackage has already swapped the artifact for
+                             the fat jar, whose nested-jar layout native-image cannot use as
+                             classpath ("Main entry point class ... not found") - at verify
+                             the compile sees plain target/classes. -->
+                        <version>0.10.6</version>
+                        <executions>
+                            <execution>
+                                <id>native-compile</id>
+                                <!-- after process-aot (same phase, declared earlier) and
+                                     before package (where the repackage swaps the artifact
+                                     for the fat jar native-image cannot consume) -->
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

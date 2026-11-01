@@ -2,7 +2,11 @@
 
 Both modern adapters compile to a native executable: instant startup, single-digit-MB RSS,
 no JVM in the container — the server keeps answering the full Inertia protocol (root HTML
-pages, JSON visits, version guard, redirects).
+pages, JSON visits, version guard, redirects). The demo apps carry the profiles themselves:
+`mvn -pl :inertia-demo-spring -Pnative package` (Boot: bound before repackage, plugin
+pinned) and `mvn -pl :inertia-demo-quarkus package -Dnative` — end-to-end shipped proof: the
+Spring demo binary serves the full CRUD flow (`DemoNativeHints` registers the demo's
+`Todo` record, the application-side agent-equivalent the recipes teach).
 
 > **First, a common misconception:** the old `org.springframework.experimental:spring-native`
 > dependency is **not** needed. That was the Spring Boot 2.x experimental project,
@@ -177,3 +181,5 @@ build; this is only a recommendation for the total-footprint story.
 | Asset/manifest resource missing in the binary | Resources travel through framework AOT registration; keep them under `META-INF/resources` (Quarkus) / `static` (Boot) as the guides teach, or extend the framework's resource includes. The bundled root template is registered by the adapters (`META-INF/inertia/templates/.*`); an app-owned head-fragment override is an APP resource — register your own pattern or point `inertia.template-path` at a `file:` location |
 | A prop type fails to serialize only on native | Run the [tracing agent](https://graalvm.org/latest/reference-manual/native-image/metadata/agent/) on the JVM-mode app and commit the generated config |
 | `No String returning writeValue(Object) method found on ...ObjectMapper` | should not happen anymore (the adapters ship the registration); if it does with a custom mapper of your own, register it the same way or switch to a `PageSerializer` bean |
+| The reachability-metadata schema requires a newer GraalVM (Boot parent-less poms) | the native-maven-plugin resolves unpinned to the LATEST (new metadata format, GraalVM 21/25 only) — pin Bespoke the Boot line's version (e.g. `0.10.6` for Boot 3.3.x) |
+| `Main entry point class ... neither found on classpath` (Boot fat jar) | the native compile ran AFTER Boot's repackage (the fat jar's nested-jar layout is unusable as classpath) — bind the graal `compile` goal BEFORE `package` (e.g. `prepare-package`), so it sees plain `target/classes` |
