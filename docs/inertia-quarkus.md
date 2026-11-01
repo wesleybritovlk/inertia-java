@@ -61,9 +61,9 @@ properties ([configuration.md](configuration.md)):
 
 ```properties
 inertia.version=1
-# inertia.version-file=classpath:static/manifest.json   # file-hash versioning
+# inertia.version-file=classpath:META-INF/resources/manifest.json   # file-hash versioning
 inertia.root-id=app
-# inertia.vite-manifest=classpath:static/manifest.json  # enables the @vite-equivalent root
+# inertia.vite-manifest=classpath:META-INF/resources/manifest.json  # enables the @vite-equivalent root
 # inertia.vite-dev-url=http://localhost:5173
 # inertia.vite-dev-hot=                                  # blank = auto-scan; off disables
 # inertia.vite-react-refresh=auto                        # auto | true | false

@@ -47,10 +47,12 @@
                 <directory>src/main/resources</directory>
             </resource>
             <!-- the canonical Vite front-ends build into ../frontend-assets (single source:
-                 one `npm run build` feeds this app AND the Spring demo) -->
+                 one `npm run build` feeds this app AND the Spring demo). targetPath follows
+                 the Servlet spec static-resources location: the Undertow default servlet
+                 serves jar META-INF/resources (as does Spring Boot's static locations) -->
             <resource>
                 <directory>${project.basedir}/../frontend-assets</directory>
-                <targetPath>static</targetPath>
+                <targetPath>META-INF/resources</targetPath>
             </resource>
         </resources>
         <plugins>

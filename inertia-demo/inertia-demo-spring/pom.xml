@@ -54,10 +54,13 @@
                 <directory>src/main/resources</directory>
             </resource>
             <!-- the canonical Vite front-ends build into ../frontend-assets (single source:
-                 one `npm run build` feeds this app AND the Quarkus demo) -->
+                 one `npm run build` feeds this app AND the Quarkus demo). targetPath follows
+                 the Servlet spec static-resources location so BOTH stacks serve the assets:
+                 Spring Boot (classpath:/META-INF/resources) and the Undertow default
+                 servlet (jar META-INF/resources) -->
             <resource>
                 <directory>${project.basedir}/../frontend-assets</directory>
-                <targetPath>static</targetPath>
+                <targetPath>META-INF/resources</targetPath>
             </resource>
         </resources>
         <plugins>
@@ -65,6 +68,13 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring.boot.version}</version>
+                <configuration>
+                    <!-- dev-mode hot-flag discovery scans the WORKING directory (three
+                         levels, node_modules aware): the front-ends live in the parent
+                         demo folder, so the run anchors at the repo root — the same
+                         layout both stacks document -->
+                    <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
