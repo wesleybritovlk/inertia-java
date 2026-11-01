@@ -1,0 +1,36 @@
+# GraalVM CE native build of the Boot 3 demo. Stages: 1) the Svelte front-end is built
+# EVERY time (the assets bake into the image); 2) the reactor compiles the JVM side and
+# the native binary inside the GraalVM CE toolchain image (maven copied from maven:3.9;
+# JAVA_HOME ships set by the GraalVM CE image); 3) the runtime image carries the
+# executable alone (no JVM).
+#
+# build: docker build -f inertia-demo/inertia-demo-spring/Dockerfile.native -t inertia-demo-spring:native .
+# run:   docker run --rm -p 8081:8080 inertia-demo-spring:native
+# → http://localhost:8081
+FROM node:20-bookworm-slim AS frontend
+WORKDIR /workspace
+COPY inertia-demo/frontend-demo-svelte inertia-demo/frontend-demo-svelte
+RUN cd inertia-demo/frontend-demo-svelte && npm ci && npm run build
+
+FROM ghcr.io/graalvm/graalvm-ce:ol9-java17-22.3.3 AS build
+WORKDIR /workspace
+COPY --from=maven:3.9 /usr/share/maven /usr/share/maven
+RUN ln -s /usr/share/maven/bin/mvn /usr/local/bin/mvn
+COPY pom.xml .
+COPY inertia-core inertia-core
+COPY inertia-web inertia-web
+COPY inertia-servlet inertia-servlet
+COPY inertia-servlet-javax inertia-servlet-javax
+COPY inertia-spring-boot inertia-spring-boot
+COPY inertia-spring-boot2 inertia-spring-boot2
+COPY inertia-quarkus inertia-quarkus
+COPY inertia-demo inertia-demo
+COPY --from=frontend /workspace/inertia-demo/frontend-assets inertia-demo/frontend-assets
+RUN mvn -B -pl :inertia-demo-spring -am -Pnative package -DskipTests \
+    && strip --strip-debug inertia-demo/inertia-demo-spring/target/inertia-demo-spring
+
+FROM debian:bookworm-slim
+WORKDIR /application
+COPY --from=build /workspace/inertia-demo/inertia-demo-spring/target/inertia-demo-spring /application/app
+EXPOSE 8080
+ENTRYPOINT ["/application/app"]

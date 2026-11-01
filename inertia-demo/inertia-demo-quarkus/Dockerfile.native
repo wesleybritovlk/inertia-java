@@ -1,0 +1,41 @@
+# GraalVM CE native build of the Quarkus demo. Stages: 1) the Svelte front-end is built
+# EVERY time (the assets bake into the image); 2) the reactor compiles inside the GraalVM
+# CE toolchain image (maven copied from maven:3.9; JAVA_HOME ships set by the GraalVM CE
+# image) and runs the local native-image (no container-build indirection needed); 3) the
+# runtime image carries the runner alone (no JVM).
+#
+# build: docker build -f inertia-demo/inertia-demo-quarkus/Dockerfile.native -t inertia-demo-quarkus:native .
+# run:   docker run --rm -p 8082:8080 inertia-demo-quarkus:native
+# → http://localhost:8082
+FROM node:20-bookworm-slim AS frontend
+WORKDIR /workspace
+COPY inertia-demo/frontend-demo-svelte inertia-demo/frontend-demo-svelte
+RUN cd inertia-demo/frontend-demo-svelte && npm ci && npm run build
+
+FROM ghcr.io/graalvm/graalvm-ce:ol9-java17-22.3.3 AS build
+# the CE image does not bundle the native-image COMPONENT (22.x installer era) — quarkus
+# requires the executable to be present (the spring plugin travels inside the JDK, so it
+# worked without this step)
+RUN gu install native-image
+WORKDIR /workspace
+COPY --from=maven:3.9 /usr/share/maven /usr/share/maven
+RUN ln -s /usr/share/maven/bin/mvn /usr/local/bin/mvn
+COPY pom.xml .
+COPY inertia-core inertia-core
+COPY inertia-web inertia-web
+COPY inertia-servlet inertia-servlet
+COPY inertia-servlet-javax inertia-servlet-javax
+COPY inertia-spring-boot inertia-spring-boot
+COPY inertia-spring-boot2 inertia-spring-boot2
+COPY inertia-quarkus inertia-quarkus
+COPY inertia-demo inertia-demo
+COPY --from=frontend /workspace/inertia-demo/frontend-assets inertia-demo/frontend-assets
+RUN mvn -B -pl :inertia-demo-quarkus -am package -Dnative -DskipTests \
+    -Dquarkus.native.container-build=false \
+    && strip --strip-debug inertia-demo/inertia-demo-quarkus/target/inertia-demo-quarkus-runner
+
+FROM debian:bookworm-slim
+WORKDIR /application
+COPY --from=build /workspace/inertia-demo/inertia-demo-quarkus/target/inertia-demo-quarkus-runner /application/runner
+EXPOSE 8080
+ENTRYPOINT ["/application/runner"]

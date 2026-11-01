@@ -165,6 +165,42 @@ the template inside the inertia-web jar, the JSON visit answers the protocol wit
 version hash, and the built front-end assets serve from `META-INF/resources` (the Quarkus
 static-resources filter validated inside the binary).
 
+## The demo Dockerfiles (no local GraalVM needed)
+
+`inertia-demo/inertia-demo-spring/Dockerfile.native` and
+`inertia-demo/inertia-demo-quarkus/Dockerfile.native` build the binaries inside a
+container — three stages: the **Svelte front-end is rebuilt every time** (the assets bake
+into the image), the reactor compiles inside `ghcr.io/graalvm/graalvm-ce:ol9-java17-22.3.3`
+(maven copied from `maven:3.9`), and `debian:bookworm-slim` ships the executable alone.
+
+```bash
+docker build -f inertia-demo/inertia-demo-spring/Dockerfile.native -t inertia-demo-spring:native .
+docker run --rm -p 8081:8080 inertia-demo-spring:native   # → localhost:8081
+docker build -f inertia-demo/inertia-demo-quarkus/Dockerfile.native -t inertia-demo-quarkus:native .
+docker run --rm -p 8082:8080 inertia-demo-quarkus:native   # → localhost:8082
+```
+
+Traps baked into those files, each validated:
+
+- **The CE image does not bundle the `native-image` component** (22.x installer era:
+  `gu install native-image` in the stage) — the Spring plugin invokes the compiler
+  in-process and works without it, the Quarkus build requires the executable.
+- **Quarkus falls back to container-build when the executable is absent** ("No container
+  runtime was found" reported from inside the stage) — the Dockerfile passes
+  `-Dquarkus.native.container-build=false` explicitly so the local stage toolchain runs.
+- **Bound the graal compile goal BEFORE Boot's repackage** (the fat jar is unusable as
+  native-image classpath) and pinned the plugin version (the latest one requires a newer
+  GraalVM).
+- **`strip --strip-debug`** trims the shipped binary — `native-image` output carries
+  debug_info by default.
+- **No Alpine runtime**: a binary built inside the glibc toolchain (any CE ol9 image)
+  cannot exec on Alpine's musl — a musl toolchain build is a different recipe; the saved
+  weight is small next to the stripped binary itself.
+- Publication to Maven Central would shrink *user* Dockerfiles (only their sources, deps
+  from the registry) — the demo builds the full reactor in-image today because the
+  snapshots are not published (as the user weighs: with the demo pom assembled, it does
+  not matter for THESE files).
+
 ## The front-end note (why Svelte is a good neighbor here)
 
 A native deployment is usually about a lean footprint — and the client side is part of
