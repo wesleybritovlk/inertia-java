@@ -74,9 +74,12 @@ final class DotPaths {
             return;
         }
         Object existing = branch.get(head);
-        LinkedHashMap<String, Object> child = existing instanceof LinkedHashMap<?, ?> map
-                ? (LinkedHashMap<String, Object>) map
-                : new LinkedHashMap<>();
+        LinkedHashMap<String, Object> child;
+        if (existing instanceof LinkedHashMap<?, ?>) {
+            child = (LinkedHashMap<String, Object>) existing;
+        } else {
+            child = new LinkedHashMap<>();
+        }
         branch.put(head, child);
         insert(child, segments.subList(1, size), leaf);
     }
@@ -84,8 +87,8 @@ final class DotPaths {
     private static void walk(Map<String, Object> nested, String prefix, LinkedHashMap<String, Prop> out) {
         for (Map.Entry<String, Object> entry : nested.entrySet()) {
             String path = prefix == null ? entry.getKey() : prefix + '.' + entry.getKey();
-            if (entry.getValue() instanceof Map<?, ?> map) {
-                walk((Map<String, Object>) castTypeless(map), path, out);
+            if (entry.getValue() instanceof Map<?, ?>) {
+                walk((Map<String, Object>) castTypeless(entry.getValue()), path, out);
             } else {
                 out.put(path, (Prop) entry.getValue());
             }

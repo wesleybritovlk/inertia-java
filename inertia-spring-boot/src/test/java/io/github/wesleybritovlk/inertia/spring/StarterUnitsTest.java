@@ -17,13 +17,13 @@ import io.github.wesleybritovlk.inertia.core.Inertia;
 import io.github.wesleybritovlk.inertia.core.InertiaHeaders;
 import io.github.wesleybritovlk.inertia.core.InertiaPage;
 import io.github.wesleybritovlk.inertia.core.InertiaResult;
-import io.github.wesleybritovlk.inertia.servlet.FileVersionProvider;
+import io.github.wesleybritovlk.inertia.web.FileVersionProvider;
 import io.github.wesleybritovlk.inertia.servlet.InertiaFilter;
 import io.github.wesleybritovlk.inertia.servlet.InertiaPageWriter;
-import io.github.wesleybritovlk.inertia.servlet.InertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.web.InertiaRootTemplateRenderer;
 import io.github.wesleybritovlk.inertia.servlet.ServletInertiaRequest;
-import io.github.wesleybritovlk.inertia.servlet.ThymeleafInertiaRootTemplateRenderer;
-import io.github.wesleybritovlk.inertia.servlet.ViteInertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.web.ThymeleafInertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.web.ViteInertiaRootTemplateRenderer;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

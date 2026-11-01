@@ -1,10 +1,11 @@
-package io.github.wesleybritovlk.inertia.servlet;
+package io.github.wesleybritovlk.inertia.web;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Resource locations for the adapter resources: supports {@code classpath:<path>} (resolved via
@@ -22,7 +23,7 @@ final class InertiaResources {
         if (location.startsWith("classpath:")) {
             return readClasspath(location.substring("classpath:".length()));
         }
-        return Files.readAllBytes(Path.of(location.startsWith("file:") ? location.substring(5) : location));
+        return Files.readAllBytes(Paths.get(location.startsWith("file:") ? location.substring(5) : location));
     }
 
     static boolean exists(String location) {
@@ -31,7 +32,7 @@ final class InertiaResources {
                 return threadLoader().getResourceAsStream(location.substring("classpath:".length())) != null
                         || InertiaResources.class.getClassLoader().getResourceAsStream(location.substring("classpath:".length())) != null;
             }
-            return Files.exists(Path.of(location.startsWith("file:") ? location.substring(5) : location));
+            return Files.exists(Paths.get(location.startsWith("file:") ? location.substring(5) : location));
         } catch (Exception unavailable) {
             return false;
         }
@@ -40,15 +41,25 @@ final class InertiaResources {
     private static byte[] readClasspath(String path) throws IOException {
         try (InputStream in = threadLoader().getResourceAsStream(path)) {
             if (in != null) {
-                return in.readAllBytes();
+                return readAll(in);
             }
         }
         try (InputStream in = InertiaResources.class.getClassLoader().getResourceAsStream(path)) {
             if (in != null) {
-                return in.readAllBytes();
+                return readAll(in);
             }
         }
         throw new NoSuchFileException("classpath:" + path);
+    }
+
+    /** Java-8-safe read-all for the streams the classloader hands back ( {@code InputStream.readAllBytes} is 9+). */
+    static byte[] readAll(InputStream in) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] chunk = new byte[8192];
+        for (int read; (read = in.read(chunk)) != -1; ) {
+            buffer.write(chunk, 0, read);
+        }
+        return buffer.toByteArray();
     }
 
     private static ClassLoader threadLoader() {

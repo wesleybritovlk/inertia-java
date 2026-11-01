@@ -9,7 +9,7 @@ import java.util.Map;
 
 import io.github.wesleybritovlk.inertia.core.InertiaPage;
 import io.github.wesleybritovlk.inertia.core.InertiaResult;
-import io.github.wesleybritovlk.inertia.servlet.InertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.web.InertiaRootTemplateRenderer;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

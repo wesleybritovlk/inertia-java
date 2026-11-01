@@ -15,6 +15,13 @@
     <name>inertia-core</name>
     <description>Inertia.js protocol engine: framework-agnostic, zero-dependency core (page object, props, partial reloads, redirects, flash/error SPI).</description>
 
+    <properties>
+        <!-- the core rides the legacy line (bytecode 8 runs on every modern runtime too) -->
+        <maven.compiler.release>8</maven.compiler.release>
+        <!-- tests exercise runtime-17 features (user records) over the bytecode-8 classes -->
+        <maven.compiler.testRelease>17</maven.compiler.testRelease>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

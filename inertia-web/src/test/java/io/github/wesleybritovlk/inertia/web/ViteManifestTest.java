@@ -1,4 +1,4 @@
-package io.github.wesleybritovlk.inertia.servlet;
+package io.github.wesleybritovlk.inertia.web;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

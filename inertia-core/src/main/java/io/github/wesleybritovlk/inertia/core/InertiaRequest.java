@@ -1,6 +1,7 @@
 package io.github.wesleybritovlk.inertia.core;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,11 +49,15 @@ public interface InertiaRequest {
     default List<String> headerList(String name) {
         String value = header(name);
         if (value == null) {
-            return List.of();
+            return Collections.emptyList();
         }
-        return Arrays.stream(value.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
+        List<String> parts = new ArrayList<>();
+        for (String part : value.split(",")) {
+            String trimmed = part.trim();
+            if (!trimmed.isEmpty()) {
+                parts.add(trimmed);
+            }
+        }
+        return Collections.unmodifiableList(parts);
     }
 }

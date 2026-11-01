@@ -1,6 +1,7 @@
-package io.github.wesleybritovlk.inertia.servlet;
+package io.github.wesleybritovlk.inertia.web;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -41,17 +42,21 @@ public final class ViteManifest {
      * Template variables for the configured entry: {@code viteAppJs} and {@code viteCss}.
      */
     public Map<String, Object> templateVariables(String entryKey, String base) {
-        String selected = entryKey == null || entryKey.isBlank() ? firstEntry() : entryKey;
-        if (!(entries.get(selected) instanceof Map<?, ?> entry)) {
+        String selected = entryKey == null || entryKey.trim().isEmpty() ? firstEntry() : entryKey;
+        Object selectedValue = entries.get(selected);
+        if (!(selectedValue instanceof Map<?, ?>)) {
             throw new IllegalStateException("Vite manifest " + location + " has no entry " + selected);
         }
+        Map<?, ?> entry = (Map<?, ?>) selectedValue;
         List<String> css = new ArrayList<>();
         LinkedHashSet<String> visited = new LinkedHashSet<>();
         visited.add(selected);
         collectCss(selected, entry, css, visited);
         Map<String, Object> variables = new LinkedHashMap<>();
         variables.put("viteAppJs", prefix(base, entry.get("file")));
-        variables.put("viteCss", css.stream().map(path -> prefix(base, path)).collect(java.util.stream.Collectors.toUnmodifiableList()));
+        variables.put("viteCss", css.stream().map(path -> prefix(base, path)).collect(
+                java.util.stream.Collectors.collectingAndThen(java.util.stream.Collectors.toList(),
+                        Collections::unmodifiableList)));
         return variables;
     }
 
@@ -63,18 +68,27 @@ public final class ViteManifest {
     }
 
     private void collectCss(String key, Map<?, ?> entry, List<String> css, Set<String> visited) {
-        if (entry.get("css") instanceof List<?> files) {
-            for (Object file : files) {
-                if (file instanceof String s) {
-                    css.add(s);
+        Object cssFiles = entry.get("css");
+        if (cssFiles instanceof List<?>) {
+            for (Object file : (List<?>) cssFiles) {
+                if (file instanceof String) {
+                    css.add((String) file);
                 }
             }
         }
-        if (entry.get("imports") instanceof List<?> imports) {
-            for (Object imported : imports) {
-                if (imported instanceof String key0 && visited.add(key0)
-                        && entries.get(key0) instanceof Map<?, ?> importedEntry) {
-                    collectCss(key0, importedEntry, css, visited);
+        Object importedKeys = entry.get("imports");
+        if (importedKeys instanceof List<?>) {
+            for (Object imported : (List<?>) importedKeys) {
+                if (!(imported instanceof String)) {
+                    continue;
+                }
+                String key0 = (String) imported;
+                if (!visited.add(key0)) {
+                    continue;
+                }
+                Object importedValue = entries.get(key0);
+                if (importedValue instanceof Map<?, ?>) {
+                    collectCss(key0, (Map<?, ?>) importedValue, css, visited);
                 }
             }
         }
@@ -83,9 +97,11 @@ public final class ViteManifest {
     private String firstEntry() {
         // auto-detect: the first manifest entry flagged "isEntry": true, manifest order kept
         for (Map.Entry<String, Object> candidate : entries.entrySet()) {
-            if (candidate.getValue() instanceof Map<?, ?> entry
-                    && Boolean.TRUE.equals(entry.get("isEntry"))) {
-                return candidate.getKey();
+            if (candidate.getValue() instanceof Map<?, ?>) {
+                Map<?, ?> entry = (Map<?, ?>) candidate.getValue();
+                if (Boolean.TRUE.equals(entry.get("isEntry"))) {
+                    return candidate.getKey();
+                }
             }
         }
         return "src/app.js";
@@ -93,10 +109,14 @@ public final class ViteManifest {
 
     // ------------------------------------------------------------------ json reading
 
+    @SuppressWarnings("unchecked")
     private static Map<String, Object> parse(String json) {
         Mapper parser = new Mapper(json);
         Object value = parser.value();
-        return value instanceof Map<?, ?> entries ? (Map<String, Object>) entries : Map.of();
+        if (value instanceof Map<?, ?>) {
+            return (Map<String, Object>) value;
+        }
+        return Collections.emptyMap();
     }
 
     private static final class Mapper {
@@ -112,15 +132,32 @@ public final class ViteManifest {
             if (atEnd()) {
                 throw new IllegalArgumentException("Empty JSON at " + index);
             }
-            return switch (peek()) {
-                case '{' -> object();
-                case '[' -> array();
-                case '"' -> string();
-                case 't' -> word("true");
-                case 'f' -> word("false");
-                case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> number();
-                default -> throw new IllegalArgumentException("Unsupported JSON at " + index);
-            };
+            switch (peek()) {
+                case '{':
+                    return object();
+                case '[':
+                    return array();
+                case '"':
+                    return string();
+                case 't':
+                    return word("true");
+                case 'f':
+                    return word("false");
+                case '-':
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    return number();
+                default:
+                    throw new IllegalArgumentException("Unsupported JSON at " + index);
+            }
         }
 
         private Map<String, Object> object() {
@@ -177,18 +214,35 @@ public final class ViteManifest {
                 }
                 if (c == '\\') {
                     char escape = next();
-                    out.append(switch (escape) {
-                        case '"' -> '"';
-                        case '\\' -> '\\';
-                        case '/' -> '/';
-                        case 'b' -> '\b';
-                        case 'f' -> '\f';
-                        case 'n' -> '\n';
-                        case 'r' -> '\r';
-                        case 't' -> '\t';
-                        case 'u' -> (char) Integer.parseInt(json.substring(index, index + 4), 16);
-                        default -> throw new IllegalArgumentException("Unknown escape \\" + escape);
-                    });
+                    char decoded;
+                    switch (escape) {
+                        case '"':
+                        case '\\':
+                        case '/':
+                            decoded = escape;
+                            break;
+                        case 'b':
+                            decoded = '\b';
+                            break;
+                        case 'f':
+                            decoded = '\f';
+                            break;
+                        case 'n':
+                            decoded = '\n';
+                            break;
+                        case 'r':
+                            decoded = '\r';
+                            break;
+                        case 't':
+                            decoded = '\t';
+                            break;
+                        case 'u':
+                            decoded = (char) Integer.parseInt(json.substring(index, index + 4), 16);
+                            break;
+                        default:
+                            throw new IllegalArgumentException("Unknown escape \\" + escape);
+                    }
+                    out.append(decoded);
                     if (escape == 'u') {
                         index += 4;
                     }

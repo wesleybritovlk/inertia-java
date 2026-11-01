@@ -2,7 +2,6 @@ package io.github.wesleybritovlk.inertia.core;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.RecordComponent;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.temporal.Temporal;
@@ -25,7 +24,9 @@ import java.util.function.Supplier;
  * <p>Handles the value shapes Inertia props use in practice: primitives/boxes, strings,
  * enums, numbers, maps, iterables and arrays, records, POJOs via public getters,
  * {@link Optional}, {@code java.time} values (ISO-8601), {@link UUID}/{@link java.net.URI}
- * /{@link java.net.URL}, and dates. Cycle detection and a depth cap guard recursive values.</p>
+ * /{@link java.net.URL}, and dates. Cycle detection and a depth cap guard recursive values.
+ * User-side records are recognized through the {@link Records8} reflection gate, so they
+ * keep serializing on modern runtimes while the core rides release 8.</p>
  *
  * <p>With {@link PageKeys#PRESERVE_BIG_INTEGERS} set, integers outside the JavaScript
  * safe-integer range are wrapped as {@code {"$bigint": "..."}} so the client revives them
@@ -40,7 +41,6 @@ public final class PlainJsonPageSerializer implements PageSerializer {
     private static final BigInteger JS_SAFE_MIN = JS_SAFE_MAX.negate();
     private static final long JS_SAFE_MAX_LONG = JS_SAFE_MAX.longValueExact(); // 2^53 - 1
 
-    private static final Map<Class<?>, List<Method>> RECORD_ACCESSORS = new ConcurrentHashMap<>();
     private static final Map<Class<?>, List<Method>> POJO_GETTERS = new ConcurrentHashMap<>();
 
     @Override
@@ -63,19 +63,20 @@ public final class PlainJsonPageSerializer implements PageSerializer {
             out.append("null");
             return;
         }
-        if (value instanceof Boolean b) {
-            out.append(b);
+        if (value instanceof Boolean) {
+            out.append(value);
             return;
         }
-        if (value instanceof CharSequence s) {
-            writeString(out, s.toString());
+        if (value instanceof CharSequence) {
+            writeString(out, value.toString());
             return;
         }
-        if (value instanceof Character c) {
-            writeString(out, c.toString());
+        if (value instanceof Character) {
+            writeString(out, value.toString());
             return;
         }
-        if (value instanceof Double d) {
+        if (value instanceof Double) {
+            Double d = (Double) value;
             if (d.isNaN() || d.isInfinite()) {
                 out.append("null");
             } else {
@@ -83,7 +84,8 @@ public final class PlainJsonPageSerializer implements PageSerializer {
             }
             return;
         }
-        if (value instanceof Float f) {
+        if (value instanceof Float) {
+            Float f = (Float) value;
             if (f.isNaN() || f.isInfinite()) {
                 out.append("null");
             } else {
@@ -91,40 +93,40 @@ public final class PlainJsonPageSerializer implements PageSerializer {
             }
             return;
         }
-        if (value instanceof BigDecimal bd) {
-            out.append(bd.toString());
+        if (value instanceof BigDecimal) {
+            out.append(value);
             return;
         }
-        if (value instanceof BigInteger bi) {
-            writeBigInteger(out, bi, bigIntegers);
+        if (value instanceof BigInteger) {
+            writeBigInteger(out, (BigInteger) value, bigIntegers);
             return;
         }
-        if (value instanceof Long l) {
-            writeLong(out, l, bigIntegers);
+        if (value instanceof Long) {
+            writeLong(out, (Long) value, bigIntegers);
             return;
         }
-        if (value instanceof Number n) {
-            out.append(n);
+        if (value instanceof Number) {
+            out.append(value);
             return;
         }
-        if (value instanceof Enum<?> e) {
-            writeString(out, e.name());
+        if (value instanceof Enum<?>) {
+            writeString(out, ((Enum<?>) value).name());
             return;
         }
-        if (value instanceof Optional<?> optional) {
-            writeValue(out, optional.orElse(null), active, depth, bigIntegers);
+        if (value instanceof Optional<?>) {
+            writeValue(out, ((Optional<?>) value).orElse(null), active, depth, bigIntegers);
             return;
         }
-        if (value instanceof Temporal t) {
-            writeString(out, t.toString());
+        if (value instanceof Temporal) {
+            writeString(out, ((Temporal) value).toString());
             return;
         }
-        if (value instanceof java.util.Date d) {
-            writeString(out, d.toInstant().toString());
+        if (value instanceof java.util.Date) {
+            writeString(out, ((java.util.Date) value).toInstant().toString());
             return;
         }
-        if (value instanceof java.util.Calendar c) {
-            writeString(out, c.toInstant().toString());
+        if (value instanceof java.util.Calendar) {
+            writeString(out, ((java.util.Calendar) value).toInstant().toString());
             return;
         }
         if (value instanceof UUID || value instanceof java.net.URI || value instanceof java.net.URL
@@ -132,61 +134,62 @@ public final class PlainJsonPageSerializer implements PageSerializer {
             writeString(out, value.toString());
             return;
         }
-        if (value instanceof Class<?> type) {
-            writeString(out, type.getName());
+        if (value instanceof Class<?>) {
+            writeString(out, ((Class<?>) value).getName());
             return;
         }
-        if (value instanceof Map<?, ?> map) {
-            writeMap(out, map, active, depth, bigIntegers);
+        if (value instanceof Map<?, ?>) {
+            writeMap(out, (Map<?, ?>) value, active, depth, bigIntegers);
             return;
         }
-        if (value instanceof Iterable<?> iterable) {
-            writeCollection(out, iterable, active, depth, bigIntegers);
+        if (value instanceof Iterable<?>) {
+            writeCollection(out, (Iterable<?>) value, active, depth, bigIntegers);
             return;
         }
-        if (value instanceof Object[] array) {
-            writeCollection(out, Arrays.asList(array), active, depth, bigIntegers);
+        if (value instanceof Object[]) {
+            writeCollection(out, Arrays.asList((Object[]) value), active, depth, bigIntegers);
             return;
         }
-        if (value instanceof int[] array) {
-            writeInts(out, array, active, depth, bigIntegers);
+        if (value instanceof int[]) {
+            writeInts(out, (int[]) value, active, depth, bigIntegers);
             return;
         }
-        if (value instanceof long[] array) {
-            writeLongs(out, array, active, depth, bigIntegers);
+        if (value instanceof long[]) {
+            writeLongs(out, (long[]) value, active, depth, bigIntegers);
             return;
         }
-        if (value instanceof double[] array) {
-            writeDoubles(out, array, active, depth, bigIntegers);
+        if (value instanceof double[]) {
+            writeDoubles(out, (double[]) value, active, depth, bigIntegers);
             return;
         }
-        if (value instanceof float[] array) {
-            writeFloats(out, array, active, depth, bigIntegers);
+        if (value instanceof float[]) {
+            writeFloats(out, (float[]) value, active, depth, bigIntegers);
             return;
         }
-        if (value instanceof boolean[] array) {
-            writeCollection(out, toList(array), active, depth, bigIntegers);
+        if (value instanceof boolean[]) {
+            writeCollection(out, toList((boolean[]) value), active, depth, bigIntegers);
             return;
         }
-        if (value instanceof short[] array) {
-            writeCollection(out, toList(array), active, depth, bigIntegers);
+        if (value instanceof short[]) {
+            writeCollection(out, toList((short[]) value), active, depth, bigIntegers);
             return;
         }
-        if (value instanceof byte[] array) {
-            writeCollection(out, toList(array), active, depth, bigIntegers);
+        if (value instanceof byte[]) {
+            writeCollection(out, toList((byte[]) value), active, depth, bigIntegers);
             return;
         }
-        if (value instanceof char[] array) {
-            writeCollection(out, toList(array), active, depth, bigIntegers);
+        if (value instanceof char[]) {
+            writeCollection(out, toList((char[]) value), active, depth, bigIntegers);
             return;
         }
-        if (value instanceof Record record) {
-            writeRecord(out, record, active, depth, bigIntegers);
+        List<Method> recordAccessors = Records8.accessors(value.getClass());
+        if (recordAccessors != null) {
+            writeRecord(out, value, recordAccessors, active, depth, bigIntegers);
             return;
         }
-        if (value instanceof Supplier<?> supplier) {
+        if (value instanceof Supplier<?>) {
             // defensive: suppliers should be resolved by the page resolver; resolve anyway
-            writeValue(out, supplier.get(), active, depth, bigIntegers);
+            writeValue(out, ((Supplier<?>) value).get(), active, depth, bigIntegers);
             return;
         }
         writePojo(out, value, active, depth, bigIntegers);
@@ -303,7 +306,7 @@ public final class PlainJsonPageSerializer implements PageSerializer {
         out.append(']');
     }
 
-    private static void writeRecord(StringBuilder out, Record record, Set<Object> active, int depth, boolean bigIntegers) {
+    private static void writeRecord(StringBuilder out, Object record, List<Method> accessors, Set<Object> active, int depth, boolean bigIntegers) {
         if (active.contains(record)) {
             throw new IllegalStateException("Inertia prop cycle detected: " + record.getClass().getName());
         }
@@ -311,7 +314,7 @@ public final class PlainJsonPageSerializer implements PageSerializer {
         try {
             out.append('{');
             boolean first = true;
-            for (Method accessor : recordAccessors(record.getClass())) {
+            for (Method accessor : accessors) {
                 if (!first) {
                     out.append(',');
                 }
@@ -360,42 +363,48 @@ public final class PlainJsonPageSerializer implements PageSerializer {
         for (int i = 0; i < length; i++) {
             char c = value.charAt(i);
             switch (c) {
-                case '"' -> out.append("\\\"");
-                case '\\' -> out.append("\\\\");
-                case '\b' -> out.append("\\b");
-                case '\f' -> out.append("\\f");
-                case '\n' -> out.append("\\n");
-                case '\r' -> out.append("\\r");
-                case '\t' -> out.append("\\t");
-                case '<' -> out.append("\\u003C");
-                case '>' -> out.append("\\u003E");
-                case '\u2028' -> out.append("\\u2028");
-                case '\u2029' -> out.append("\\u2029");
-                default -> {
+                case '"':
+                    out.append("\\\"");
+                    break;
+                case '\\':
+                    out.append("\\\\");
+                    break;
+                case '\b':
+                    out.append("\\b");
+                    break;
+                case '\f':
+                    out.append("\\f");
+                    break;
+                case '\n':
+                    out.append("\\n");
+                    break;
+                case '\r':
+                    out.append("\\r");
+                    break;
+                case '\t':
+                    out.append("\\t");
+                    break;
+                case '<':
+                    out.append("\\u003C");
+                    break;
+                case '>':
+                    out.append("\\u003E");
+                    break;
+                case '\u2028':
+                    out.append("\\u2028");
+                    break;
+                case '\u2029':
+                    out.append("\\u2029");
+                    break;
+                default:
                     if (c < 0x20) {
                         out.append("\\u").append(String.format("%04X", (int) c));
                     } else {
                         out.append(c);
                     }
-                }
             }
         }
         out.append('"');
-    }
-
-    private static List<Method> recordAccessors(Class<?> type) {
-        return RECORD_ACCESSORS.computeIfAbsent(type, t -> {
-            RecordComponent[] components = t.getRecordComponents();
-            List<Method> accessors = new ArrayList<>(components.length);
-            for (RecordComponent component : components) {
-                try {
-                    accessors.add(t.getMethod(component.getName()));
-                } catch (NoSuchMethodException e) {
-                    throw new IllegalStateException("Unreadable record component: " + t.getName() + "." + component.getName(), e);
-                }
-            }
-            return accessors;
-        });
     }
 
     private static List<Method> pojoGetters(Class<?> type) {

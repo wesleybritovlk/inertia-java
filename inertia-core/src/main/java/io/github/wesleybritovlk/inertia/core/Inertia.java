@@ -103,8 +103,8 @@ public class Inertia {
         InertiaFlashStore store = request.flash();
         Object previous = store.peek(FlashKeys.FLASH);
         Map<String, Object> merged = new java.util.LinkedHashMap<>();
-        if (previous instanceof Map<?, ?> existing) {
-            for (Map.Entry<?, ?> entry : existing.entrySet()) {
+        if (previous instanceof Map<?, ?>) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) previous).entrySet()) {
                 if (entry.getKey() != null) {
                     merged.put(String.valueOf(entry.getKey()), entry.getValue());
                 }
@@ -137,7 +137,7 @@ public class Inertia {
 
     /** Starts a page build; customize with {@code render} consumers. */
     public InertiaPage render(String component) {
-        if (component == null || component.isBlank()) {
+        if (component == null || component.trim().isEmpty()) {
             throw new IllegalArgumentException("Inertia component name must not be blank");
         }
         return new InertiaPage(component);

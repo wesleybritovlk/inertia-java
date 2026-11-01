@@ -98,7 +98,7 @@ public final class InertiaPage {
     }
 
     private InertiaPage withDeferred(String key, String group, Supplier<?> supplier, boolean rescue) {
-        return put(key, new Prop.Deferred(supplier, group == null || group.isBlank() ? "default" : group, rescue));
+        return put(key, new Prop.Deferred(supplier, group == null || group.trim().isEmpty() ? "default" : group, rescue));
     }
 
     /**
@@ -201,7 +201,7 @@ public final class InertiaPage {
     }
 
     private InertiaPage put(String key, Prop prop) {
-        if (key == null || key.isBlank()) {
+        if (key == null || key.trim().isEmpty()) {
             throw new IllegalArgumentException("Inertia prop key must not be blank");
         }
         props.put(key, prop);

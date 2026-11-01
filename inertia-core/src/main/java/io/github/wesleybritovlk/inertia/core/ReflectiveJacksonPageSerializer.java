@@ -2,6 +2,8 @@ package io.github.wesleybritovlk.inertia.core;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,7 +32,7 @@ public final class ReflectiveJacksonPageSerializer implements PageSerializer {
     /** Jackson 3 mapper FQN (the default inside Spring Boot 4). */
     public static final String JACKSON_3 = "tools.jackson.databind.ObjectMapper";
 
-    private static final List<String> DETECTION_ORDER = List.of(JACKSON_2, JACKSON_3);
+    private static final List<String> DETECTION_ORDER = Collections.unmodifiableList(Arrays.asList(JACKSON_2, JACKSON_3));
 
     private final Object mapper;
     private final Method writer;
@@ -85,8 +87,8 @@ public final class ReflectiveJacksonPageSerializer implements PageSerializer {
             throw new IllegalStateException("Inertia page serialization failed through the Jackson runtime", failure);
         } catch (InvocationTargetException failure) {
             Throwable cause = failure.getCause();
-            if (cause instanceof RuntimeException runtime) {
-                throw runtime; // keep Jackson's own exception types visible to applications
+            if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause; // keep Jackson's own exception types visible to applications
             }
             throw new IllegalStateException("Inertia page serialization failed through the Jackson runtime", cause);
         }

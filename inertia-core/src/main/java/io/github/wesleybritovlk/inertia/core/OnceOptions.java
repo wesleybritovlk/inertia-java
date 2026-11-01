@@ -87,17 +87,23 @@ public final class OnceOptions {
 
     /** Builds the wrapped prop this configuration describes. */
     Prop wrappedProp(Supplier<?> supplier) {
-        return switch (mode) {
-            case PLAIN -> new Prop.Plain(supplier);
-            case LAZY -> new Prop.Lazy(supplier);
-            case DEFERRED -> new Prop.Deferred(supplier, deferredGroup, false);
-            case MERGED -> new Prop.Merge(
-                    supplier,
-                    mergeOptions.append,
-                    mergeOptions.appendsAtPaths,
-                    mergeOptions.prependsAtPaths,
-                    mergeOptions.deep,
-                    mergeOptions.matchOn);
-        };
+        switch (mode) {
+            case PLAIN:
+                return new Prop.Plain(supplier);
+            case LAZY:
+                return new Prop.Lazy(supplier);
+            case DEFERRED:
+                return new Prop.Deferred(supplier, deferredGroup, false);
+            case MERGED:
+                return new Prop.Merge(
+                        supplier,
+                        mergeOptions.append,
+                        mergeOptions.appendsAtPaths,
+                        mergeOptions.prependsAtPaths,
+                        mergeOptions.deep,
+                        mergeOptions.matchOn);
+            default:
+                throw new IllegalStateException("Unexpected once prop mode: " + mode);
+        }
     }
 }

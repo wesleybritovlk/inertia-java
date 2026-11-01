@@ -13,7 +13,7 @@
     <artifactId>inertia-servlet</artifactId>
 
     <name>inertia-servlet</name>
-    <description>Framework-neutral servlet glue of inertia-java: the Jakarta Servlet implementation of the core HTTP ports (request adapter, protocol filter, result/page writers) plus the Thymeleaf/Vite root renderers and version providers. Shared by every servlet-based adapter (Spring Boot, Quarkus, plain containers).</description>
+    <description>Servlet glue of inertia-java: the Jakarta Servlet implementation of the core HTTP ports (request adapter, protocol filter, result/page writers). The root renderers, asset version providers and hot scanner live in inertia-web, shared by every servlet-based adapter (Spring Boot, Quarkus, plain containers).</description>
 
     <dependencies>
         <dependency>
@@ -22,9 +22,9 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.thymeleaf</groupId>
-            <artifactId>thymeleaf</artifactId>
-            <version>3.1.3.RELEASE</version>
+            <groupId>io.github.wesleybritovlk.inertia</groupId>
+            <artifactId>inertia-web</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- provided: the host container (Spring Boot / Quarkus undertow / other servlet app) -->

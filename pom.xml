@@ -22,6 +22,7 @@
 
     <modules>
         <module>inertia-core</module>
+        <module>inertia-web</module>
         <module>inertia-servlet</module>
         <module>inertia-spring-boot</module>
         <module>inertia-quarkus</module>

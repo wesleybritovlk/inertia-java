@@ -1,4 +1,4 @@
-package io.github.wesleybritovlk.inertia.servlet;
+package io.github.wesleybritovlk.inertia.web;
 
 import java.util.Map;
 

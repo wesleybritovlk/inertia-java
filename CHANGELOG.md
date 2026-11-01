@@ -7,6 +7,13 @@ All notable changes of this project are documented here. Format based on
 ## [Unreleased]
 
 ### Changed
+- **`inertia-core` and the web glue compile on Java 8**: the baseline aimed at reuse by
+  legacy servlet containers and future Boot 2 adapters. `Prop`'s seven record kinds and
+  the Vite settings records became hand-written parity classes (record-shaped
+  `equals`/`hashCode`/`toString`), records resolve reflectively behind a `java.lang.Record`
+  gate (`Records8`), remaining 9-17 syntax in the two modules was flattened — behavior,
+  wire format and the public API are unchanged; the same test suite passes on JDK 17 and
+  on the Boot 4 benchmark.
 - **Documentation restructured around two stack guides**: `getting-started` became the
   concepts page (protocol flow, module map, root template, the any-stack front-end
   boilerplate, dev vs build mode) and two zero-to-package guides were added —
@@ -24,7 +31,7 @@ All notable changes of this project are documented here. Format based on
   adapter; CDI commands the client proxy) — replacing the `InertiaProvider` wrapper.
   The core `Inertia` class gains a protected no-arg constructor for the Arc proxying.
 - **Root template override became optional and tiny**: the bundled layout inside
-  `inertia-servlet` internalizes ALL the machinery (vite script/css, dev blocks, root
+  `inertia-web` internalizes ALL the machinery (vite script/css, dev blocks, root
   mount, data-page payload). The optional override is a **head fragment** — title,
   meta, fonts, CDN scripts — injected into the bundled head (`inertiaUserHead`);
   a whole-document template remains supported for full control. Demos ship the
@@ -41,6 +48,11 @@ All notable changes of this project are documented here. Format based on
   buried inside the Spring starter (request adapter, protocol filter, result/page
   writers, Thymeleaf/Vite root renderers, version/hot providers, bundled root template).
   The Spring starter delegates to it; every servlet-based stack can too.
+- **`inertia-web` module**: the servlet-free web glue split out of `inertia-servlet` —
+  root-template renderers (Thymeleaf/Vite), version providers, the hot-reload scanner
+  and the bundled root template/head fragment — so every servlet-based stack shares
+  exactly the same rendering machinery (now at Java 8 level); `inertia-servlet`
+  keeps only the Jakarta Servlet-specific pieces and delegates the rest.
 
 ### Added — demos
 - `inertia-demo` became an aggregator with **two adapter flavors sharing ONE copy of the

@@ -1,9 +1,13 @@
-package io.github.wesleybritovlk.inertia.servlet;
+package io.github.wesleybritovlk.inertia.web;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Root template renderer with Vite asset support (the starter's {@code @vite} equivalent):
@@ -20,6 +24,10 @@ import java.util.Map;
 public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplateRenderer {
 
     private static final long PROBE_TTL_MS = 1000;
+
+    /** JUL replaces {@code System.Logger} (runtime 9+); the module rides release 8. */
+    private static final java.util.logging.Logger LOGGER =
+            java.util.logging.Logger.getLogger(ViteInertiaRootTemplateRenderer.class.getName());
 
     private final InertiaRootTemplateRenderer delegate;
     private final ManifestSource manifests;
@@ -47,8 +55,7 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
                         .templateVariables(manifests.entry(), manifests.base()));
             } catch (IllegalStateException unreadable) {
                 // no build output yet: render the page without the app script instead of 500
-                System.getLogger(ViteInertiaRootTemplateRenderer.class.getName()).log(
-                        System.Logger.Level.WARNING, unreadable.getMessage());
+                LOGGER.warning(unreadable.getMessage());
             }
         }
         return delegate.render(pageJson, variables);
@@ -99,7 +106,23 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
      * serving another entry/plugin on the same origin) must invalidate the per-process
      * probe caches.
      */
-    private record DevServer(String devUrl, String identity) {
+    private static final class DevServer {
+
+        private final String devUrl;
+        private final String identity;
+
+        DevServer(String devUrl, String identity) {
+            this.devUrl = devUrl;
+            this.identity = identity;
+        }
+
+        String devUrl() {
+            return devUrl;
+        }
+
+        String identity() {
+            return identity;
+        }
     }
 
     private DevServer locateDevServer() {
@@ -108,7 +131,7 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
                 continue;
             }
             try {
-                String content = java.nio.file.Files.readString(candidate).trim();
+                String content = new String(java.nio.file.Files.readAllBytes(candidate), StandardCharsets.UTF_8).trim();
                 if (content.isEmpty()) {
                     continue;
                 }
@@ -152,10 +175,7 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
                 server.identity(), id -> probe(server.devUrl() + "/@react-refresh"));
     }
 
-    /**
-     * Zero-config dev entry: use the configured key when set; otherwise probe the common
-     * Inertia entry names on the dev server (first 200 wins, cached for the process).
-     */
+    /** Zero-config dev entry: use the configured key when set; otherwise probe the common Inertia entry names on the dev server (first 200 wins, cached for the process). */
     private final java.util.concurrent.ConcurrentHashMap<String, String> devEntryCache =
             new java.util.concurrent.ConcurrentHashMap<>();
     private static final String[] DEV_ENTRY_CANDIDATES = { "src/app.js", "src/app.jsx" };
@@ -169,7 +189,7 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
      */
     private String resolveDevEntry(DevServer server) {
         String configured = hot.entry();
-        if (configured != null && !configured.isBlank()) {
+        if (configured != null && !configured.trim().isEmpty()) {
             return configured;
         }
         return devEntryCache.computeIfAbsent(server.identity(), id -> {
@@ -200,7 +220,50 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
     }
 
     /** Manifest settings for build (production) mode. */
-    public record ManifestSource(String manifestLocation, String entry, String base) {
+    public static final class ManifestSource {
+
+        private final String manifestLocation;
+        private final String entry;
+        private final String base;
+
+        public ManifestSource(String manifestLocation, String entry, String base) {
+            this.manifestLocation = manifestLocation;
+            this.entry = entry;
+            this.base = base;
+        }
+
+        public String manifestLocation() {
+            return manifestLocation;
+        }
+
+        public String entry() {
+            return entry;
+        }
+
+        public String base() {
+            return base;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (!(other instanceof ManifestSource)) {
+                return false;
+            }
+            ManifestSource that = (ManifestSource) other;
+            return Objects.equals(manifestLocation, that.manifestLocation)
+                    && Objects.equals(entry, that.entry)
+                    && Objects.equals(base, that.base);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(manifestLocation, entry, base);
+        }
+
+        @Override
+        public String toString() {
+            return "ManifestSource[manifestLocation=" + manifestLocation + ", entry=" + entry + ", base=" + base + "]";
+        }
     }
 
     /**
@@ -212,14 +275,62 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
      * render; the renderer probes the dev server so a stale flag (dev server dead) falls
      * back to build mode.
      */
-    public record HotMode(List<Path> hotFiles, String devUrl, String entry, String reactRefresh) {
+    public static final class HotMode {
 
-        public HotMode {
-            hotFiles = List.copyOf(hotFiles);
+        private final List<Path> hotFiles;
+        private final String devUrl;
+        private final String entry;
+        private final String reactRefresh;
+
+        public HotMode(List<Path> hotFiles, String devUrl, String entry, String reactRefresh) {
+            // unmodifiable defensive copy ( {@code List.copyOf} is runtime 10, the module rides release 8)
+            this.hotFiles = Collections.unmodifiableList(new ArrayList<>(hotFiles));
+            this.devUrl = devUrl;
+            this.entry = entry;
+            this.reactRefresh = reactRefresh;
+        }
+
+        public List<Path> hotFiles() {
+            return hotFiles;
+        }
+
+        public String devUrl() {
+            return devUrl;
+        }
+
+        public String entry() {
+            return entry;
+        }
+
+        public String reactRefresh() {
+            return reactRefresh;
         }
 
         boolean isEnabled() {
             return hotFiles.stream().anyMatch(java.nio.file.Files::exists);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (!(other instanceof HotMode)) {
+                return false;
+            }
+            HotMode that = (HotMode) other;
+            return Objects.equals(hotFiles, that.hotFiles)
+                    && Objects.equals(devUrl, that.devUrl)
+                    && Objects.equals(entry, that.entry)
+                    && Objects.equals(reactRefresh, that.reactRefresh);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(hotFiles, devUrl, entry, reactRefresh);
+        }
+
+        @Override
+        public String toString() {
+            return "HotMode[hotFiles=" + hotFiles + ", devUrl=" + devUrl + ", entry=" + entry + ", reactRefresh="
+                    + reactRefresh + "]";
         }
     }
 }

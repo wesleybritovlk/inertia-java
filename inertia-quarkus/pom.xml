@@ -33,6 +33,11 @@
             <artifactId>inertia-servlet</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.github.wesleybritovlk.inertia</groupId>
+            <artifactId>inertia-web</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- provided by the Quarkus application at runtime; versions come from the platform BOM -->
         <dependency>

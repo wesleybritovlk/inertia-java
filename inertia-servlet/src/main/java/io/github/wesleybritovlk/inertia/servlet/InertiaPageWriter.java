@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import io.github.wesleybritovlk.inertia.core.Inertia;
 import io.github.wesleybritovlk.inertia.core.InertiaPage;
 import io.github.wesleybritovlk.inertia.core.InertiaResult;
+import io.github.wesleybritovlk.inertia.web.InertiaRootTemplateRenderer;
 
 import java.util.function.Supplier;
 

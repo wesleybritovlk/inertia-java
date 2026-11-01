@@ -1,8 +1,10 @@
-package io.github.wesleybritovlk.inertia.servlet;
+package io.github.wesleybritovlk.inertia.web;
 
 import java.nio.file.Files;
-import java.util.List;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import io.github.wesleybritovlk.inertia.core.VersionProvider;
 
@@ -19,7 +21,8 @@ public final class HotAwareVersionProvider implements VersionProvider {
 
     public HotAwareVersionProvider(VersionProvider source, List<Path> hotFiles) {
         this.source = source;
-        this.hotFiles = List.copyOf(hotFiles);
+        // unmodifiable defensive copy ( {@code List.copyOf} is runtime 10, the module rides release 8)
+        this.hotFiles = Collections.unmodifiableList(new ArrayList<>(hotFiles));
     }
 
     @Override

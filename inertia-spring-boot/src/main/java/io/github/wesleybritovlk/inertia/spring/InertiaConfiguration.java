@@ -9,15 +9,15 @@ import io.github.wesleybritovlk.inertia.core.ReflectiveJacksonPageSerializer;
 import io.github.wesleybritovlk.inertia.core.InertiaSharedPropsCustomizer;
 import io.github.wesleybritovlk.inertia.core.VersionProvider;
 
-import io.github.wesleybritovlk.inertia.servlet.FileVersionProvider;
-import io.github.wesleybritovlk.inertia.servlet.HotAwareVersionProvider;
-import io.github.wesleybritovlk.inertia.servlet.HotFileScanner;
+import io.github.wesleybritovlk.inertia.web.FileVersionProvider;
+import io.github.wesleybritovlk.inertia.web.HotAwareVersionProvider;
+import io.github.wesleybritovlk.inertia.web.HotFileScanner;
 import io.github.wesleybritovlk.inertia.servlet.InertiaFilter;
 import io.github.wesleybritovlk.inertia.servlet.InertiaPageWriter;
-import io.github.wesleybritovlk.inertia.servlet.InertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.web.InertiaRootTemplateRenderer;
 import io.github.wesleybritovlk.inertia.servlet.ServletInertiaRequest;
-import io.github.wesleybritovlk.inertia.servlet.ThymeleafInertiaRootTemplateRenderer;
-import io.github.wesleybritovlk.inertia.servlet.ViteInertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.web.ThymeleafInertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.web.ViteInertiaRootTemplateRenderer;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.ObjectProvider;

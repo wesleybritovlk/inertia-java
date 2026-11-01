@@ -1,4 +1,4 @@
-package io.github.wesleybritovlk.inertia.servlet;
+package io.github.wesleybritovlk.inertia.web;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -97,7 +97,7 @@ public final class ThymeleafInertiaRootTemplateRenderer implements InertiaRootTe
     }
 
     private String loadTemplate(String overrideTemplatePath) {
-        String override = overrideTemplatePath == null || overrideTemplatePath.isBlank()
+        String override = overrideTemplatePath == null || overrideTemplatePath.trim().isEmpty()
                 ? "classpath:templates/inertia.html"
                 : overrideTemplatePath;
         return readResource(override);
@@ -109,8 +109,8 @@ public final class ThymeleafInertiaRootTemplateRenderer implements InertiaRootTe
         if (in == null) {
             return null;
         }
-        try (in) {
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        try (InputStream safe = in) {
+            return new String(InertiaResources.readAll(safe), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new IllegalStateException("Unreadable Inertia root template: " + classpathLocation, e);
         }

@@ -1,4 +1,4 @@
-package io.github.wesleybritovlk.inertia.servlet;
+package io.github.wesleybritovlk.inertia.web;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.io.TempDir;
 import io.github.wesleybritovlk.inertia.core.VersionProvider;
 
 /** Asset version providers + the shared hot scanner + the root template renderers. */
-class ServletUnitsTest {
+class WebUnitsTest {
 
     @TempDir
     Path tempDir;

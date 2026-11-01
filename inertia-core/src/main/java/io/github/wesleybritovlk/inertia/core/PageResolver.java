@@ -1,10 +1,12 @@
 package io.github.wesleybritovlk.inertia.core;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Resolves one {@link InertiaPage} into an {@link InertiaResult} against the current
@@ -77,35 +79,35 @@ final class PageResolver {
     }
 
     private static void resolveProp(String path, Prop prop, Ctx ctx, State out, boolean bypassChildren) {
-        if (prop instanceof Prop.Always always) {
+        if (prop instanceof Prop.Always) {
             // bypasses only/except; subtrees bypass too (Laravel parentWasResolved semantics)
-            include(path, always.value().get(), true, ctx, out);
-        } else if (prop instanceof Prop.Plain plain) {
+            include(path, ((Prop.Always) prop).value().get(), true, ctx, out);
+        } else if (prop instanceof Prop.Plain) {
             if (!ctx.partial || DotPaths.matches(path, ctx.only, ctx.except)) {
-                include(path, plain.value().get(), bypassChildren, ctx, out);
+                include(path, ((Prop.Plain) prop).value().get(), bypassChildren, ctx, out);
             }
-        } else if (prop instanceof Prop.Lazy lazy) {
+        } else if (prop instanceof Prop.Lazy) {
             if (ctx.partial && DotPaths.matches(path, ctx.only, ctx.except)) {
-                include(path, lazy.value().get(), bypassChildren, ctx, out);
+                include(path, ((Prop.Lazy) prop).value().get(), bypassChildren, ctx, out);
             }
-        } else if (prop instanceof Prop.Deferred deferred) {
+        } else if (prop instanceof Prop.Deferred) {
             if (ctx.partial) {
                 // behaves like a plain prop on partial reloads; no deferred metadata here
                 if (DotPaths.matches(path, ctx.only, ctx.except)) {
-                    includeResolveDefer(path, deferred, ctx, out);
+                    includeResolveDefer(path, (Prop.Deferred) prop, ctx, out);
                 }
             } else {
-                announceDeferred(path, deferred.group(), out);
+                announceDeferred(path, ((Prop.Deferred) prop).group(), out);
             }
-        } else if (prop instanceof Prop.Merge merge) {
+        } else if (prop instanceof Prop.Merge) {
             if (!ctx.partial || DotPaths.matches(path, ctx.only, ctx.except)) {
-                include(path, merge.value().get(), bypassChildren, ctx, out);
-                collectMergeMetadata(path, merge, ctx, out);
+                include(path, ((Prop.Merge) prop).value().get(), bypassChildren, ctx, out);
+                collectMergeMetadata(path, (Prop.Merge) prop, ctx, out);
             }
-        } else if (prop instanceof Prop.Once once) {
-            resolveOnce(path, once, ctx, out, bypassChildren);
-        } else if (prop instanceof Prop.Scroll scroll) {
-            resolveScroll(path, scroll, ctx, out);
+        } else if (prop instanceof Prop.Once) {
+            resolveOnce(path, (Prop.Once) prop, ctx, out, bypassChildren);
+        } else if (prop instanceof Prop.Scroll) {
+            resolveScroll(path, (Prop.Scroll) prop, ctx, out);
         }
     }
 
@@ -114,11 +116,11 @@ final class PageResolver {
      * included as-is unless it is a JSON object needing per-child filtering.
      */
     private static void include(String path, Object value, boolean bypass, Ctx ctx, State out) {
-        if (!ctx.partial || bypass || !(value instanceof Map<?, ?> map)) {
+        if (!ctx.partial || bypass || !(value instanceof Map<?, ?>)) {
             out.values.put(path, value);
             return;
         }
-        walkChildren(path, map, bypass, ctx, out);
+        walkChildren(path, (Map<?, ?>) value, bypass, ctx, out);
     }
 
     private static void walkChildren(String path, Map<?, ?> map, boolean bypass, Ctx ctx, State out) {
@@ -128,10 +130,10 @@ final class PageResolver {
                 continue;
             }
             Object child = entry.getValue();
-            if (!ctx.partial || bypass || !(child instanceof Map<?, ?> childMap)) {
+            if (!ctx.partial || bypass || !(child instanceof Map<?, ?>)) {
                 out.values.put(childPath, child);
             } else {
-                walkChildren(childPath, childMap, bypass, ctx, out);
+                walkChildren(childPath, (Map<?, ?>) child, bypass, ctx, out);
             }
         }
     }
@@ -151,7 +153,7 @@ final class PageResolver {
 
     private static void announceDeferred(String path, String group, State out) {
         out.deferredGroups
-                .computeIfAbsent(group == null || group.isBlank() ? DEFAULT_GROUP : group, key -> new ArrayList<>())
+                .computeIfAbsent(group == null || group.trim().isEmpty() ? DEFAULT_GROUP : group, key -> new ArrayList<>())
                 .add(path);
     }
 
@@ -169,8 +171,8 @@ final class PageResolver {
         boolean skipped = !ctx.partial && !once.fresh() && ctx.exceptOnce.contains(once.key());
         out.onceProps.put(once.key(), onceEntry(path, once));
         if (skipped) {
-            if (!ctx.partial && once.inner() instanceof Prop.Deferred deferred) {
-                announceDeferred(path, deferred.group(), out);
+            if (!ctx.partial && once.inner() instanceof Prop.Deferred) {
+                announceDeferred(path, ((Prop.Deferred) once.inner()).group(), out);
             }
             return;
         }
@@ -190,28 +192,28 @@ final class PageResolver {
 
     /** Prop-kind dispatch of the wrapped once value (mirrors the top-level branches). */
     private static void resolveOnceInner(String path, Prop inner, Ctx ctx, State out, boolean bypassChildren) {
-        if (inner instanceof Prop.Always always) {
-            include(path, always.value().get(), true, ctx, out);
-        } else if (inner instanceof Prop.Plain plain) {
+        if (inner instanceof Prop.Always) {
+            include(path, ((Prop.Always) inner).value().get(), true, ctx, out);
+        } else if (inner instanceof Prop.Plain) {
             if (!ctx.partial || DotPaths.matches(path, ctx.only, ctx.except)) {
-                include(path, plain.value().get(), bypassChildren, ctx, out);
+                include(path, ((Prop.Plain) inner).value().get(), bypassChildren, ctx, out);
             }
-        } else if (inner instanceof Prop.Lazy lazy) {
+        } else if (inner instanceof Prop.Lazy) {
             if (ctx.partial && DotPaths.matches(path, ctx.only, ctx.except)) {
-                include(path, lazy.value().get(), bypassChildren, ctx, out);
+                include(path, ((Prop.Lazy) inner).value().get(), bypassChildren, ctx, out);
             }
-        } else if (inner instanceof Prop.Deferred deferred) {
+        } else if (inner instanceof Prop.Deferred) {
             if (ctx.partial) {
                 if (DotPaths.matches(path, ctx.only, ctx.except)) {
-                    includeResolveDefer(path, deferred, ctx, out);
+                    includeResolveDefer(path, (Prop.Deferred) inner, ctx, out);
                 }
             } else {
-                announceDeferred(path, deferred.group(), out);
+                announceDeferred(path, ((Prop.Deferred) inner).group(), out);
             }
-        } else if (inner instanceof Prop.Merge merge) {
+        } else if (inner instanceof Prop.Merge) {
             if (!ctx.partial || DotPaths.matches(path, ctx.only, ctx.except)) {
-                include(path, merge.value().get(), bypassChildren, ctx, out);
-                collectMergeMetadata(path, merge, ctx, out);
+                include(path, ((Prop.Merge) inner).value().get(), bypassChildren, ctx, out);
+                collectMergeMetadata(path, (Prop.Merge) inner, ctx, out);
             }
         }
     }
@@ -240,9 +242,9 @@ final class PageResolver {
     /** Bare lists are wrapped as {@code {<wrapper>: [...]}}; maps pass through untouched. */
     private static Object scrollValue(Prop.Scroll scroll) {
         Object value = scroll.value().get();
-        if (value instanceof List<?> items) {
+        if (value instanceof List<?>) {
             LinkedHashMap<String, Object> wrapped = new LinkedHashMap<>();
-            wrapped.put(scroll.wrapper(), items);
+            wrapped.put(scroll.wrapper(), (List<?>) value);
             return wrapped;
         }
         return value;
@@ -280,7 +282,8 @@ final class PageResolver {
         }
         Object previous = null;
         Object next = null;
-        if (current instanceof Integer currentInt) {
+        if (current instanceof Integer) {
+            Integer currentInt = (Integer) current;
             if (currentInt > 1) {
                 previous = currentInt - 1;
             }
@@ -336,7 +339,7 @@ final class PageResolver {
         for (String key : sharedPropKeys) {
             sharedKeys.add(topKey(key));
         }
-        List<String> distinctSharedKeys = sharedKeys.stream().distinct().toList();
+        List<String> distinctSharedKeys = sharedKeys.stream().distinct().collect(Collectors.toList());
 
         LinkedHashMap<String, Object> pageJson = new LinkedHashMap<>();
         pageJson.put(PageKeys.COMPONENT, page.component());
@@ -384,8 +387,8 @@ final class PageResolver {
             pageJson.put(PageKeys.ENCRYPT_HISTORY, Boolean.TRUE);
         }
         Object flashData = flash.pull(FlashKeys.FLASH);
-        if (flashData instanceof Map<?, ?> flashMap && !flashMap.isEmpty()) {
-            pageJson.put(PageKeys.FLASH, flashMap);
+        if (flashData instanceof Map<?, ?> && !((Map<?, ?>) flashData).isEmpty()) {
+            pageJson.put(PageKeys.FLASH, (Map<?, ?>) flashData);
         }
         if (Boolean.TRUE.equals(flash.pull(FlashKeys.PRESERVE_FRAGMENT))) {
             pageJson.put(PageKeys.PRESERVE_FRAGMENT, Boolean.TRUE);
@@ -408,13 +411,13 @@ final class PageResolver {
     @SuppressWarnings("unchecked")
     static Map<String, Object> resolveErrors(InertiaFlashStore flash, String errorBag) {
         Object stored = flash.pull(FlashKeys.ERRORS);
-        if (!(stored instanceof Map<?, ?> bags) || bags.isEmpty()) {
-            return Map.of();
+        if (!(stored instanceof Map<?, ?>)) {
+            return Collections.emptyMap();
         }
-        Map<String, Object> values = (Map<String, Object>) bags;
+        Map<String, Object> values = (Map<String, Object>) stored;
         boolean hasDefault = values.containsKey(DEFAULT_GROUP);
-        if (hasDefault && errorBag != null && !errorBag.isBlank()) {
-            return Map.of(errorBag, values.get(DEFAULT_GROUP));
+        if (hasDefault && errorBag != null && !errorBag.trim().isEmpty()) {
+            return Collections.singletonMap(errorBag, values.get(DEFAULT_GROUP));
         }
         if (hasDefault) {
             return (Map<String, Object>) values.get(DEFAULT_GROUP);
@@ -471,8 +474,8 @@ final class PageResolver {
             this.visit = request.isInertiaVisit();
             String partialComponent = request.header(InertiaHeaders.PARTIAL_COMPONENT);
             this.partial = visit && partialComponent != null && partialComponent.equals(page.component());
-            this.only = partial ? request.headerList(InertiaHeaders.PARTIAL_DATA) : List.of();
-            this.except = partial ? request.headerList(InertiaHeaders.PARTIAL_EXCEPT) : List.of();
+            this.only = partial ? request.headerList(InertiaHeaders.PARTIAL_DATA) : Collections.<String>emptyList();
+            this.except = partial ? request.headerList(InertiaHeaders.PARTIAL_EXCEPT) : Collections.<String>emptyList();
             this.reset = request.headerList(InertiaHeaders.RESET);
             this.exceptOnce = request.headerList(InertiaHeaders.EXCEPT_ONCE_PROPS);
             this.errorBag = request.header(InertiaHeaders.ERROR_BAG);
@@ -494,10 +497,46 @@ final class PageResolver {
     }
 
     /** A controller/user supplied cursor set, emitted verbatim (no request derivation). */
-    private record FixedScrollMetadata(
-            String pageName, Object previousPage, Object nextPage, Object currentPage) implements ScrollMetadata {
+    private static final class FixedScrollMetadata implements ScrollMetadata {
+
+        private final String pageName;
+        private final Object previousPage;
+        private final Object nextPage;
+        private final Object currentPage;
+
+        FixedScrollMetadata(String pageName, Object previousPage, Object nextPage, Object currentPage) {
+            this.pageName = pageName;
+            this.previousPage = previousPage;
+            this.nextPage = nextPage;
+            this.currentPage = currentPage;
+        }
+
+        @Override
+        public String pageName() {
+            return pageName;
+        }
+
+        @Override
+        public Object previousPage() {
+            return previousPage;
+        }
+
+        @Override
+        public Object nextPage() {
+            return nextPage;
+        }
+
+        @Override
+        public Object currentPage() {
+            return currentPage;
+        }
     }
 
-    private static final java.util.function.UnaryOperator<String> URL_DECODER =
-            raw -> java.net.URLDecoder.decode(raw, java.nio.charset.StandardCharsets.UTF_8);
+    private static final java.util.function.UnaryOperator<String> URL_DECODER = raw -> {
+        try {
+            return java.net.URLDecoder.decode(raw, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException never) {
+            throw new java.lang.AssertionError(never); // UTF-8 is guaranteed on every Java platform
+        }
+    };
 }

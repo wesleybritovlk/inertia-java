@@ -17,15 +17,20 @@ public final class InertiaResponseUpgrade {
         if (status != 302 || !request.isInertiaVisit()) {
             return;
         }
-        switch (request.method().toUpperCase(java.util.Locale.ROOT)) {
-            case "PUT", "PATCH", "DELETE", "QUERY" -> response.status(303);
-            default -> {
+        String method = request.method().toUpperCase(java.util.Locale.ROOT);
+        switch (method) {
+            case "PUT":
+            case "PATCH":
+            case "DELETE":
+            case "QUERY":
+                response.status(303);
+                return;
+            default:
                 String location = response.location();
                 if (location != null && location.contains("#")) {
                     response.status(409);
                     response.header(InertiaHeaders.REDIRECT, location);
                 }
-            }
         }
     }
 }

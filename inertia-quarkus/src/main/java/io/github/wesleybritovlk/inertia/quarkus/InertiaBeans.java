@@ -8,12 +8,12 @@ import io.github.wesleybritovlk.inertia.core.PageSerializer;
 import io.github.wesleybritovlk.inertia.core.PlainJsonPageSerializer;
 import io.github.wesleybritovlk.inertia.core.ReflectiveJacksonPageSerializer;
 import io.github.wesleybritovlk.inertia.core.VersionProvider;
-import io.github.wesleybritovlk.inertia.servlet.FileVersionProvider;
-import io.github.wesleybritovlk.inertia.servlet.HotAwareVersionProvider;
-import io.github.wesleybritovlk.inertia.servlet.HotFileScanner;
-import io.github.wesleybritovlk.inertia.servlet.InertiaRootTemplateRenderer;
-import io.github.wesleybritovlk.inertia.servlet.ThymeleafInertiaRootTemplateRenderer;
-import io.github.wesleybritovlk.inertia.servlet.ViteInertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.web.FileVersionProvider;
+import io.github.wesleybritovlk.inertia.web.HotAwareVersionProvider;
+import io.github.wesleybritovlk.inertia.web.HotFileScanner;
+import io.github.wesleybritovlk.inertia.web.InertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.web.ThymeleafInertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.web.ViteInertiaRootTemplateRenderer;
 
 
 import jakarta.enterprise.context.ApplicationScoped;
