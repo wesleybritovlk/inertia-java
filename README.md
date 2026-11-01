@@ -62,7 +62,7 @@ A runnable proof of the whole flow lives in [`inertia-demo/`](inertia-demo/READM
 
 ```bash
 git config core.hooksPath .githooks   # one-time: enables the pre-commit gates
-mvn test                              # the full suite (166 tests)
+mvn test                              # the full suite (208 tests)
 mvn install                           # installs all modules locally
 mvn verify -Pboot4                    # the whole reactor on Spring Boot 4 (Jackson 3)
 ```

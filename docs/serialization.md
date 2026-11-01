@@ -18,7 +18,9 @@ adapter should ride along with whatever version the application runs.
 Never re-serialize around major changes: the core reflection adapter binds by name/shape,
 not by compiled Jackson types. In the common Spring-app case, rule 2 produces output that
 looks like any other Jackson call: your `@JsonFormat`, `LocalDateTime` module formatting,
-`@JsonIgnore` — all apply naturally.
+`@JsonIgnore` — all apply naturally. On the legacy Boot 2 line (Jackson 2.13) the mapper
+sees standard `get`/`is` accessors — record-style `title()` accessors belong to the Boot 3+
+Jackson 3 runtime (see [the divergences page](differences-from-inertia-laravel.md#6-serialization-behavioral-drifts)).
 
 ### Fallbacks are compile-free
 

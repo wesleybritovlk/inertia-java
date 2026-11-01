@@ -120,6 +120,10 @@ deferred callbacks pre-fill on redirect pre-charts, this is not here yet (roadma
   byte-for-byte determinism are required.
 - Versioning via hash of the version file uses SHA-256 (namespace-sufficient; the exact
   digest does not matter to the protocol).
+- **On the Boot 2 line**, your mapper is Jackson 2.13: value classes must expose Jackson-visible
+  accessors (`getId`/`isDone`) — record-style `id()` accessors are not discovered there (the Boot 3
+  mapper serializes Java records natively; the Boot 2 demo carries both shapes as proof). The same
+  rule applies to any legacy-POJO prop on `PlainJsonPageSerializer` (java-8 getter discovery).
 
 ### 7. Java-ecosystem realities
 
