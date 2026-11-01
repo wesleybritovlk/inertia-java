@@ -13,7 +13,7 @@ of a hot flag file (the adapter equivalent of Laravel's `public/hot`, named here
 
 ```
  ┌── Terminal 1 ─────────────────┐   ┌── Terminal 2 ─────────────────────────────┐
- │  npm run dev                  │   │  mvn -pl inertia-demo-spring spring-boot:run     │
+ │  npm run dev                  │   │  mvn -pl :inertia-demo-spring spring-boot:run   │
  │  (Vite on :5173, HMR)         │   │  (Tomcat on :8080)                        │
  │  writes .hot-inertia on boot, │   │                                           │
  │  deletes it on shutdown       │   │  per render: .hot-inertia exists?         │
@@ -94,7 +94,7 @@ cd inertia-demo/frontend-demo-vue      # demo-react | demo-svelte
 npm install && npm run dev             # writes node_modules/.hot-inertia
 
 # terminal 2 (back-end — may run from the repo root or demo dir, detection is automatic)
-mvn -pl inertia-demo-spring spring-boot:run   # → http://localhost:8080
+mvn -pl :inertia-demo-spring spring-boot:run   # → http://localhost:8080
 ```
 
 React specifics (Fast Refresh):
@@ -103,7 +103,7 @@ React specifics (Fast Refresh):
 # react dev needs NO extra arguments — the preamble is auto-detected when the
 # react dev server is up (@vitejs/plugin-react mounts /@react-refresh);
 # force it with --inertia.vite-react-refresh=true if you prefer explicitness
-mvn -pl inertia-demo-spring spring-boot:run
+mvn -pl :inertia-demo-spring spring-boot:run
 ```
 
 Everything validated live (Boot 3.3.12): Vue page updated through HMR without reload,
@@ -131,7 +131,7 @@ renderer resolves assets per render.
   detects `node_modules/.hot-inertia` (written by the shipped plugin) via the
   `inertia.vite-dev-hot` setting — empty by default, meaning the auto-scan; `off`
   disables detection and one or more paths override it.
-- The React refresh preamble is auto-detected from the dev server (`/ @react-refresh`
+- The React refresh preamble is auto-detected from the dev server (`/@react-refresh`
   module probe, `inertia.vite-react-refresh` as `auto`/`true`/`false` override) instead
   of a known-file-type heuristic.
 - **Version guard**: same parity — while hot, the page version is `null` and no `409`

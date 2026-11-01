@@ -32,8 +32,8 @@ npm install && npm run dev           # Vite on :5173, writes node_modules/.hot-i
 
 ```bash
 # pick ONE back-end (both live on the default port 8080 and share the same pages):
-mvn -pl inertia-demo-spring spring-boot:run    # Spring Boot (Tomcat; devtools reload)
-mvn -pl inertia-demo-quarkus quarkus:dev       # Quarkus (Undertow/RESTEasy)
+mvn -pl :inertia-demo-spring spring-boot:run    # Spring Boot (Tomcat; devtools reload)
+mvn -pl :inertia-demo-quarkus quarkus:dev       # Quarkus (Undertow/RESTEasy)
 # → http://localhost:8080
 ```
 
@@ -49,15 +49,15 @@ npm run build
 #   ../frontend-assets/manifest.json — ONE output both demo apps mount as classpath
 #   resources (builds are NOT committed; every framework rebuilds the same folder)
 
-mvn -pl inertia-demo-spring spring-boot:run    # Boot 3.3.12 / 4.0.5 via -Pboot4
-mvn -pl inertia-demo-quarkus quarkus:dev       # add a leading `clean` if the demo seems stale (e.g. after npm builds)
+mvn -pl :inertia-demo-spring spring-boot:run    # Boot 3.3.12 / 4.0.5 via -Pboot4
+mvn -pl :inertia-demo-quarkus quarkus:dev       # add a leading `clean` if the demo seems stale (e.g. after npm builds)
 ```
 
 The whole back-end configuration for Vite is **one property**
 (`application.properties` in each demo):
 
 ```properties
-inertia.vite-manifest=classpath:static/manifest.json
+inertia.vite-manifest=classpath:META-INF/resources/manifest.json
 ```
 
 With it the adapter wires the `@vite` equivalent (hashed entry script + css from the

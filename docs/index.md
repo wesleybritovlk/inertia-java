@@ -38,10 +38,10 @@ layouts for **Vue 3**, **React 19** and **Svelte 5** (hashed assets, asset versi
 live from the Vite manifest):
 
 ```bash
-cd inertia-demo/frontend-demo-vue && npm install && npm run build   # or demo-react | demo-svelte
+cd inertia-demo/frontend-demo-vue && npm install && npm run build   # or frontend-demo-react | frontend-demo-svelte
 mvn install
-mvn -pl inertia-demo-spring spring-boot:run   # Spring Boot demo (Boot 3.3.12; -Pboot4 for 4.0.5)
-mvn -pl inertia-demo-quarkus quarkus:dev      # Quarkus demo (Undertow + RESTEasy)
+mvn -pl :inertia-demo-spring spring-boot:run   # Spring Boot demo (Boot 3.3.12; -Pboot4 for 4.0.5)
+mvn -pl :inertia-demo-quarkus quarkus:dev      # Quarkus demo (Undertow + RESTEasy)
 # → http://localhost:8080
 ```
 

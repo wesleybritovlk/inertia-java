@@ -40,14 +40,14 @@ public class App {
 }
 ```
 
-`inertia` (lowercase `app` and version default to sane values; see
-[configuration.md](configuration.md) for the complete list):
+Sensible defaults apply (`root-id: app`, static `version: "1"`); the one property you
+will usually touch is the version — any string that changes when your front-end assets
+change (see [configuration.md](configuration.md) for the complete list):
 
 ```yaml
 inertia:
-  version: b39c07f            # any value that changes when frontend assets change
-  root-id: app                # must match the client-side createInertiaApp id
-  filter-order: -2147483547   # optional: outermost by default, so security redirects also upgrade
+  version: b39c07f   # any value that changes when the front-end assets change
+  root-id: app       # must match the client-side createInertiaApp id
 ```
 
 > For real applications prefer `inertia.version-file` pointing at your build manifest
@@ -149,15 +149,16 @@ projects use the two-line fragment form.
 ## 4b. The vite.config.js boilerplate (includes dev mode)
 
 Front-end production builds AND the live dev loop need the flag plugin; it is small
-enough to be copied **inline** — this is the exact `vite.config.js` the demo uses
-(Vue variant; React: `react()` + `'src/app.jsx'`; Svelte: `{ svelte }` + `.svelte`):
+enough to be copied **inline** — the boilerplate below is the Vue variant the demo's
+configs use (React: `react()` + `'src/app.jsx'`; Svelte: `svelte()` with pages
+resolving `./Pages/${name}.svelte`):
 
 ```js
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import fs from 'node:fs';
 
-// .hot-inertia = the flag the Spring adapter reads PER RENDER to switch the root
+// .hot-inertia = the flag the Java adapter reads PER RENDER to switch the root
 // template to dev mode (HMR) - inertia-laravel public/hot parity; written on
 // `npm run dev`, removed on shutdown (kill -9 leaves it: delete manually).
 // node_modules/.hot-inertia never shows up in git status (node_modules is ignored).
@@ -196,6 +197,11 @@ point the plugin at a custom path (`inertiaHotFile('../.hot-inertia')`) and mirr
 on the Spring side with the same `inertia.vite-dev-hot` value relative to the
 `mvn` working directory — or turn detection off with `inertia.vite-dev-hot=off`.
 
+> The demo tree writes its build to one shared `frontend-assets/` folder both demo
+> back-ends mount (`outDir: '../frontend-assets'`). For a single application, the
+> `../src/main/resources/static` outDir above is the canonical layout — the manifest
+> property then reads `classpath:static/manifest.json`.
+
 ## 5. Front-end entrypoint
 
 Standard `@inertiajs` setup (Vue 3 example):
@@ -212,7 +218,7 @@ createInertiaApp({
       .use(plugin)
       .mount(el);
   },
-}).then(({ resolveComponent }) => resolveComponent);
+});
 ```
 
 > Prefer the **live dev loop** (`npm run dev` + HMR while Spring serves the pages)? That
@@ -276,5 +282,6 @@ before a commit.
 
 - Every prop builder: [pages-and-props.md](pages-and-props.md)
 - The redirect/version behavior: [redirects-and-versioning.md](redirects-and-versioning.md)
+- The same protocol on Quarkus: [inertia-quarkus.md](inertia-quarkus.md)
 - Running this outside Spring Boot: [other-frameworks.md](other-frameworks.md)
 - What is *not* a 1:1 port of the Laravel adapter: [differences-from-inertia-laravel.md](differences-from-inertia-laravel.md)

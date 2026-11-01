@@ -15,7 +15,7 @@ every design decision is the Laravel adapter's protocol semantics:
 | Framework-neutral core | The core exchanges only neutral types (`InertiaPage`, `InertiaResult`); integrations map them to the native response |
 | Request access through ports | A neutral `InertiaRequest` port; the request-scoped engine is born from the *current* request inside the integration |
 | Any JSON runtime | The core is dependency-free; a reflection adapter prefers *your* Jackson (any major), or falls back to a bundled zero-dependency serializer |
-| Modern Boot, present and next | `@AutoConfiguration` with name-based ordering, Jakarta Servlet 6.x compile-only — tested on Boot 3.x, ready for 4.x |
+| Modern Boot, present and next | `@AutoConfiguration` with name-based ordering, Jakarta Servlet 6.x compile-only — tested on Boot 3.x and 4.x |
 
 The SPI split in [`inertia4j`](https://github.com/inertia4j/inertia4j) (core + framework
 adapters) confirmed this direction is viable — this project pushes it further by keeping
@@ -40,7 +40,7 @@ even the serialization and request ports runtime-neutral.
 ```
 
 Only the pieces you need: use `inertia-core` (or the servlet glue) alone when bringing
-your own framework adapter, or the Quarkus starter
+your own framework adapter, or the Quarkus adapter
 ([docs/inertia-quarkus.md](docs/inertia-quarkus.md)).
 
 ## Spring Boot 4
@@ -57,7 +57,7 @@ Complete usage documentation lives in [`docs/`](docs/index.md):
 | Doc | Topic |
 |---|---|
 | [Getting started](docs/getting-started.md) | First run on Spring Boot end to end (controller, root template, front-end wiring, validation flow, catch-all SPA routes) |
-| [Pages and props](docs/pages-and-props.md) | `render` + every prop builder incl. deferred groups and merge options |
+| [Pages and props](docs/pages-and-props.md) | `render` + every prop builder incl. deferred groups, merge, once and scroll options |
 | [Partial reloads](docs/partial-reloads.md) | the `X-Inertia-Partial-*` protocol, subtree cutting, `X-Inertia-Reset` |
 | [Redirects and versioning](docs/redirects-and-versioning.md) | 303/409 redirect rules and the asset-version guard |
 | [Flash and validation](docs/flash-and-validation.md) | session flash, `ValidationErrors.store`, error-bag renaming |
@@ -160,6 +160,12 @@ Page props override shared props with the same key.
 |---|---|---|
 | `inertia.version` | `"1"` | Static asset version (string/hash) compared against `X-Inertia-Version` |
 | `inertia.version-file` | _(empty)_ | Path of a build manifest; its SHA-256 becomes the version (recommended — stale assets then trigger the standard 409 full-visit reload) |
+| `inertia.vite-manifest` | _(empty)_ | Vite manifest location (`classpath:` paths are jar-safe); enables the `@vite` equivalent renderer and — when no explicit version source is set — the asset version from the same manifest |
+| `inertia.vite-base` | `/` | URL prefix for Vite asset files |
+| `inertia.vite-entry` | _(empty)_ | Vite entry key override; default resolves the first `"isEntry": true` entry |
+| `inertia.vite-dev-url` | `http://localhost:5173` | Vite dev server origin used in dev mode (the hot flag's written port overrides it) |
+| `inertia.vite-dev-hot` | _(auto-scan)_ | Hot-flag discovery for dev mode: empty scans the working directory three levels deep plus one bounded parent level per front-end `node_modules`; `off` disables detection (recommended for production) |
+| `inertia.vite-react-refresh` | `auto` | React Fast Refresh preamble in dev mode (`auto` probes `/@react-refresh`; `true`/`false` force it) |
 | `inertia.root-id` | `app` | DOM id the client mounts into (matches the client configuration) |
 | `inertia.template-path` | `classpath:templates/inertia.html` | Classpath resource for your root template override |
 | `inertia.filter-order` | `Ordered.HIGHEST_PRECEDENCE + 50` | Filter registration order (outermost by default so Spring Security redirects also get upgraded) |
@@ -213,8 +219,8 @@ Notes: JSON object key order is not part of the Inertia protocol; only the bundl
 # one-time per clone: enables the repository pre-commit hook
 git config core.hooksPath .githooks
 
-mvn test          # the full suite: 70 core + 35 servlet glue + 32 spring + 17 quarkus, 154 total
-mvn install       # installs all six modules locally
+mvn test          # the full suite: 70 core + 36 servlet glue + 32 spring + 19 quarkus, 157 total
+mvn install       # installs all modules locally (core, servlet glue, both adapters + demo apps)
 ```
 
 The pre-commit hook (`mvn verify`) enforces three quality gates on every commit:

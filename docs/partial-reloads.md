@@ -49,6 +49,9 @@ Prop types interact with partials like this:
 | `withAlways` | included | included (bypass) |
 | `withDeferred` | excluded + `deferredProps[group][path]` | included |
 | any failing `withDeferredRescued` | — | dropped + reported in `rescuedProps` |
+| `withMerged` | included with its merge metadata | included + metadata when the path matches |
+| `withOnce` | skipped when the client remembers the key (`onceProps` metadata stays) | always resolves — the except-once header is ignored |
+| `withScroll` | value wrapped `{data: [...]}` + cursor in `scrollProps` | included + merge label and cursor when matched |
 
 `deferredProps` metadata is emitted **only on full visits** (the client triggers each
 group later as a partial reload, and the deferred prop then behaves like a plain one).
@@ -89,5 +92,7 @@ Merge metadata is collected only for props that would be **included** on the par
 A partial response carries the complete page object shape (`component`, `props`, `url`,
 `version`, plus the metadata arrays needed by the received props). The client merges the
 props it received with its current state — merge semantics (`mergeProps`,
-`prependProps`, `deepMergeProps`, `matchPropsOn`) are fully implemented; scroll props are
-not (see [differences-from-inertia-laravel.md](differences-from-inertia-laravel.md)).
+`prependProps`, `deepMergeProps`, `matchPropsOn`), once props and scroll props are all
+implemented (wire shapes in [pages-and-props.md](pages-and-props.md)); every remaining
+divergence from the Laravel adapter is listed in
+[differences-from-inertia-laravel.md](differences-from-inertia-laravel.md).

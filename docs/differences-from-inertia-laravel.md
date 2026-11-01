@@ -26,14 +26,15 @@ plugin writes the flag **inside `node_modules/`** (`node_modules/.hot-inertia`) 
 universally git-ignored by construction, guaranteed to exist at dev time, and it can
 never leak into a packaged artifact — and the Spring side **auto-scans** for it
 (the empty `inertia.vite-dev-hot` default scans the working directory three levels
-deep), so no path pairing is needed and `mvn` may run from the repository root. You
+deep plus one bounded parent level `../`), so no path pairing is needed and `mvn`
+may run from the repository root. You
 never write the file yourself; `touch`ing it by hand is the manual override — and
 nothing at all is needed when you only run in build mode.
 
 | Difference | Meaning |
 |---|---|
 | Flag file name | Laravel writes `public/hot`; here `node_modules/.hot-inertia`, detected automatically (`inertia.vite-dev-hot` empty by default = auto-scan; `off` disables detection; explicit paths override) |
-| React refresh preamble | auto-detected from the dev server (`/@react-refresh` probe only `@vitejs/plugin-react` serves) instead of a known-file-type heuristic; `inertia.vite-react-refresh`= `auto` (default)/`true`/`false` overrides |
+| React refresh preamble | auto-detected from the dev server (`/@react-refresh` probe only `@vitejs/plugin-react` serves) instead of a known-file-type heuristic; `inertia.vite-react-refresh` = `auto` (default)/`true`/`false` overrides |
 | **Version guard** | same parity — while hot, the page version is `null` and no `409` version checks fire (HMR owns the changes); stale-reload stays a build-mode concern |
 
 ## Compatibilities that ARE 1:1
@@ -101,8 +102,6 @@ deferred callbacks pre-fill on redirect pre-charts, this is not here yet (roadma
 
 | Feature | State |
 |---|---|
-| Once props (`Inertia::once`, `X-Inertia-Except-Once-Props`) | metadata placed in the page keys model; builders v2 |
-| Scroll props (`Inertia::scroll`, `X-Inertia-Infinite-Scroll-Merge-Intent`) | not implemented |
 | `X-Inertia-Vary`, `Vary` handling per route, `X-Inertia-Error-Bag` full unused-bag set | core ready; page-level toggles not exposed yet |
 | SSR client (`Inertia::ssr`, `@inertiaHead`, Node render server bridge) | module planned; not in the starter |
 | `expose_shared_prop_keys = false` | always exposed today (Laravel default is `true`) |

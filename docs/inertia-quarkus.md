@@ -70,9 +70,9 @@ inertia.root-id=app
 ```
 
 Vite dev mode works identically to Spring: the companion plugin keeps writing
-`node_modules/.hot-inertia`, the starter's hot-aware versioning (Laravel parity) and the
-React preamble auto-detection (`/@react-refresh` probing) apply as documented in
-[dev-workflow.md](dev-workflow.md).
+`node_modules/.hot-inertia`, the shared glue's hot-aware versioning (Laravel parity)
+and the React preamble auto-detection (`/@react-refresh` probing) apply as documented
+in [dev-workflow.md](dev-workflow.md).
 
 ## Overrides (CDI style)
 
@@ -99,9 +99,16 @@ public class MyVersion implements VersionProvider {
 ## Validation
 
 ```java
-Set<ConstraintViolation<User>> violations = validator.validate(user);
-ValidationErrors.store(inertiaProvider.current(), violations, "default");
-return inertiaProvider.current().redirect("/users");
+@POST
+public InertiaResult create(@Valid UserForm form) {
+    Set<ConstraintViolation<UserForm>> violations = validator.validate(form);
+    if (!violations.isEmpty()) {
+        ValidationErrors.store(inertia, violations, "default");
+        return inertia.redirect("/users");
+    }
+    // ...
+    return inertia.redirect("/users");
+}
 ```
 
 `ValidationErrors` (this module) writes through the shared `errors` prop via the session
