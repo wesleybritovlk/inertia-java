@@ -167,10 +167,7 @@ createInertiaApp({
 ```
 
 No path pairing is ever needed between the plugin and the back-end: the adapter
-**auto-scans** for `node_modules/.hot-inertia` around its working directory. If you
-maintain several projects, the same plugin ships as a reusable package
-(`npm/inertia-vite-hot-file` in this repository,
-`@wesleybritovlk/inertia-vite-hot-file` once published).
+**auto-scans** for `node_modules/.hot-inertia` around its working directory.
 
 ## Dev mode vs build mode
 

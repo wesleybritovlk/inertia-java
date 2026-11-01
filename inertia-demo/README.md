@@ -17,9 +17,9 @@ inertia-demo/
 └── inertia-demo-quarkus/              # Quarkus back-end (adapter demo; mvn quarkus:dev)
 ```
 
-Each `vite.config.js` carries the dev-mode flag plugin **inline** (the copy-paste
-boilerplate from the [getting started](../docs/getting-started.md)); the npm package
-`npm/inertia-vite-hot-file` is the same code ready to publish.
+Each `vite.config.js` carries the dev-mode flag plugin **inline** — the copy-paste
+boilerplate from the [getting started](../docs/getting-started.md) (~10 lines, zero
+dependencies, written on dev boot, removed on shutdown).
 
 ## Run it
 

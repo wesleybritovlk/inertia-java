@@ -66,10 +66,7 @@ the whole repo), and `inertia.vite-dev-hot=off` to disable dev-mode detection en
 **production servers should always set `off`** (or run away from any `node_modules`
 directory), because a stale flag file left by a killed dev session keeps the asset
 version dark (no 409s). The renderer re-probes per request, so deleting a stale flag
-restores build mode without a restart. For teams maintaining several projects, the same
-plugin ships as a reusable npm package in this repository
-(`npm/inertia-vite-hot-file`, `@wesleybritovlk/inertia-vite-hot-file` — `npm i` +
-`inertiaHotFile()`), consumable from any front-end to avoid copy-paste drift.
+restores build mode without a restart.
 
 It writes `.hot-inertia` on dev server boot and deletes it when the process closes
 gracefully. If a dev process dies hard (`kill -9`), remove the file manually.
