@@ -30,6 +30,11 @@
     <dependencies>
         <dependency>
             <groupId>io.github.wesleybritovlk.inertia</groupId>
+            <artifactId>inertia-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.wesleybritovlk.inertia</groupId>
             <artifactId>inertia-servlet</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -114,6 +119,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

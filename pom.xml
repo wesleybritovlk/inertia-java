@@ -9,8 +9,11 @@
     <!-- CI-friendly single-source version: property interpolation in parent/version
          blocks accepts ONLY ${revision}/${changelist}/${sha1} (Maven 3.5+), so a
          release version bump edits this property and the whole reactor follows.
-         If a future Central publication needs pre-resolved poms, add the
-         flatten-maven-plugin at release time. -->
+         The flatten-maven-plugin resolves ONLY those properties into literal
+         versions in every installed pom — required "early", not just for a Central
+         release: any resolution outside the root reactor (-pl from a subdirectory,
+         quarkus:dev, spring-boot:run) reads the installed poms and chokes on the
+         literal "${revision}" parent reference otherwise. -->
     <version>${revision}</version>
     <packaging>pom</packaging>
 
@@ -144,6 +147,40 @@
                     </executions>
                 </plugin>
 
+                <!-- CI-friendly versions need consumer-resolvable poms: flatten resolves ONLY
+                     the revision/changelist/sha1 properties into literal versions (non-
+                     destructive since 1.7.1) for EVERYTHING that gets installed — otherwise
+                     any resolution outside the root reactor (mvn -pl from a subdirectory,
+                     quarkus:dev, spring-boot:run) chokes on a parent lookup keyed by the
+                     literal "${revision}" string (reproduced from inertia-demo). -->
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>flatten-maven-plugin</artifactId>
+                    <version>1.8.0</version>
+                    <configuration>
+                        <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                        <!-- the root and the demo aggregator are packaging=pom; the default
+                             updatePomFile covers only jar packaging -->
+                        <updatePomFile>true</updatePomFile>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>flatten</id>
+                            <phase>process-resources</phase>
+                            <goals>
+                                <goal>flatten</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>flatten-clean</id>
+                            <phase>clean</phase>
+                            <goals>
+                                <goal>clean</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
                 <!-- coverage gate: 75% instruction AND branch at bundle level -->
                 <plugin>
                     <groupId>org.jacoco</groupId>
@@ -193,6 +230,15 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+
+        <plugins>
+            <!-- the root pom itself is installed/consumed too; it needs the same
+                 CI-friendly resolution its children get -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
     </build>
 
     <profiles>

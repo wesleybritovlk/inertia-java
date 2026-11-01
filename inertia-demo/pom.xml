@@ -20,4 +20,12 @@
         <module>inertia-demo-spring</module>
         <module>inertia-demo-quarkus</module>
     </modules>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>
