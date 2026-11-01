@@ -33,14 +33,15 @@ public class InertiaProperties {
     private String viteDevUrl = "http://localhost:5173";
 
     /**
-     * Path of the hot flag file (relative to the process working directory); while the
-     * file exists, pages answer in Vite dev mode (HMR). Empty disables dev mode.
-     * Default "node_modules/.hot-inertia" &mdash; pairs with the plugin default in the
-     * companion vite plugin (node_modules is universally git-ignored, so the flag never
-     * shows in {@code git status} and cannot leak into a packaged artifact; monorepos
-     * may point both sides at one shared path).
+     * How the dev-mode hot flag ({@code node_modules/.hot-inertia} written by the companion
+     * vite plugin while {@code npm run dev} runs) is located. Empty (default) scans the
+     * working directory for it inside each project's own {@code node_modules} (up to three
+     * levels deep &mdash; node_modules is universally git-ignored, so the flag never shows
+     * in {@code git status} nor leaks into packaged artifacts). One or more comma-separated
+     * filesystem paths override the scan (relative to the working directory). The value
+     * {@code off} disables dev-mode detection entirely.
      */
-    private String viteDevHot = "node_modules/.hot-inertia";
+    private String viteDevHot = "";
 
     /** Emits the React refresh preamble while in dev mode (needed only for React HMR). */
     private boolean viteReactRefresh = false;

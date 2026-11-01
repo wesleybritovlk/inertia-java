@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,14 +16,16 @@ import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Vite asset support: @vite-equivalent variables, entry auto-detection, import css
- * resolution and the renderer delegation.
+ * resolution, the renderer delegation, classpath manifests and the self-healing hot
+ * flag (stale flag with a dead dev server falls back to build mode).
  */
 class ViteManifestTest {
 
     @TempDir
     Path tempDir;
 
-    private static final Path FIXTURE = Path.of("src/test/resources/vite-test/manifest.json");
+    private static final String FIXTURE = "src/test/resources/vite-test/manifest.json";
+    private static final String CLASSPATH_FIXTURE = "classpath:vite-test/manifest.json";
 
     @Test
     void autoDetectsTheEntryAndResolvesImportCss() {
@@ -31,6 +34,15 @@ class ViteManifestTest {
         assertEquals("/assets/app-Hx987.js", vars.get("viteAppJs"));
         // own css + lazy chunk css + imported vendor css, deduplicated and order kept
         assertEquals(List.of("/assets/app-def456.css", "/assets/Index-vW234.css", "/assets/vendor-abc123.css"),
+                vars.get("viteCss"));
+    }
+
+    @Test
+    void readsClasspathManifests() {
+        Map<String, Object> vars = ViteManifest.read(CLASSPATH_FIXTURE).templateVariables("", "");
+
+        assertEquals("assets/app-Hx987.js", vars.get("viteAppJs"));
+        assertEquals(List.of("assets/app-def456.css", "assets/Index-vW234.css", "assets/vendor-abc123.css"),
                 vars.get("viteCss"));
     }
 
@@ -54,7 +66,7 @@ class ViteManifestTest {
 
     @Test
     void missingManifestFileHintsAtTheFrontendBuild() {
-        Path absent = tempDir.resolve("nope/manifest.json");
+        String absent = tempDir.resolve("nope/manifest.json").toString();
 
         IllegalStateException failure = assertThrows(IllegalStateException.class, () -> ViteManifest.read(absent));
 
@@ -67,32 +79,43 @@ class ViteManifestTest {
         java.nio.file.Files.writeString(numbers, """
                 {
                   "app": { "file": "a-\\u00B71.js", "isEntry": true, "answer": 42 },
-                  "legacy": ["old", "shape"]
+                  "legacy": ["old", "shape"],
+                  "off": false,
+                  "emptyObj": {},
+                  "emptyArr": []
                 }
                 """);
 
-        Map<String, Object> vars = ViteManifest.read(numbers).templateVariables(null, null);
+        Map<String, Object> vars = ViteManifest.read(numbers.toString()).templateVariables(null, null);
 
         assertEquals("a-\u00B71.js", vars.get("viteAppJs")); // null base = raw file path
 
         Path array = tempDir.resolve("array.json");
         java.nio.file.Files.writeString(array, "[1, 2]");
-        assertThrows(IllegalStateException.class, () -> ViteManifest.read(array).templateVariables(null, "/"));
+        assertThrows(IllegalStateException.class, () -> ViteManifest.read(array.toString()).templateVariables(null, "/"));
 
         Path garbage = tempDir.resolve("garbage.json");
         java.nio.file.Files.writeString(garbage, "{ nope");
-        assertThrows(IllegalStateException.class, () -> ViteManifest.read(garbage));
+        assertThrows(IllegalStateException.class, () -> ViteManifest.read(garbage.toString()));
+
+        Path malformedArray = tempDir.resolve("malformed.json");
+        java.nio.file.Files.writeString(malformedArray, "{ \"a\": [1 ] 2] }");
+        assertThrows(IllegalStateException.class, () -> ViteManifest.read(malformedArray.toString()));
+
+        Path unknownEscape = tempDir.resolve("escapes.json");
+        java.nio.file.Files.writeString(unknownEscape, "{ \"a\": { \"file\": \"x\\Qy.js\", \"isEntry\": true } }");
+        assertThrows(IllegalStateException.class, () -> ViteManifest.read(unknownEscape.toString()).templateVariables(null, "/"));
     }
 
     @Test
     void noEntryFlaggedFallsBackToAppJsAndMissingFileEntryFails() throws Exception {
         Path noFlag = tempDir.resolve("noflag.json");
         java.nio.file.Files.writeString(noFlag, "{ \"main.js\": { \"file\": \"assets/main.js\" } }");
-        assertThrows(IllegalStateException.class, () -> ViteManifest.read(noFlag).templateVariables(null, "/"));
+        assertThrows(IllegalStateException.class, () -> ViteManifest.read(noFlag.toString()).templateVariables(null, "/"));
 
         Path noFile = tempDir.resolve("nofile.json");
         java.nio.file.Files.writeString(noFile, "{ \"src/app.js\": { \"css\": [\"a.css\"] , \"isEntry\": true } }");
-        assertThrows(IllegalStateException.class, () -> ViteManifest.read(noFile).templateVariables(null, "/"));
+        assertThrows(IllegalStateException.class, () -> ViteManifest.read(noFile.toString()).templateVariables(null, "/"));
     }
 
     @Test
@@ -105,7 +128,7 @@ class ViteManifestTest {
                 }
                 """);
 
-        Map<String, Object> vars = ViteManifest.read(cycle).templateVariables(null, "/");
+        Map<String, Object> vars = ViteManifest.read(cycle.toString()).templateVariables(null, "/");
 
         assertEquals(List.of("/a.css", "/b.css"), vars.get("viteCss"));
     }
@@ -122,13 +145,59 @@ class ViteManifestTest {
                     return "<html/>";
                 },
                 new ViteInertiaRootTemplateRenderer.ManifestSource(FIXTURE, "", "/"),
-                new ViteInertiaRootTemplateRenderer.HotMode(stale, "http://localhost:55599", "", false));
+                new ViteInertiaRootTemplateRenderer.HotMode(List.of(stale), "http://localhost:55599", "", false));
 
         String html = renderer.render("{}", Map.of());
 
         assertEquals("<html/>", html);
         assertNull(captured.get("viteDevMode")); // fell back: no vite running on 55599
         assertEquals("/assets/app-Hx987.js", captured.get("viteAppJs"));
+    }
+
+    @Test
+    void rendersGracefullyWhenTheManifestIsMissing() {
+        LinkedHashMap<String, Object> captured = new LinkedHashMap<>();
+        ViteInertiaRootTemplateRenderer renderer = new ViteInertiaRootTemplateRenderer(
+                (pageJson, viewData) -> {
+                    captured.putAll(viewData);
+                    return "<html/>";
+                },
+                new ViteInertiaRootTemplateRenderer.ManifestSource(
+                        "classpath:does/not/exist.json", "", "/"),
+                null);
+
+        String html = renderer.render("{}", Map.of("custom", "x"));
+
+        assertEquals("<html/>", html); // never 500s the page for missing build output
+        assertEquals("x", captured.get("custom"));
+        assertTrue(captured.containsKey("viteAppJs") == false);
+    }
+
+    @Test
+    void hotAutoScanFindsNestedFrontendFlags() throws Exception {
+        // simulates a demo-like nested frontend INSIDE the repo root (cleaned after)
+        Path frontend = Path.of("inertia-hmr-scan-fixture", "frontend");
+        java.nio.file.Files.createDirectories(frontend.resolve("node_modules"));
+        java.nio.file.Files.writeString(frontend.resolve("node_modules").resolve(".hot-inertia"), "5173");
+
+        try {
+            List<Path> candidates = InertiaConfiguration.hotCandidates(new InertiaProperties());
+            assertTrue(candidates.contains(frontend.resolve("node_modules").resolve(".hot-inertia")),
+                    "auto-scan should find nested frontend flags");
+        } finally {
+            deleteRecursively(Path.of("inertia-hmr-scan-fixture"));
+        }
+    }
+
+    private static void deleteRecursively(Path path) throws Exception {
+        if (path == null || !Files.exists(path)) {
+            return;
+        }
+        try (var stream = Files.walk(path)) {
+            for (Path p : (Iterable<Path>) stream.sorted(java.util.Comparator.reverseOrder())::iterator) {
+                Files.delete(p);
+            }
+        }
     }
 
     @Test
@@ -139,7 +208,8 @@ class ViteManifestTest {
             return "<html/>";
         };
         ViteInertiaRootTemplateRenderer renderer =
-                new ViteInertiaRootTemplateRenderer(delegate, new ViteInertiaRootTemplateRenderer.ManifestSource(FIXTURE, "", "/"), null);
+                new ViteInertiaRootTemplateRenderer(delegate,
+                        new ViteInertiaRootTemplateRenderer.ManifestSource(FIXTURE, "", "/"), null);
 
         String html = renderer.render("{}", Map.of("custom", "x"));
 
@@ -180,7 +250,7 @@ class ViteManifestTest {
                         return "<html/>";
                     },
                     new ViteInertiaRootTemplateRenderer.ManifestSource(FIXTURE, "", "/"),
-                    new ViteInertiaRootTemplateRenderer.HotMode(hot, devUrl, "", true));
+                    new ViteInertiaRootTemplateRenderer.HotMode(List.of(hot), devUrl, "", true));
 
             String html = renderer.render("{}", Map.of());
 

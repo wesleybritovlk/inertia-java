@@ -5,7 +5,10 @@ import java.util.List;
 import io.github.wesleybritovlk.inertia.core.Inertia;
 import io.github.wesleybritovlk.inertia.core.PageSerializer;
 import io.github.wesleybritovlk.inertia.core.PlainJsonPageSerializer;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import io.github.wesleybritovlk.inertia.core.ReflectiveJacksonPageSerializer;
@@ -68,10 +71,10 @@ public class InertiaConfiguration {
     }
 
     private static VersionProvider wrapWithHotAware(InertiaProperties properties, VersionProvider source) {
-        if (properties.getViteDevHot() == null || properties.getViteDevHot().isBlank()) {
-            return source; // dev mode disabled: no hot awareness needed
+        if (devHotOff(properties)) {
+            return source; // dev mode off: no hot awareness needed
         }
-        return new HotAwareVersionProvider(source, Path.of(properties.getViteDevHot()));
+        return new HotAwareVersionProvider(source, hotCandidates(properties));
     }
 
     @Bean
@@ -110,6 +113,74 @@ public class InertiaConfiguration {
         }
     }
 
+    /**
+     * Hot flag candidates: empty (default) runs the auto-scan (frontends keep the flag
+     * inside their OWN node_modules — universally git-ignored); one or more comma-separated
+     * paths override the scan; the value {@code off} yields no candidates (dev-mode
+     * detection disabled).
+     */
+    static List<Path> hotCandidates(InertiaProperties properties) {
+        String override = properties.getViteDevHot();
+        if (override == null || override.isBlank()) {
+            return hotAutoScan();
+        }
+        if ("off".equalsIgnoreCase(override.trim())) {
+            return List.of();
+        }
+        List<Path> explicit = new ArrayList<>();
+        for (String part : override.split(",")) {
+            if (!part.isBlank()) {
+                explicit.add(Path.of(part.trim()));
+            }
+        }
+        return explicit.isEmpty() ? hotAutoScan() : List.copyOf(explicit);
+    }
+
+    /** {@code devHotOff} mirrors the value {@code off}: the whole detection stack is skipped. */
+    static boolean devHotOff(InertiaProperties properties) {
+        String value = properties.getViteDevHot();
+        return value != null && "off".equalsIgnoreCase(value.trim());
+    }
+
+    private static List<Path> hotAutoScan() {
+        List<Path> auto = new ArrayList<>();
+        auto.add(Path.of("node_modules", ".hot-inertia"));
+        auto.add(Path.of(".hot-inertia"));
+        collectDeepScan(Path.of(""), 3, auto);
+        return List.copyOf(auto);
+    }
+
+    private static final List<String> SKIP_DIRS =
+            List.of("node_modules", "target", "build", "dist", ".git", ".idea", "src", "docs");
+
+    private static void collectDeepScan(Path dir, int depth, List<Path> out) {
+        if (depth <= 0) {
+            return;
+        }
+        try (var stream = Files.newDirectoryStream(dir)) {
+            for (java.util.Iterator<Path> it = stream.iterator(); ; ) {
+                Path child;
+                try {
+                    child = it.next();
+                } catch (java.util.NoSuchElementException exhausted) {
+                    break;
+                }
+                if (child == null || child.getFileName() == null) {
+                    continue; // directory stream contract allows null entries
+                }
+                if (SKIP_DIRS.contains(child.getFileName().toString())) {
+                    continue;
+                }
+                out.add(child.resolve("node_modules").resolve(".hot-inertia"));
+                if (Files.isDirectory(child)) {
+                    collectDeepScan(child, depth - 1, out);
+                }
+            }
+        } catch (IOException ignored) {
+            // not a readable directory: stop scanning this branch
+        }
+    }
+
     @Bean
     @ConditionalOnMissingBean(InertiaRootTemplateRenderer.class)
     InertiaRootTemplateRenderer inertiaRootTemplateRenderer(InertiaProperties properties) {
@@ -119,15 +190,10 @@ public class InertiaConfiguration {
             return base;
         }
         ViteInertiaRootTemplateRenderer.ManifestSource manifest = new ViteInertiaRootTemplateRenderer.ManifestSource(
-                Path.of(properties.getViteManifest()), properties.getViteEntry(), properties.getViteBase());
-        ViteInertiaRootTemplateRenderer.HotMode hot =
-                properties.getViteDevHot() == null || properties.getViteDevHot().isBlank()
-                        ? null
-                        : new ViteInertiaRootTemplateRenderer.HotMode(
-                                Path.of(properties.getViteDevHot()),
-                                properties.getViteDevUrl(),
-                                properties.getViteEntry(),
-                                properties.isViteReactRefresh());
+                properties.getViteManifest(), properties.getViteEntry(), properties.getViteBase());
+        ViteInertiaRootTemplateRenderer.HotMode hot = devHotOff(properties) ? null
+                : new ViteInertiaRootTemplateRenderer.HotMode(hotCandidates(properties),
+                        properties.getViteDevUrl(), properties.getViteEntry(), properties.isViteReactRefresh());
         return new ViteInertiaRootTemplateRenderer(base, manifest, hot);
     }
 

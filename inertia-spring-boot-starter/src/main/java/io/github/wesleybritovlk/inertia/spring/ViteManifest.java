@@ -1,7 +1,5 @@
 package io.github.wesleybritovlk.inertia.spring;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -14,26 +12,28 @@ import java.util.Set;
  * ({@code viteAppJs} + {@code viteCss}), including the CSS of lazily imported chunks —
  * the server-side part of Laravel's {@code @vite} directive, zero dependencies.
  *
- * <p>Entry resolution: an explicit entry key, or the first {@code "isEntry": true} entry of
- * the manifest when none is configured. Asset URLs get the configured base prefix, mirroring
- * the frontend {@code base} setting.</p>
+ * <p>Locations support {@code classpath:} (immune to the working directory — recommended
+ * for build outputs) and plain filesystem paths. Entry resolution: an explicit entry
+ * key, or the first {@code "isEntry": true} entry of the manifest when none is
+ * configured. Asset URLs get the configured base prefix, mirroring the frontend
+ * {@code base} setting.</p>
  */
 final class ViteManifest {
 
-    private final Path file;
+    private final String location;
     private final Map<String, Object> entries;
 
-    private ViteManifest(Path file, Map<String, Object> entries) {
-        this.file = file;
+    private ViteManifest(String location, Map<String, Object> entries) {
+        this.location = location;
         this.entries = entries;
     }
 
-    static ViteManifest read(Path file) {
+    static ViteManifest read(String location) {
         try {
-            return new ViteManifest(file, parse(Files.readString(file)));
+            return new ViteManifest(location, parse(new String(StarterResources.read(location), java.nio.charset.StandardCharsets.UTF_8)));
         } catch (Exception e) {
             throw new IllegalStateException(
-                    "Unreadable Vite manifest " + file + " (run the frontend build, e.g. `npm run build`)", e);
+                    "Unreadable Vite manifest " + location + " (run the frontend build, e.g. `npm run build`)", e);
         }
     }
 
@@ -43,7 +43,7 @@ final class ViteManifest {
     Map<String, Object> templateVariables(String entryKey, String base) {
         String selected = entryKey == null || entryKey.isBlank() ? firstEntry() : entryKey;
         if (!(entries.get(selected) instanceof Map<?, ?> entry)) {
-            throw new IllegalStateException("Vite manifest " + file + " has no entry " + selected);
+            throw new IllegalStateException("Vite manifest " + location + " has no entry " + selected);
         }
         List<String> css = new ArrayList<>();
         LinkedHashSet<String> visited = new LinkedHashSet<>();

@@ -21,8 +21,12 @@ import path from 'node:path';
  *                                            may share ONE flag across several front-ends)
  *   `inertiaHotFile({ file: ... })`       → same as the string form, object shape
  *
- * Spring-side pairing (application.properties) — both sides must point at the SAME path:
- *   inertia.vite-dev-hot=node_modules/.hot-inertia   (the plugin default)
+ * Spring-side detection (application.properties) — nothing to configure for this default:
+ *   inertia.vite-dev-hot=          (empty; the default AUTO-SCANS the working directory for
+ *                                   node_modules/.hot-inertia of each front-end, so both
+ *                                   sides are already paired — custom flag paths are the
+ *                                   only case needing the same value on both sides)
+ *   inertia.vite-dev-hot=off       disables dev-mode detection entirely
  */
 export function inertiaHotFile(options = {}) {
     const hotFile = path.resolve(

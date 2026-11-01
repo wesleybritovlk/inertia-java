@@ -26,12 +26,11 @@ prefer the ready-to-publish package in `npm/inertia-vite-hot-file`.
 ```bash
 cd inertia-demo/frontend-demo-vue    # demo-react | demo-svelte
 npm install
-npm run dev                          # Vite on :5173, writes .hot-inertia
+npm run dev                          # Vite on :5173, writes node_modules/.hot-inertia
 ```
 
 ```bash
-cd ..
-mvn -pl inertia-demo spring-boot:run # → http://localhost:8800 (pages serve in DEV MODE)
+mvn -pl inertia-demo spring-boot:run # from the repo root or demo dir → http://localhost:8800 (DEV MODE)
 ```
 
 Edits in the front-end source update the running page through HMR — no reloads, no
@@ -82,7 +81,8 @@ map — no service layer, it is a demo.
 ### Dev mode rewards
 
 `npm run dev` (Vite) + Spring Boot pair exactly like `artisan serve` + Vite in Laravel:
-while `.hot-inertia` exists (written by the shared vite plugin running `npm run dev`),
+while the hot flag exists inside the front-end's own `node_modules/.hot-inertia`
+(written by the vite plugin, auto-detected by the starter from any working directory),
 every render answers with the dev modules and the HMR socket — your front edits update
 the running page without reloads, and the back-end keeps its own process. Full details:
 [dev-workflow.md](dev-workflow.md).

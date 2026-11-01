@@ -1,6 +1,7 @@
 package io.github.wesleybritovlk.inertia.spring;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -41,7 +42,14 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
         if (hot != null && hotActive()) {
             variables.putAll(hotVariables());
         } else {
-            variables.putAll(ViteManifest.read(manifests.manifestPath()).templateVariables(manifests.entry(), manifests.base()));
+            try {
+                variables.putAll(ViteManifest.read(manifests.manifestLocation())
+                        .templateVariables(manifests.entry(), manifests.base()));
+            } catch (IllegalStateException unreadable) {
+                // no build output yet: render the page without the app script instead of 500
+                System.getLogger(ViteInertiaRootTemplateRenderer.class.getName()).log(
+                        System.Logger.Level.WARNING, unreadable.getMessage());
+            }
         }
         return delegate.render(pageJson, variables);
     }
@@ -50,8 +58,10 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
      * Laravel {@code isRunningHot} parity plus one guard Laravel does not need: the flag
      * file alone is not enough — a dead dev server that never removed it would leave the
      * app serving dead dev URLs. So the flag must exist <em>and</em> the dev server must
-     * answer; failed probes are remembered for {@value #PROBE_TTL_MS} ms and retried on
-     * the next render (self-healing stale flags).
+     * answer the HMR client endpoint — the one URL dev mode actually requires (Inertia
+     * layouts ship no {@code index.html}: the Vite root answers 404, so probing {@code /}
+     * would reject a healthy dev server). Failed probes are remembered for
+     * {@value #PROBE_TTL_MS} ms and retried on the next render (self-healing stale flags).
      */
     private boolean hotActive() {
         if (!hot.isEnabled()) {
@@ -60,7 +70,7 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
         if (System.currentTimeMillis() - lastFailedProbeAt < PROBE_TTL_MS) {
             return false;
         }
-        if (!hot.probe(hot.devUrl())) {
+        if (!hot.probe(hot.devUrl() + "/@vite/client")) {
             lastFailedProbeAt = System.currentTimeMillis();
             return false;
         }
@@ -128,7 +138,7 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
     }
 
     /** Manifest settings for build (production) mode. */
-    public record ManifestSource(Path manifestPath, String entry, String base) {
+    public record ManifestSource(String manifestLocation, String entry, String base) {
     }
 
     /**
@@ -137,10 +147,14 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
      * {@code probe()} guards against stale flags: with the file present but the dev
      * server unreachable, the renderer falls back to build mode.
      */
-    public record HotMode(Path hotFile, String devUrl, String entry, boolean reactRefresh) {
+    public record HotMode(List<Path> hotFiles, String devUrl, String entry, boolean reactRefresh) {
+
+        public HotMode {
+            hotFiles = List.copyOf(hotFiles);
+        }
 
         boolean isEnabled() {
-            return hotFile != null && java.nio.file.Files.exists(hotFile);
+            return hotFiles.stream().anyMatch(java.nio.file.Files::exists);
         }
 
         boolean probe(String url) {

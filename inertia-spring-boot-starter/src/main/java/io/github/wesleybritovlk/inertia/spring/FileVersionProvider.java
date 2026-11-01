@@ -1,7 +1,5 @@
 package io.github.wesleybritovlk.inertia.spring;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -11,36 +9,45 @@ import java.util.HexFormat;
 import io.github.wesleybritovlk.inertia.core.VersionProvider;
 
 /**
- * Asset version provider hashing a build manifest (Vite/Rollup style), inertia-laravel
- * parity ({@code hash_file}). Missing file disables versioning (returns {@code null}).
+ * Asset version provider hashing the configured resource (Vite/Rollup manifest), inertia-laravel
+ * parity ({@code hash_file}). Supports {@code classpath:} locations (immune to the working
+ * directory) and filesystem paths. Missing resource disables versioning (returns {@code null});
+ * read failures on readable-but-broken locations surface as IllegalStateException.
  */
 final class FileVersionProvider implements VersionProvider {
 
-    private final Path file;
+    private final String location;
 
     FileVersionProvider(String location) {
-        this.file = resolve(location);
+        this.location = location;
     }
 
-    private static Path resolve(String location) {
-        String path = location.startsWith("file:") ? location.substring("file:".length()) : location;
-        return Path.of(path);
+    static String hash(byte[] bytes) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(bytes));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 unavailable for asset version hashing", e);
+        }
     }
 
     @Override
     public String version() {
-        if (!Files.isRegularFile(file)) {
-            return null;
+        if (location.startsWith("classpath:")) {
+            try {
+                return hash(StarterResources.read(location));
+            } catch (java.io.IOException missing) {
+                return null; // absent classpath resource disables versioning
+            }
         }
-        MessageDigest digest;
+        Path path = Path.of(location.startsWith("file:") ? location.substring(5) : location);
+        if (!Files.isRegularFile(path)) {
+            return null; // missing file (or a directory): versioning disabled
+        }
         try {
-            digest = MessageDigest.getInstance("SHA-256");
-            digest.update(Files.readAllBytes(file));
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 unavailable for asset version hashing", e);
-        } catch (IOException e) {
-            throw new UncheckedIOException("Unable to hash asset version file: " + file, e);
+            return hash(Files.readAllBytes(path));
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("Unable to hash asset version resource: " + location, e);
         }
-        return HexFormat.of().formatHex(digest.digest());
     }
 }

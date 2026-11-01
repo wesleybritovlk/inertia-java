@@ -9,7 +9,7 @@ are sane; `inertia.version-file` is the one you will usually set.
 |---|---|---|
 | `inertia.version` | `"1"` | Static asset version string |
 | `inertia.version-file` | _(empty)_ | Path of a build manifest; SHA-256 of the file becomes the version and takes priority over `inertia.version`. Missing file disables versioning (`null`) |
-| `inertia.vite-manifest` | _(empty)_ | **Vite integration switch**: path of the produced `manifest.json`. Activates the `@vite` equivalent renderer (`viteAppJs`/`viteCss` template variables, entry detection + lazy-chunk css) and — when no explicit version source is set — doubles as the asset version source (same SHA-256) |
+| `inertia.vite-manifest` | _(empty)_ | **Vite integration switch**: location of the produced `manifest.json` — classpath: locations (jar-safe, cwd-independent, recommended for build outputs) or filesystem paths. Activates the `@vite` equivalent renderer (`viteAppJs`/`viteCss` template variables, entry detection + lazy-chunk css) and — when no explicit version source is set — doubles as the asset version source (same SHA-256) |
 | `inertia.vite-base` | `/` | URL prefix for Vite asset files |
 | `inertia.vite-entry` | _(empty)_ | Vite entry key override; default resolves the first `"isEntry": true` entry |
 | `inertia.root-id` | `app` | DOM mount id — must equal the client's `createInertiaApp({ id })` and is used for both `data-page` and `div#id` in the root template |

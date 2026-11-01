@@ -24,14 +24,15 @@ Laravel's adapter does exactly this: `laravel-vite-plugin` touches `public/hot`,
 `Vite::isRunningHot()` reads it. Our defaults go one step friendlier: the shipped
 plugin writes the flag **inside `node_modules/`** (`node_modules/.hot-inertia`) —
 universally git-ignored by construction, guaranteed to exist at dev time, and it can
-never leak into a packaged artifact. The demo (three shared front-ends) pins ONE
-shared flag instead (`inertia.vite-dev-hot=.hot-inertia`, already in the demo's
-`.gitignore`). You never write the file yourself; `touch`ing it by hand is the manual
-override — and nothing at all is needed when you only run in build mode.
+never leak into a packaged artifact — and the Spring side **auto-scans** for it
+(the empty `inertia.vite-dev-hot` default scans the working directory three levels
+deep), so no path pairing is needed and `mvn` may run from the repository root. You
+never write the file yourself; `touch`ing it by hand is the manual override — and
+nothing at all is needed when you only run in build mode.
 
 | Difference | Meaning |
 |---|---|
-| Flag file name | Laravel writes `public/hot`; here `inertia.vite-dev-hot` (default `node_modules/.hot-inertia`, auto-gitignored via node_modules) |
+| Flag file name | Laravel writes `public/hot`; here `node_modules/.hot-inertia`, detected automatically (`inertia.vite-dev-hot` empty by default = auto-scan; `off` disables detection; explicit paths override) |
 | React refresh preamble | driven by the `inertia.vite-react-refresh` property instead of a known-file-type heuristic |
 | **Version guard** | same parity — while hot, the page version is `null` and no `409` version checks fire (HMR owns the changes); stale-reload stays a build-mode concern |
 

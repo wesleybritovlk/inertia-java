@@ -157,21 +157,17 @@ export default defineConfig({
 });
 ```
 
-Pair the flag path on the Spring side (both sides must be identical):
-
-```properties
-inertia.vite-dev-hot=node_modules/.hot-inertia
-```
-
-The dev loop then pairs `npm run dev` (writes the flag) with `spring-boot:run`
+The flag writes `node_modules/.hot-inertia` and the Spring side auto-scans for it
+(its `inertia.vite-dev-hot` default is empty = auto-scan), so no path pairing is
+required at all — node_modules is git-ignored, so the flag never shows in `git status`
+either. The dev loop then pairs `npm run dev` (writes the flag) with `spring-boot:run`
 (answers pages in dev mode, HMR live) — details in
 [dev-workflow.md](dev-workflow.md). If you maintain several projects, the same plugin
 ships as a reusable package: `npm/inertia-vite-hot-file` in this repository
-(`npm i @wesleybritovlk/inertia-vite-hot-file` once published). Confirm the single
-source-of-truth path on both sides (e.g. a shared flag like
-`inertiaHotFile('../.hot-inertia')` in the front and
-`inertia.vite-dev-hot=.hot-inertia` on the back) — or keep the node_modules default,
-which every JS project already ignores.
+(`npm i @wesleybritovlk/inertia-vite-hot-file` once published). Exotic layouts only:
+point the plugin at a custom path (`inertiaHotFile('../.hot-inertia')`) and mirror it
+on the Spring side with the same `inertia.vite-dev-hot` value relative to the
+`mvn` working directory — or turn detection off with `inertia.vite-dev-hot=off`.
 
 ## 5. Front-end entrypoint
 

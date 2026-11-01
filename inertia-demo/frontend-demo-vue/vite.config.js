@@ -5,14 +5,14 @@ import fs from 'node:fs';
 // .hot-inertia = the flag the Spring adapter reads PER RENDER to switch the root
 // template to dev mode (HMR) - inertia-laravel public/hot parity; written on
 // `npm run dev`, removed on shutdown (kill -9 leaves it: delete manually).
-// THIS demo shares ONE flag for all three front-ends: '../.hot-inertia' lives in the
-// demo root and is git-ignored there (user projects default to node_modules/.hot-inertia,
-// which never shows in git status anyway).
-const inertiaHotFile = () => ({
+// Default location: node_modules/.hot-inertia of THIS project (node_modules is
+// universally git-ignored, and the starter auto-scans for it, so `mvn` may run
+// from the repo root or here — both work). Pass a path for exotic setups.
+const inertiaHotFile = (file = 'node_modules/.hot-inertia') => ({
     name: 'inertia-hot-file',
     configureServer(server) {
-        fs.writeFileSync('../.hot-inertia', String(server.config.server?.port ?? 5173));
-        server.httpServer?.on?.('close', () => fs.rmSync('../.hot-inertia', { force: true }));
+        fs.writeFileSync(file, String(server.config.server?.port ?? 5173));
+        server.httpServer?.on?.('close', () => fs.rmSync(file, { force: true }));
     },
 });
 

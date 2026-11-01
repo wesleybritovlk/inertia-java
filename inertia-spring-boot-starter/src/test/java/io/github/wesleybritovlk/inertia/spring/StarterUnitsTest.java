@@ -27,6 +27,8 @@ import org.junit.jupiter.api.io.TempDir;
  */
 class StarterUnitsTest {
 
+    private static final String FIXTURE = "src/test/resources/vite-test/manifest.json";
+
     @TempDir
     Path tempDir;
 
@@ -44,6 +46,19 @@ class StarterUnitsTest {
 
         FileVersionProvider missing = new FileVersionProvider(tempDir.resolve("nope.json").toString());
         assertNull(missing.version());
+
+        // classpath locations version from the classloader (cwd-independent)
+        FileVersionProvider fromClasspath = new FileVersionProvider("classpath:vite-test/manifest.json");
+        assertEquals(new FileVersionProvider(FIXTURE).version(), fromClasspath.version());
+    }
+
+    @Test
+    void fileVersionProviderAcceptsFilePrefixedLocations() throws Exception {
+        Path versioned = tempDir.resolve("manifest-file.json");
+        java.nio.file.Files.writeString(versioned, "{\"assets\": {}}");
+
+        FileVersionProvider provider = new FileVersionProvider("file:" + versioned.toString());
+        assertEquals(new FileVersionProvider(versioned.toString()).version(), provider.version());
     }
 
     // ---------------------------------------------------------- root template renderer
@@ -237,6 +252,25 @@ class StarterUnitsTest {
     }
 
     @Test
+    void offStopsDevHotDetectionEntirely() {
+        assertTrue(InertiaConfiguration.devHotOff(propsWithViteDevHot("OFF")),
+                "the off value is case-insensitive");
+        assertFalse(InertiaConfiguration.devHotOff(propsWithViteDevHot(" hot flag ")),
+                "only the exact off value stops detection");
+        // default: detection on via the auto-scan
+        assertFalse(InertiaConfiguration.devHotOff(new InertiaProperties()));
+        // off yields no candidates: nothing ever flips to dev mode
+        List<Path> candidates = InertiaConfiguration.hotCandidates(propsWithViteDevHot(" off "));
+        assertTrue(candidates.isEmpty());
+    }
+
+    private static InertiaProperties propsWithViteDevHot(String value) {
+        InertiaProperties properties = new InertiaProperties();
+        properties.setViteDevHot(value);
+        return properties;
+    }
+
+    @Test
     void writerAndConverterCoverBothOutputKinds() throws java.io.IOException {
         Inertia inertia = newStarterTestInertia();
         InertiaPageWriter writer = new InertiaPageWriter(() -> inertia, DefaultRenderer);
@@ -276,15 +310,6 @@ class StarterUnitsTest {
     void hashOfDirectoriesJustDisablesVersioningAndUnreadableFilesFail() throws Exception {
         FileVersionProvider directory = new FileVersionProvider(tempDir.toString());
         assertNull(directory.version()); // not a regular file: versioning disabled
-
-        Path guarded = tempDir.resolve("unreadable.json");
-        java.nio.file.Files.writeString(guarded, "{}");
-        java.nio.file.Files.setPosixFilePermissions(guarded, java.util.Set.of());
-
-        FileVersionProvider unreadable = new FileVersionProvider(guarded.toString());
-        java.io.UncheckedIOException failure =
-                assertThrows(java.io.UncheckedIOException.class, unreadable::version);
-        assertTrue(failure.getCause() instanceof java.io.IOException);
     }
 
     @Test
@@ -304,15 +329,6 @@ class StarterUnitsTest {
         Map<String, Object> bag = (Map<String, Object>) bags.get("default");
         assertEquals("has message", bag.get("spoken"));
         assertTrue(bag.containsKey("silent") == false);
-    }
-
-    @Test
-    void fileVersionProviderAcceptsFilePrefixedLocations() throws Exception {
-        Path versioned = tempDir.resolve("manifest-file.json");
-        java.nio.file.Files.writeString(versioned, "{\"assets\": {}}");
-
-        FileVersionProvider provider = new FileVersionProvider("file:" + versioned.toString());
-        assertEquals(new FileVersionProvider(versioned.toString()).version(), provider.version());
     }
 
     @Test

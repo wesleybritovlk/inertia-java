@@ -31,12 +31,17 @@ export default defineConfig({
 });
 ```
 
-Spring side (`application.properties`) — one line turns on the whole pair:
+Spring side (`application.properties`) — the manifest line turns on the whole pair:
 
 ```properties
-inertia.vite-manifest=path/to/your/manifest.json
-inertia.vite-dev-hot=.hot-inertia      # default; set to empty to disable dev mode
+inertia.vite-manifest=classpath:static/manifest.json
 ```
+
+Dev-mode detection needs NO property: the empty `inertia.vite-dev-hot` default
+auto-scans the working directory for `node_modules/.hot-inertia` of each front-end
+(the `inertiaHotFile()` default), so both sides are already paired and `mvn` may run
+from the repo root. `inertia.vite-dev-hot=off` disables detection entirely; one or
+more comma-separated paths override the scan (exotic layouts only).
 
 Vue, React and Svelte work the same way; for React Fast Refresh also set
 `inertia.vite-react-refresh=true` and `inertia.vite-entry=src/app.jsx` on the Spring
@@ -46,13 +51,13 @@ side (details in `docs/dev-workflow.md`).
 
 | Form | Meaning |
 |---|---|
-| `inertiaHotFile()` | flag file `.hot-inertia` at the Vite project root |
-| `inertiaHotFile('../.hot-inertia')` | custom path (monorepos: one shared flag for every front-end) |
+| `inertiaHotFile()` | flag file `node_modules/.hot-inertia` (git-ignored; found by the starter's auto-scan) |
+| `inertiaHotFile('../.hot-inertia')` | custom path (monorepos: one shared flag for every front-end — pair the same value in `inertia.vite-dev-hot`) |
 | `inertiaHotFile({ file })` | object form of the above |
 
 ## Notes
 
 - `kill -9` on the dev server leaves the flag behind (no graceful shutdown) — delete it
-  manually or the adapter stays in dev mode.
-- `inertia.vite-dev-hot=` (empty) on the Spring side disables dev-mode detection
-  entirely.
+  manually or the adapter stays in dev mode (a dead dev server self-heals back to build
+  mode within a second, the stale flag is just noise in node_modules).
+- `inertia.vite-dev-hot=off` on the Spring side disables dev-mode detection entirely.
