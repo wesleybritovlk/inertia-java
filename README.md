@@ -18,6 +18,7 @@ Jackson 3, the case that breaks other Java adapters.
 | `inertia-core` | The Inertia protocol engine. **Zero dependencies** (Java 8+). |
 | `inertia-web` | Framework-neutral web glue (no servlet dependency): Thymeleaf + Vite renderers, version/hot providers, bundled root template — Java 8+. |
 | `inertia-servlet` | Jakarta Servlet glue: protocol filter, request adapter, writers (delegates to `inertia-web`). |
+| `inertia-servlet-javax` | The legacy twin for pre-Jakarta containers (Tomcat 9 / Java EE 8 era): same glue on `javax.servlet`, Java 8 — tests are the parity pin. |
 | `inertia-spring-boot` | Spring Boot integration (3.x and 4.x). |
 | `inertia-quarkus` | Quarkus integration (Undertow + RESTEasy + CDI). |
 | `inertia-demo` | Runnable demo: three canonical Vite front-ends (Vue 3, React 19, Svelte 5) served by both back-ends. |

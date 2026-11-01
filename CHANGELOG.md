@@ -44,6 +44,10 @@ All notable changes of this project are documented here. Format based on
   and `page()/pageName()/wrapper()/metadata()/deferred()`), available on both adapters.
 
 ### Added — architecture
+- **`inertia-servlet-javax` module**: the legacy javax twin of the Jakarta servlet glue —
+  the same request adapter, protocol filter and writers compiled against `javax.servlet`
+  4.0.1 on Java 8, for Java EE 8 / Tomcat 9- / Spring Boot 2-era containers, reusing
+  `inertia-core` and `inertia-web` unchanged; behavior pinned by the mirrored test suite.
 - **`inertia-servlet` module**: the framework-neutral Jakarta Servlet glue previously
   buried inside the Spring starter (request adapter, protocol filter, result/page
   writers, Thymeleaf/Vite root renderers, version/hot providers, bundled root template).

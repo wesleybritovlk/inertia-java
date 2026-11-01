@@ -46,5 +46,16 @@ that is the adapters' job:
 Serializer rule in raw usage: construct the engine with `PlainJsonPageSerializer`
 (zero-dependency, bundled) or wrap your Jackson via `ReflectiveJacksonPageSerializer.over(mapper)`.
 
+## The legacy javax twin
+
+For pre-Jakarta containers (Tomcat 9-, Java EE 8-, Spring Boot 2-era deployments that
+speak `javax.servlet`), the same glue exists as
+[`inertia-servlet-javax`](https://search.maven.org/search?q=g:io.github.wesleybritovlk.inertia%20a:inertia-servlet-javax)
+— identical classes and packages' layout under `...inertia.servlet.javax`, compiled on
+**Java 8**, on the shared `inertia-core` + `inertia-web` artifacts. It is behavior-pinned
+by the same test suite (its
+[`ServletAdapterTest`](../inertia-servlet-javax/src/test/java/io/github/wesleybritovlk/inertia/servlet/javax/ServletAdapterTest.java)
+mirrors this module's); no javax-specific API diverges from the Jakarta contract.
+
 Deeper behaviors (prop types, partials, redirects, flash) are engine-level and documented
 in their own pages — identical across every stack.

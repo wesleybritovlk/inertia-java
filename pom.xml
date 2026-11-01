@@ -32,6 +32,7 @@
         <module>inertia-core</module>
         <module>inertia-web</module>
         <module>inertia-servlet</module>
+        <module>inertia-servlet-javax</module>
         <module>inertia-spring-boot</module>
         <module>inertia-quarkus</module>
         <module>inertia-demo</module>

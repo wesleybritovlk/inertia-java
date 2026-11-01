@@ -42,6 +42,7 @@ its own router, and the server answers each visit with just the page object.
 | `inertia-core` | The protocol engine. **Zero dependencies** (Java 8+): page/props resolution, partial matching, redirects, version guard, the serializer SPI. |
 | `inertia-web` | The web layer (Java 8+, servlet-free): the Thymeleaf + Vite root renderers, version/hot providers and the bundled root template. |
 | `inertia-servlet` | The shared Jakarta Servlet glue: request adapter, protocol filter, result/page writers — rendering delegates to `inertia-web`. |
+| `inertia-servlet-javax` | The legacy javax twin (Java EE 8 / Tomcat 9 era): the same glue on `javax.servlet`, Java 8, sharing `inertia-core` + `inertia-web` unchanged. |
 | `inertia-spring-boot` | The Spring Boot integration (3.x and 4.x): auto-configuration, request-scoped `Inertia` bean, return-value bridges, properties. |
 | `inertia-quarkus` | The Quarkus integration: CDI wiring over the same glue, Undertow registration, RESTEasy writers, SmallRye config. |
 | `inertia-demo` | A runnable demo (Hello World + CRUD Todo) with three canonical front-ends served by both back-ends. |

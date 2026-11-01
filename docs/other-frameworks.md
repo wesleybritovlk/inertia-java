@@ -111,7 +111,7 @@ through its optional `InertiaRequestAttachment` (the Quarkus module uses that ho
 |---|---|---|
 | Protocol rules (props, partials, redirects, version guard) | `inertia-core` | pure Java (8+) |
 | Root document, rendering and toolchain story | `inertia-web` | pure Java (8+), servlet-free |
-| Servlet-shaped request/response wiring | `inertia-servlet` | plain Jakarta Servlet glue |
+| Servlet-shaped request/response wiring | `inertia-servlet` (Jakarta) · `inertia-servlet-javax` (Java EE 8 era) | plain Servlet glue on each namespace |
 | CDI/Welding/properties per framework | adapter modules | Spring Boot auto-config / Quarkus CDI |
 | Flash storage mechanics | the host | `InertiaFlashStore` |
 
