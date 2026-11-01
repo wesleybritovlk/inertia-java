@@ -75,6 +75,12 @@ All notable changes of this project are documented here. Format based on
   reflection-free (nothing to register) and the javax/Boot-2 line is out of native by
   construction — the ownership table and the build recipes live in
   [docs/compile-native.md](docs/compile-native.md).
+- **The demo apps build native with no extra wiring**: `mvn -pl :inertia-demo-spring
+  -Pnative package` and `mvn -pl :inertia-demo-quarkus package -Dnative` (plugin pinned;
+  bound before the Boot repackage) — shipped end to end: the compiled demos serve the full CRUD flow with the `Todo`
+  record registered app-side (`DemoNativeHints` on the Spring demo,
+  `@RegisterForReflection` on the Quarkus one — validated with a real browser session
+  against the binaries), and the two toolchain traps documented as troubleshooting rows.
 
 ### Added — demos
 - **`inertia-demo-spring-boot2`**: the Hello World + CRUD demo running on the legacy

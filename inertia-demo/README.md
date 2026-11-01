@@ -57,6 +57,21 @@ mvn -pl :inertia-demo-spring-boot2 spring-boot:run # Boot 2.7.18 demo (same asse
 mvn -pl :inertia-demo-quarkus quarkus:dev       # add a leading `clean` if the demo seems stale (e.g. after npm builds)
 ```
 
+**GraalVM native builds (both modern demos carry the profiles):**
+
+```bash
+npm run build                                                  # front first: the assets are BAKED into the image
+mvn -pl :inertia-demo-spring -Pnative package                  # Boot: AOT + native-image (plugin pinned)
+./inertia-demo/inertia-demo-spring/target/inertia-demo-spring  # the ELF boot in milliseconds (~107 MB RSS)
+mvn -pl :inertia-demo-quarkus package -Dnative                 # Quarkus native
+./inertia-demo/inertia-demo-quarkus/target/inertia-demo-quarkus-runner
+```
+
+Full mechanics — the ownership table, the reflective-serializer registration that makes
+Inertia visits work in the binary, the resource registration that keeps the bundled root
+template alive, the `Todo` record's `@RegisterForReflection` story and both toolchain
+traps: [docs/compile-native.md](../docs/compile-native.md).
+
 The whole back-end configuration for Vite is **one property**
 (`application.properties` in each demo):
 

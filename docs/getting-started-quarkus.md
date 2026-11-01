@@ -211,6 +211,11 @@ mvn package
 java -jar target/quarkus-app/quarkus-run.jar
 ```
 
+GraalVM native: install a GraalVM 17+ with `native-image` and `mvn package -Dnative`
+writes a single executable that boots in milliseconds
+([the native guide](compile-native.md) for the ownership table, the reflective
+registration story, recipes and troubleshooting).
+
 ## What to read next
 
 - The same guide for Spring Boot: [getting-started-spring.md](getting-started-spring.md)

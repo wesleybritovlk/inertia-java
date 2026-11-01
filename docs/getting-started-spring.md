@@ -241,6 +241,11 @@ mvn package
 java -jar target/my-app-1.0.0.jar
 ```
 
+GraalVM native: the demo apps carry the profile — install a GraalVM 17+ with
+`native-image` and `mvn -Pnative package` writes an instant-boot executable with no JVM
+([the native guide](compile-native.md) for the ownership table, the reflective
+registration story, recipes and troubleshooting).
+
 The jar is self-contained: hashed assets, manifest, root template and the whole
 protocol machinery. SPA catch-all routing (`@GetMapping("/{*path}")`) keeps first
 visits of client-side routes working the same way as any other page.
