@@ -73,12 +73,4 @@ final class Records8 {
             return null; // bare Java 8 runtime: nothing can be a record
         }
     }
-
-    private static Method resolveComponentsFetcher() {
-        try {
-            return Class.class.getMethod("getRecordComponents");
-        } catch (ReflectiveOperationException absent) {
-            return null; // pre-16 runtime that somehow ships Record
-        }
-    }
 }
