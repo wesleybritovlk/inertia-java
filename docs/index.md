@@ -15,6 +15,7 @@ with Thymeleaf playing the role of Laravel's Blade.
 | [Getting started (Quarkus)](getting-started-quarkus.md) | The same zero-to-packaged path on Quarkus: pom, controller with `@Inject Inertia`, config, dev loop, build mode, validation, packaging |
 | [Getting started (pure servlet)](getting-started-servlet.md) | The Inertia protocol on any servlet container (Tomcat 10.1+, Jetty, Jakarta EE 9+ WAR): bootstrap listener, protocol filter, page servlets, WAR packaging |
 | [The web layer](inertia-web.md) | `inertia-web`: the bundled `root.html`, the head-fragment override, the Thymeleaf/Vite renderers and version/hot providers — Java 8, servlet-free |
+| [Native compilation](compile-native.md) | GraalVM native-image: who builds what, the one reflective surface and its registrations, per-stack profiles, lab evidence |
 | [The servlet glue](inertia-servlet.md) | `inertia-servlet`: every class of the Jakarta transport layer, what the adapters add on top, and what raw-servlet users wire themselves |
 | [Development workflow](dev-workflow.md) | `npm run dev` + the back-end pairing (HMR): hot flag file, Vite client injection, Fast Refresh, spring-boot-devtools |
 | [Pages and props](pages-and-props.md) | `inertia.render`, every prop builder (`with`, `withLazy`, `withAlways`, `withDeferred`, `withDeferredRescued`, `withMerged`, `withOnce`, `withScroll`), dot-key nesting and `withViewData` |

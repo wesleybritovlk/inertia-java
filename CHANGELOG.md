@@ -44,16 +44,6 @@ All notable changes of this project are documented here. Format based on
   and `page()/pageName()/wrapper()/metadata()/deferred()`), available on both adapters.
 
 ### Added — architecture
-- **`inertia-spring-boot2` module**: the legacy Spring Boot 2 twin of the starter (2.7 /
-  Spring 5.3 / javax, Java 8) — the same auto-configuration registered via
-  `META-INF/spring.factories`, the same `inertia.*` properties, request-scoped engine and
-  MVC bridges, riding the javax servlet glue (`inertia-servlet-javax`) and the shared
-  Java-8 core/web; 32 mirrored tests (18 units + 14 MockMvc integration) run on the Boot
-  2.7.18 toolchain inside the same reactor.
-- **`inertia-servlet-javax` module**: the legacy javax twin of the Jakarta servlet glue —
-  the same request adapter, protocol filter and writers compiled against `javax.servlet`
-  4.0.1 on Java 8, for Java EE 8 / Tomcat 9- / Spring Boot 2-era containers, reusing
-  `inertia-core` and `inertia-web` unchanged; behavior pinned by the mirrored test suite.
 - **`inertia-servlet` module**: the framework-neutral Jakarta Servlet glue previously
   buried inside the Spring starter (request adapter, protocol filter, result/page
   writers, Thymeleaf/Vite root renderers, version/hot providers, bundled root template).
@@ -63,6 +53,28 @@ All notable changes of this project are documented here. Format based on
   and the bundled root template/head fragment — so every servlet-based stack shares
   exactly the same rendering machinery (now at Java 8 level); `inertia-servlet`
   keeps only the Jakarta Servlet-specific pieces and delegates the rest.
+- **`inertia-servlet-javax` module**: the legacy javax twin of the Jakarta servlet glue —
+  the same request adapter, protocol filter and writers compiled against `javax.servlet`
+  4.0.1 on Java 8, for Java EE 8 / Tomcat 9- / Spring Boot 2-era containers, reusing
+  `inertia-core` and `inertia-web` unchanged; behavior pinned by the mirrored test suite.
+- **`inertia-spring-boot2` module**: the legacy Spring Boot 2 twin of the starter (2.7 /
+  Spring 5.3 / javax, Java 8) — the same auto-configuration registered via
+  `META-INF/spring.factories`, the same `inertia.*` properties, request-scoped engine and
+  MVC bridges, riding the javax servlet glue (`inertia-servlet-javax`) and the shared
+  Java-8 core/web; 32 mirrored tests (18 units + 14 MockMvc integration) run on the Boot
+  2.7.18 toolchain inside the same reactor.
+
+### Added — native
+- **GraalVM native-image readiness for the modern line**: the one reflective surface of
+  the library (the serializer's by-name bridge into the application's Jackson mapper,
+  stripped in compiled binaries) is now registered where it belongs —
+  `META-INF/native-image/.../reflect-config.json` inside `inertia-quarkus` and a
+  `RuntimeHintsRegistrar` (`InertiaNativeHints`) inside `inertia-spring-boot`; the
+  lab-reproduced failure ("No String returning writeValue(Object) method found on
+  ...ObjectMapper") clears in the compiled binaries. `inertia-core`/`inertia-web` are
+  reflection-free (nothing to register) and the javax/Boot-2 line is out of native by
+  construction — the ownership table and the build recipes live in
+  [docs/compile-native.md](docs/compile-native.md).
 
 ### Added — demos
 - **`inertia-demo-spring-boot2`**: the Hello World + CRUD demo running on the legacy

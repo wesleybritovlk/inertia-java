@@ -43,6 +43,7 @@ Jackson 3, the case that breaks other Java adapters.
 | [Getting started (Quarkus)](docs/getting-started-quarkus.md) | the same path on Quarkus (`@Inject Inertia`, `quarkus:dev`) |
 | [Getting started (pure servlet)](docs/getting-started-servlet.md) | WAR on any Jakarta EE 9+ container |
 | [The web layer](docs/inertia-web.md) | the `inertia-web` module: bundled root.html, head-fragment override, renderers, versions — Java 8 |
+| [Native compilation](docs/compile-native.md) | GraalVM native-image: ownership, the reflective serializer bridge, build recipes, lab evidence |
 | [The servlet glue](docs/inertia-servlet.md) | the `inertia-servlet` transport glue, class by class |
 | [Development workflow](docs/dev-workflow.md) | `npm run dev` + the back-end (HMR, Fast Refresh, hot flag) |
 | [Pages and props](docs/pages-and-props.md) | every prop builder: lazy, deferred, merged, once, scroll |
