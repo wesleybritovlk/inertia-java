@@ -60,13 +60,14 @@ A runnable proof of the whole flow lives in [`inertia-demo/`](inertia-demo/READM
 
 ```bash
 git config core.hooksPath .githooks   # one-time: enables the pre-commit gates
-mvn test                              # the full suite (157 tests)
+mvn test                              # the full suite (166 tests)
 mvn install                           # installs all modules locally
 mvn verify -Pboot4                    # the whole reactor on Spring Boot 4 (Jackson 3)
 ```
 
 The pre-commit hook enforces Spotless formatting, 75% instruction/branch coverage
-(JaCoCo) and zero SpotBugs findings (`effort Max`) on every commit.
+(JaCoCo), zero SpotBugs findings (`effort Max`) and zero dead-code findings (PMD)
+on every commit.
 
 Each behavioral rule was implemented and then verified against the actual sources of
 `inertia-laravel` and `@inertiajs/core` (v3.10) — see the test names in `inertia-core`

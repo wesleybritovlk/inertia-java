@@ -139,5 +139,10 @@ Initial protocol engine and Spring Boot integration.
   coverage (75% instruction/branch per bundle) wired into the Maven build; repository
   pre-commit hook runs `mvn verify on every commit (enable with
   `git config core.hooksPath .githooks`).
+- PMD dead-code gate (PMD 7 via `maven-pmd-plugin`): the unused-declaration rules
+  proven absent from the SpotBugs analysis (a never-called private method passed a
+  `threshold low`/`effort max` SpotBugs run) — unused private methods/fields and local
+  variables, main sources of the published modules, added to the same verify/pre-commit
+  chain.
 - Starter unit tests for version hashing, template overrides, validation bag merging and
   writer/converter branches (67 total tests).
