@@ -31,6 +31,13 @@ public final class InertiaHeaders {
     /** Comma-separated once-prop keys the client already holds and must not receive again. */
     public static final String EXCEPT_ONCE_PROPS = "X-Inertia-Except-Once-Props";
 
+    /**
+     * Client intent for infinite-scroll partial reloads ({@code append} or {@code prepend}),
+     * telling the server which side the client will merge the returned data onto.
+     * Informational: the resolved page metadata does not depend on it.
+     */
+    public static final String INFINITE_SCROLL_MERGE_INTENT = "X-Inertia-Infinite-Scroll-Merge-Intent";
+
     /** External redirect target; any such 409 response makes the client perform a full-page visit. */
     public static final String LOCATION = "X-Inertia-Location";
 

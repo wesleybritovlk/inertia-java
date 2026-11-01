@@ -124,6 +124,58 @@ public final class InertiaPage {
         return withMerged(key, supplier, null);
     }
 
+    /**
+     * Once prop (inertia-laravel {@code Inertia::once()}): resolved a single time per client
+     * and remembered by it; later full visits carrying the remembered key
+     * ({@code X-Inertia-Except-Once-Props}) skip resolution and leave the value out of the
+     * response (the {@code onceProps} metadata stays). Customize with the options consumer:
+     * {@code as(key)}, {@code until(...)}, {@code fresh()}, and wrapping other prop kinds
+     * ({@code lazy()}, {@code deferred(...)}, {@code merged()}).
+     */
+    public InertiaPage withOnce(String key, Supplier<?> supplier) {
+        return withOnce(key, supplier, null);
+    }
+
+    /** Once prop with customization, see {@link #withOnce(String, Supplier)}. */
+    public InertiaPage withOnce(String key, Supplier<?> supplier, Consumer<OnceOptions> options) {
+        OnceOptions o = new OnceOptions();
+        if (options != null) {
+            options.accept(o);
+        }
+        Prop inner = o.wrappedProp(supplier);
+        String onceKey = o.onceKey == null ? key : o.onceKey;
+        Long fixedExpiry = o.expiresAt == null ? null : o.expiresAt.toEpochMilli();
+        return put(key, new Prop.Once(inner, onceKey, fixedExpiry, o.expiresAfter, o.fresh));
+    }
+
+    /**
+     * Scroll prop (inertia-laravel {@code Inertia::scroll()}): infinite scroll — the value is
+     * labeled for client-side merging ({@code mergeProps: [<path>.<wrapper>]}) and the page
+     * object carries the paginator cursor ({@code scrollProps}). Bare list values are wrapped
+     * as {@code {<wrapper>: [...]}}. Configure numeric pagination with
+     * {@code page(current, hasMore)}, cursor pagination with {@code metadata(provider)},
+     * the parameter/wrapper names, and deferral with {@code deferred(...)}.
+     */
+    public InertiaPage withScroll(String key, Supplier<?> supplier) {
+        return withScroll(key, supplier, null);
+    }
+
+    /** Scroll prop with customization, see {@link #withScroll(String, Supplier)}. */
+    public InertiaPage withScroll(String key, Supplier<?> supplier, Consumer<ScrollOptions> options) {
+        ScrollOptions o = new ScrollOptions();
+        if (options != null) {
+            options.accept(o);
+        }
+        return put(key, new Prop.Scroll(
+                supplier,
+                o.metadataProvider,
+                o.pageName,
+                o.wrapper,
+                o.explicitPage,
+                o.hasMore,
+                o.deferredGroup));
+    }
+
     /** Encrypts this page's client history entry ({@link PageKeys#ENCRYPT_HISTORY}). */
     public InertiaPage encryptHistory() {
         this.encryptHistory = Boolean.TRUE;

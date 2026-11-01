@@ -23,6 +23,15 @@ import java.util.function.Consumer;
  *   <li>merge metadata ({@code mergeProps}/{@code prependProps}/{@code deepMergeProps}/
  *       {@code matchPropsOn}) collected for included props only, skipped when the path is in
  *       {@code X-Inertia-Reset} (exact match);</li>
+ *   <li>once props skipped on full visits when the client remembered the once key
+ *       ({@code X-Inertia-Except-Once-Props}) unless {@code fresh} forces a refresh — the
+ *       {@code onceProps} metadata is emitted either way; partial reloads ignore that header
+ *       and always resolve requested once props;</li>
+ *   <li>scroll props (infinite scroll) resolved + labeled for merging under
+ *       {@code <path>.<wrapper>} and accompanied by the {@code scrollProps} cursor (with
+ *       {@code reset: true} when the path is in {@code X-Inertia-Reset}, which keeps the
+ *       merge label so the client replaces instead of appending); deferred scroll props
+ *       announce only, carrying the cursor on the resolving partial;</li>
  *   <li>flash + error data and {@code clearHistory}/{@code preserveFragment} flags pulled
  *       from the flash store (survive redirects, consumed by the next rendered page);</li>
  *   <li>{@code X-Inertia} visits answer JSON; other visits render the root template.</li>
@@ -86,15 +95,17 @@ final class PageResolver {
                     includeResolveDefer(path, deferred, ctx, out);
                 }
             } else {
-                out.deferredGroups
-                        .computeIfAbsent(deferred.group() == null || deferred.group().isBlank() ? DEFAULT_GROUP : deferred.group(), key -> new ArrayList<>())
-                        .add(path);
+                announceDeferred(path, deferred.group(), out);
             }
         } else if (prop instanceof Prop.Merge merge) {
             if (!ctx.partial || DotPaths.matches(path, ctx.only, ctx.except)) {
                 include(path, merge.value().get(), bypassChildren, ctx, out);
                 collectMergeMetadata(path, merge, ctx, out);
             }
+        } else if (prop instanceof Prop.Once once) {
+            resolveOnce(path, once, ctx, out, bypassChildren);
+        } else if (prop instanceof Prop.Scroll scroll) {
+            resolveScroll(path, scroll, ctx, out);
         }
     }
 
@@ -136,6 +147,172 @@ final class PageResolver {
             ctx.errorHandler.accept(failure);
             out.rescued.add(path);
         }
+    }
+
+    private static void announceDeferred(String path, String group, State out) {
+        out.deferredGroups
+                .computeIfAbsent(group == null || group.isBlank() ? DEFAULT_GROUP : group, key -> new ArrayList<>())
+                .add(path);
+    }
+
+    // ---------------------------------------------------------------- once props
+
+    /**
+     * Once resolution: the {@code onceProps} entry is emitted on every visit (full, partial,
+     * resolved, skipped — the client re-hydrates remembered values from it), while the wrapped
+     * value resolves normally unless a full visit's {@code X-Inertia-Except-Once-Props} lists
+     * the key and {@code fresh} does not force a refresh. Skipped entries carry no value and
+     * no merge label (the client keeps its copy); a still-deferred inner prop keeps announcing
+     * its group so the client can resolve it explicitly later.
+     */
+    private static void resolveOnce(String path, Prop.Once once, Ctx ctx, State out, boolean bypassChildren) {
+        boolean skipped = !ctx.partial && !once.fresh() && ctx.exceptOnce.contains(once.key());
+        out.onceProps.put(once.key(), onceEntry(path, once));
+        if (skipped) {
+            if (!ctx.partial && once.inner() instanceof Prop.Deferred deferred) {
+                announceDeferred(path, deferred.group(), out);
+            }
+            return;
+        }
+        resolveOnceInner(path, once.inner(), ctx, out, bypassChildren);
+    }
+
+    private static Map<String, Object> onceEntry(String path, Prop.Once once) {
+        Long expiresAt = once.expiresAtFixed();
+        if (expiresAt == null && once.expiresAfter() != null) {
+            expiresAt = System.currentTimeMillis() + once.expiresAfter().toMillis();
+        }
+        LinkedHashMap<String, Object> entry = new LinkedHashMap<>();
+        entry.put("prop", path);
+        entry.put("expiresAt", expiresAt);
+        return entry;
+    }
+
+    /** Prop-kind dispatch of the wrapped once value (mirrors the top-level branches). */
+    private static void resolveOnceInner(String path, Prop inner, Ctx ctx, State out, boolean bypassChildren) {
+        if (inner instanceof Prop.Always always) {
+            include(path, always.value().get(), true, ctx, out);
+        } else if (inner instanceof Prop.Plain plain) {
+            if (!ctx.partial || DotPaths.matches(path, ctx.only, ctx.except)) {
+                include(path, plain.value().get(), bypassChildren, ctx, out);
+            }
+        } else if (inner instanceof Prop.Lazy lazy) {
+            if (ctx.partial && DotPaths.matches(path, ctx.only, ctx.except)) {
+                include(path, lazy.value().get(), bypassChildren, ctx, out);
+            }
+        } else if (inner instanceof Prop.Deferred deferred) {
+            if (ctx.partial) {
+                if (DotPaths.matches(path, ctx.only, ctx.except)) {
+                    includeResolveDefer(path, deferred, ctx, out);
+                }
+            } else {
+                announceDeferred(path, deferred.group(), out);
+            }
+        } else if (inner instanceof Prop.Merge merge) {
+            if (!ctx.partial || DotPaths.matches(path, ctx.only, ctx.except)) {
+                include(path, merge.value().get(), bypassChildren, ctx, out);
+                collectMergeMetadata(path, merge, ctx, out);
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------- scroll props
+
+    /**
+     * Scroll resolution: exactly like a merge prop, plus the cursor. The merge label at
+     * {@code <path>.<wrapper>} is re-emitted on EVERY response that carries the value —
+     * including {@code X-Inertia-Reset} requests, whose {@code reset: true} cursor tells the
+     * client to replace its accumulated data instead of appending. Deferral defers both the
+     * value and its cursor to the resolving partial reload.
+     */
+    private static void resolveScroll(String path, Prop.Scroll scroll, Ctx ctx, State out) {
+        if (scroll.deferredGroup() != null && !ctx.partial) {
+            announceDeferred(path, scroll.deferredGroup(), out);
+            return;
+        }
+        if (ctx.partial && !DotPaths.matches(path, ctx.only, ctx.except)) {
+            return;
+        }
+        include(path, scrollValue(scroll), false, ctx, out);
+        collectScrollMetadata(path, scroll, ctx, out);
+    }
+
+    /** Bare lists are wrapped as {@code {<wrapper>: [...]}}; maps pass through untouched. */
+    private static Object scrollValue(Prop.Scroll scroll) {
+        Object value = scroll.value().get();
+        if (value instanceof List<?> items) {
+            LinkedHashMap<String, Object> wrapped = new LinkedHashMap<>();
+            wrapped.put(scroll.wrapper(), items);
+            return wrapped;
+        }
+        return value;
+    }
+
+    private static void collectScrollMetadata(String path, Prop.Scroll scroll, Ctx ctx, State out) {
+        ScrollMetadata metadata = scroll.metadata() == null
+                ? derivedScrollMetadata(scroll, ctx)
+                : scroll.metadata();
+        LinkedHashMap<String, Object> cursor = new LinkedHashMap<>();
+        cursor.put("pageName", metadata.pageName());
+        cursor.put("previousPage", metadata.previousPage());
+        cursor.put("nextPage", metadata.nextPage());
+        cursor.put("currentPage", metadata.currentPage());
+        cursor.put("reset", DotPaths.isReset(path, ctx.reset));
+        out.scrollProps.put(path, cursor);
+        out.mergeProps.add(path + '.' + scroll.wrapper());
+    }
+
+    /**
+     * Request-derived cursor defaults, Laravel paginator parity: the current page comes from
+     * the {@code pageName} query parameter (integer when numeric — the raw value otherwise,
+     * e.g. opaque cursor strings), falling back to the page fixed by the controller and then
+     * to page 1. Numeric cursors derive previous/next; {@code hasMore} must be declared by
+     * the controller, since the core cannot know a page exists.
+     */
+    private static ScrollMetadata derivedScrollMetadata(Prop.Scroll scroll, Ctx ctx) {
+        String pageName = scroll.pageName();
+        String raw = queryParam(ctx, pageName);
+        Object current;
+        if (raw != null) {
+            current = parsePage(raw);
+        } else {
+            current = scroll.explicitPage() == null ? Integer.valueOf(1) : scroll.explicitPage();
+        }
+        Object previous = null;
+        Object next = null;
+        if (current instanceof Integer currentInt) {
+            if (currentInt > 1) {
+                previous = currentInt - 1;
+            }
+            if (scroll.hasMore()) {
+                next = currentInt + 1;
+            }
+        }
+        return new FixedScrollMetadata(pageName, previous, next, current);
+    }
+
+    private static Object parsePage(String raw) {
+        try {
+            return Integer.valueOf(Integer.parseInt(raw));
+        } catch (NumberFormatException notNumeric) {
+            return raw;
+        }
+    }
+
+    private static String queryParam(Ctx ctx, String name) {
+        String query = ctx.request.query();
+        if (query == null || query.isEmpty()) {
+            return null;
+        }
+        for (String pair : query.split("&")) {
+            int split = pair.indexOf('=');
+            String key = split < 0 ? pair : pair.substring(0, split);
+            if (name.equals(URL_DECODER.apply(key))) {
+                String value = split < 0 ? "" : pair.substring(split + 1);
+                return URL_DECODER.apply(value);
+            }
+        }
+        return null;
     }
 
     // ---------------------------------------------------------------- output
@@ -182,6 +359,12 @@ final class PageResolver {
         }
         if (!out.matchPropsOn.isEmpty()) {
             pageJson.put(PageKeys.MATCH_PROPS_ON, out.matchPropsOn);
+        }
+        if (!out.scrollProps.isEmpty()) {
+            pageJson.put(PageKeys.SCROLL_PROPS, out.scrollProps);
+        }
+        if (!out.onceProps.isEmpty()) {
+            pageJson.put(PageKeys.ONCE_PROPS, out.onceProps);
         }
         if (!out.deferredGroups.isEmpty()) {
             pageJson.put(PageKeys.DEFERRED_PROPS, out.deferredGroups);
@@ -279,6 +462,7 @@ final class PageResolver {
         final List<String> only;
         final List<String> except;
         final List<String> reset;
+        final List<String> exceptOnce;
         final String errorBag;
         final Consumer<Throwable> errorHandler;
 
@@ -290,6 +474,7 @@ final class PageResolver {
             this.only = partial ? request.headerList(InertiaHeaders.PARTIAL_DATA) : List.of();
             this.except = partial ? request.headerList(InertiaHeaders.PARTIAL_EXCEPT) : List.of();
             this.reset = request.headerList(InertiaHeaders.RESET);
+            this.exceptOnce = request.headerList(InertiaHeaders.EXCEPT_ONCE_PROPS);
             this.errorBag = request.header(InertiaHeaders.ERROR_BAG);
             this.errorHandler = errorHandler == null ? failure -> {
             } : errorHandler;
@@ -303,6 +488,16 @@ final class PageResolver {
         final List<String> prependProps = new ArrayList<>();
         final List<String> deepMergeProps = new ArrayList<>();
         final List<String> matchPropsOn = new ArrayList<>();
+        final LinkedHashMap<String, Map<String, Object>> scrollProps = new LinkedHashMap<>();
+        final LinkedHashMap<String, Map<String, Object>> onceProps = new LinkedHashMap<>();
         final List<String> rescued = new ArrayList<>();
     }
+
+    /** A controller/user supplied cursor set, emitted verbatim (no request derivation). */
+    private record FixedScrollMetadata(
+            String pageName, Object previousPage, Object nextPage, Object currentPage) implements ScrollMetadata {
+    }
+
+    private static final java.util.function.UnaryOperator<String> URL_DECODER =
+            raw -> java.net.URLDecoder.decode(raw, java.nio.charset.StandardCharsets.UTF_8);
 }

@@ -47,7 +47,15 @@ deep-merge + `matchOn` metadata (verified against `MergesProps.php` and
 truncation in `sharedProps` metadata, unwrapped default errors bag + bag renaming via
 `X-Inertia-Error-Bag`, flash data as top-level page key pulled once per page,
 `clearHistory`/`preserveFragment` pulled page flags, Always prop full partial bypass,
-`Inertia::location()` returning a plain 302 for non-Inertia visits.
+`Inertia::location()` returning a plain 302 for non-Inertia visits — and since the v3
+protocol: once props (remembered-key skipping on full visits only, `fresh()`, `until()`
+expiry as emitted `expiresAt` ms, `as()` cross-page key including shared `shareOnce()`,
+`onceProps` metadata kept even when the value is skipped) and scroll props
+(`Inertia::scroll()` cursor parity: `scrollProps` keyed by prop path, per-request
+derivation from the `pageName` query parameter or explicit facts / a `metadata()`
+provider, merge label `<path>.<wrapper>` re-emitted even under `X-Inertia-Reset` where
+`reset: true` replaces instead of appends, deferred scroll announcing without a cursor),
+both verified against the `@inertiajs` 3.10 client behavior.
 
 ## Divergences
 

@@ -62,6 +62,27 @@ public class Inertia {
         return this;
     }
 
+    /**
+     * Shared once prop (inertia-laravel {@code shareOnce()}): remember-across-pages
+     * semantics on shared data; the same once options apply ({@code as}/ {@code until}/
+     * {@code fresh}).
+     */
+    public Inertia sharedOnce(String key, Supplier<?> supplier) {
+        return sharedOnce(key, supplier, null);
+    }
+
+    /** Shared once prop with customization, see {@link #sharedOnce(String, Supplier)}. */
+    public Inertia sharedOnce(String key, Supplier<?> supplier, Consumer<OnceOptions> options) {
+        OnceOptions o = new OnceOptions();
+        if (options != null) {
+            options.accept(o);
+        }
+        String onceKey = o.onceKey == null ? key : o.onceKey;
+        Long fixedExpiry = o.expiresAt == null ? null : o.expiresAt.toEpochMilli();
+        sharedProps.put(key, new Prop.Once(o.wrappedProp(supplier), onceKey, fixedExpiry, o.expiresAfter, o.fresh));
+        return this;
+    }
+
     /** One-shot values adopted (and consumed) by the next rendered page. */
     public Inertia flash(Map<String, Object> values) {
         if (values == null || values.isEmpty()) {

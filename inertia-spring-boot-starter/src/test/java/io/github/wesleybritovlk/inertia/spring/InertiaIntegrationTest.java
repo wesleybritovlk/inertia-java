@@ -194,7 +194,62 @@ class InertiaIntegrationTest {
                 .andExpect(header().string("Location", "/plain/index"));
     }
 
+    // ---------------------------------------------------------------- once + scroll props
+
+    @Test
+    void onceAndScrollPropsRideThroughTheServletAdapter() throws Exception {
+        mvc.perform(get("/feed").header(InertiaHeaders.INERTIA, INERTIA))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.props.plans[0]").value("basic"))
+                .andExpect(jsonPath("$.onceProps.plans.prop").value("plans"))
+                .andExpect(jsonPath("$.onceProps.plans.expiresAt").doesNotExist())
+                .andExpect(jsonPath("$.props.posts.data").exists())
+                .andExpect(jsonPath("$.scrollProps.posts.pageName").value("page"))
+                .andExpect(jsonPath("$.scrollProps.posts.currentPage").value(1))
+                .andExpect(jsonPath("$.scrollProps.posts.nextPage").value(2))
+                .andExpect(jsonPath("$.scrollProps.posts.reset").value(false))
+                .andExpect(jsonPath("$.mergeProps[0]").value("posts.data"));
+    }
+
+    @Test
+    void rememberedOnceKeysSkipPropsButKeepMetadataThroughTheAdapter() throws Exception {
+        mvc.perform(get("/feed")
+                        .header(InertiaHeaders.INERTIA, INERTIA)
+                        .header(InertiaHeaders.EXCEPT_ONCE_PROPS, "plans"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.props.plans").doesNotExist())
+                .andExpect(jsonPath("$.onceProps.plans.prop").value("plans"))
+                .andExpect(jsonPath("$.scrollProps.posts.nextPage").value(2));
+    }
+
+    @Test
+    void scrollResetRequestsRideThroughTheAdapter() throws Exception {
+        mvc.perform(get("/feed")
+                        .header(InertiaHeaders.INERTIA, INERTIA)
+                        .header(InertiaHeaders.RESET, "posts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.props.posts.data").exists())
+                .andExpect(jsonPath("$.scrollProps.posts.reset").value(true));
+    }
+
     // --------------------------------------------------------------- test app
+
+    @org.springframework.web.bind.annotation.RestController
+    static class FeedController {
+
+        private final Inertia inertia;
+
+        FeedController(Inertia inertia) {
+            this.inertia = inertia;
+        }
+
+        @GetMapping("/feed")
+        InertiaPage feed() {
+            return inertia.render("Feed", p -> p
+                    .withOnce("plans", () -> List.of("basic", "pro"))
+                    .withScroll("posts", () -> List.of(), o -> o.page(1, true)));
+        }
+    }
 
     @org.springframework.boot.SpringBootConfiguration
     @org.springframework.boot.autoconfigure.EnableAutoConfiguration

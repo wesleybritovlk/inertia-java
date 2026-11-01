@@ -437,6 +437,359 @@ class InertiaProtocolTest {
         assertEquals(List.of("a.sub", "c"), parsed.get(PageKeys.MERGE_PROPS));
         assertEquals(List.of("b.tail", "d"), parsed.get(PageKeys.PREPEND_PROPS));
     }
+
+    // ---------------------------------------------------------------- once props
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> onceEntry(Map<String, Object> parsed, String key) {
+        Object metadata = parsed.get(PageKeys.ONCE_PROPS);
+        if (!(metadata instanceof Map<?, ?> entries) ) {
+            throw new AssertionError("missing onceProps metadata");
+        }
+        Object entry = ((Map<String, Object>) entries).get(key);
+        if (!(entry instanceof Map<?, ?>)) {
+            throw new AssertionError("missing onceProps entry: " + key);
+        }
+        return (Map<String, Object>) entry;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> prop(Map<String, Object> parsed, String path) {
+        Map<String, Object> props = (Map<String, Object>) parsed.get(PageKeys.PROPS);
+        return (Map<String, Object>) props.get(path);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object propValue(Map<String, Object> parsed, String key) {
+        Map<String, Object> props = (Map<String, Object>) parsed.get(PageKeys.PROPS);
+        return props.get(key);
+    }
+
+    @Test
+    void oncePropsResolveWithMetadataOnFullVisits() {
+        MockRequest request = MockRequest.get("/billing").inertia();
+        InertiaPage page = engine(request).render("Billing", p -> p
+                .withOnce("plans", () -> List.of("basic", "pro")));
+
+        Map<String, Object> parsed = PageJson.parse(engine(request).result(page).json().orElseThrow());
+        assertEquals(List.of("basic", "pro"), propValue(parsed, "plans"));
+        Map<String, Object> entry = onceEntry(parsed, "plans");
+        assertEquals("plans", entry.get("prop"));
+        assertNull(entry.get("expiresAt"));
+    }
+
+    @Test
+    void rememberedOnceKeysSkipResolutionButStillEmitMetadata() {
+        MockRequest request = MockRequest.get("/upgrade").inertia()
+                .header(InertiaHeaders.EXCEPT_ONCE_PROPS, "plans");
+        InertiaPage page = engine(request).render("Upgrade", p -> p
+                .withOnce("plans", () -> {
+                    throw new IllegalStateException("must not resolve when remembered");
+                })
+                .with("current", "starter"));
+
+        Map<String, Object> parsed = PageJson.parse(engine(request).result(page).json().orElseThrow());
+        assertNull(propValue(parsed, "plans"), "remembered once props stay out of props");
+        assertEquals("starter", propValue(parsed, "current"));
+        Map<String, Object> entry = onceEntry(parsed, "plans");
+        assertEquals("plans", entry.get("prop"));
+        assertNull(entry.get("expiresAt"));
+    }
+
+    @Test
+    void partialReloadsIgnoreTheRememberedKeysHeader() {
+        MockRequest request = MockRequest.get("/billing").inertia()
+                .header(InertiaHeaders.PARTIAL_COMPONENT, "Billing")
+                .header(InertiaHeaders.PARTIAL_DATA, "plans")
+                .header(InertiaHeaders.EXCEPT_ONCE_PROPS, "plans");
+        InertiaPage page = engine(request).render("Billing", p -> p
+                .withOnce("plans", () -> List.of("basic")));
+
+        Map<String, Object> parsed = PageJson.parse(engine(request).result(page).json().orElseThrow());
+        assertEquals(List.of("basic"), propValue(parsed, "plans"));
+    }
+
+    @Test
+    void partialReloadsStillEmitOnceMetadataForUnrequestedProps() {
+        MockRequest request = MockRequest.get("/billing").inertia()
+                .header(InertiaHeaders.PARTIAL_COMPONENT, "Billing")
+                .header(InertiaHeaders.PARTIAL_DATA, "current");
+        InertiaPage page = engine(request).render("Billing", p -> p
+                .withOnce("plans", () -> List.of("basic"))
+                .with("current", "starter"));
+
+        Map<String, Object> parsed = PageJson.parse(engine(request).result(page).json().orElseThrow());
+        assertEquals("starter", propValue(parsed, "current"));
+        assertNull(propValue(parsed, "plans"));
+        assertEquals("plans", onceEntry(parsed, "plans").get("prop"));
+    }
+
+    @Test
+    void customOnceKeysLinkPropsAcrossPages() {
+        // page A: prop "memberRoles"; page B: prop "availableRoles"; both once key "roles"
+        MockRequest memberPage = MockRequest.get("/team").inertia();
+        Map<String, Object> memberParsed = PageJson.parse(engine(memberPage).result(engine(memberPage).render("Team/Index", p -> p
+                .withOnce("memberRoles", () -> List.of("admin"), o -> o.as("roles")))).json().orElseThrow());
+        assertEquals(List.of("admin"), propValue(memberParsed, "memberRoles"));
+        assertEquals("memberRoles", onceEntry(memberParsed, "roles").get("prop"));
+
+        // the invite page carries the same key: the remembered value is not re-sent
+        MockRequest invitePage = MockRequest.get("/team/invite").inertia()
+                .header(InertiaHeaders.EXCEPT_ONCE_PROPS, "roles");
+        Map<String, Object> inviteParsed = PageJson.parse(engine(invitePage).result(engine(invitePage).render("Team/Invite", p -> p
+                .withOnce("availableRoles", () -> List.of("admin"), o -> o.as("roles")))).json().orElseThrow());
+        assertNull(propValue(inviteParsed, "availableRoles"));
+        assertEquals("availableRoles", onceEntry(inviteParsed, "roles").get("prop"));
+    }
+
+    @Test
+    void untilEmitsEpochExpiryMilliseconds() {
+        MockRequest request = MockRequest.get("/dashboard").inertia();
+        InertiaPage page = engine(request).render("Dashboard", p -> p
+                .withOnce("rates", () -> List.of("usd"), o -> o.until(java.time.Duration.ofSeconds(60))));
+
+        Map<String, Object> parsed = PageJson.parse(engine(request).result(page).json().orElseThrow());
+        Object expiresAt = onceEntry(parsed, "rates").get("expiresAt");
+        long expectedFloor = System.currentTimeMillis() + 55_000L;
+        assertTrue(expiresAt instanceof Long expires && expires >= expectedFloor, "expiresAt in the future: " + expiresAt);
+    }
+
+    @Test
+    void freshForcesRefreshDespiteTheRememberedKey() {
+        MockRequest request = MockRequest.get("/billing").inertia()
+                .header(InertiaHeaders.EXCEPT_ONCE_PROPS, "plans");
+        InertiaPage page = engine(request).render("Billing", p -> p
+                .withOnce("plans", () -> List.of("basic", "pro"), o -> o
+                        .fresh()
+                        .until(java.time.Instant.ofEpochMilli(1_800_000_000_000L))));
+
+        Map<String, Object> parsed = PageJson.parse(engine(request).result(page).json().orElseThrow());
+        assertEquals(List.of("basic", "pro"), propValue(parsed, "plans"));
+        assertEquals(1_800_000_000_000L, onceEntry(parsed, "plans").get("expiresAt"));
+    }
+
+    @Test
+    void onceOverDeferredAnnouncesThenResolvesOnTheFollowUpPartial() {
+        MockRequest full = MockRequest.get("/dashboard").inertia();
+        Map<String, Object> fullParsed = PageJson.parse(engine(full).result(engine(full).render("Dashboard", p -> p
+                .withOnce("groups", () -> List.of("devs"), o -> o.deferred("stats")))).json().orElseThrow());
+        assertNull(propValue(fullParsed, "groups"));
+        assertEquals(Map.of("stats", List.of("groups")), fullParsed.get(PageKeys.DEFERRED_PROPS));
+        assertEquals("groups", onceEntry(fullParsed, "groups").get("prop"));
+
+        MockRequest partial = MockRequest.get("/dashboard").inertia()
+                .header(InertiaHeaders.PARTIAL_COMPONENT, "Dashboard")
+                .header(InertiaHeaders.PARTIAL_DATA, "groups")
+                .header(InertiaHeaders.EXCEPT_ONCE_PROPS, "groups");
+        Map<String, Object> partialParsed = PageJson.parse(engine(partial).result(engine(partial).render("Dashboard", p -> p
+                .withOnce("groups", () -> List.of("devs"), o -> o.deferred("stats")))).json().orElseThrow());
+        assertEquals(List.of("devs"), propValue(partialParsed, "groups"));
+        assertNull(partialParsed.get(PageKeys.DEFERRED_PROPS));
+    }
+
+    @Test
+    void onceOverMergeSkipsValueAndMergeLabelTogether() {
+        MockRequest resolved = MockRequest.get("/activity").inertia();
+        Map<String, Object> resolvedParsed = PageJson.parse(engine(resolved).result(engine(resolved).render("Activity", p -> p
+                .withOnce("timeline", () -> List.of("event"), o -> o.merged().matchOn("id")))).json().orElseThrow());
+        assertEquals(List.of("event"), propValue(resolvedParsed, "timeline"));
+        assertEquals(List.of("timeline"), resolvedParsed.get(PageKeys.MERGE_PROPS));
+        assertEquals(List.of("timeline.id"), resolvedParsed.get(PageKeys.MATCH_PROPS_ON));
+
+        MockRequest skipped = MockRequest.get("/activity").inertia()
+                .header(InertiaHeaders.EXCEPT_ONCE_PROPS, "timeline");
+        Map<String, Object> skippedParsed = PageJson.parse(engine(skipped).result(engine(skipped).render("Activity", p -> p
+                .withOnce("timeline", () -> List.of("event"), o -> o.merged().matchOn("id")))).json().orElseThrow());
+        assertNull(propValue(skippedParsed, "timeline"));
+        assertNull(skippedParsed.get(PageKeys.MERGE_PROPS), "no new data, no merge label");
+        assertNull(skippedParsed.get(PageKeys.MATCH_PROPS_ON));
+        assertEquals("timeline", onceEntry(skippedParsed, "timeline").get("prop"));
+    }
+
+    @Test
+    void sharedOncePropsJoinSharedPropsMetadataAndSkipOnRememberedKeys() {
+        Inertia engine = new Inertia(VERSION, SERIALIZER, MockRequest.get("/x").inertia());
+        engine.sharedOnce("countries", () -> List.of("br"));
+        Map<String, Object> parsed = PageJson.parse(engine.result(engine.render("X", p -> p.with("a", 1))).json().orElseThrow());
+        assertEquals(List.of("br"), propValue(parsed, "countries"));
+        assertEquals(List.of("countries"), parsed.get(PageKeys.SHARED_PROPS));
+        assertEquals("countries", onceEntry(parsed, "countries").get("prop"));
+
+        Inertia remembered = new Inertia(VERSION, SERIALIZER, MockRequest.get("/x").inertia()
+                .header(InertiaHeaders.EXCEPT_ONCE_PROPS, "countries"));
+        remembered.sharedOnce("countries", () -> List.of("br"));
+        Map<String, Object> rememberedParsed = PageJson.parse(remembered.result(remembered.render("X", p -> p.with("a", 1))).json().orElseThrow());
+        assertNull(propValue(rememberedParsed, "countries"));
+        assertEquals("countries", onceEntry(rememberedParsed, "countries").get("prop"));
+    }
+
+    @Test
+    void freshFalseKeepsTheRememberedKeysSkipping() {
+        MockRequest request = MockRequest.get("/billing").inertia()
+                .header(InertiaHeaders.EXCEPT_ONCE_PROPS, "plans");
+        InertiaPage page = engine(request).render("Billing", p -> p
+                .withOnce("plans", () -> List.of("basic"), o -> o.fresh(false)));
+
+        Map<String, Object> parsed = PageJson.parse(engine(request).result(page).json().orElseThrow());
+        assertNull(propValue(parsed, "plans"));
+    }
+
+    // ---------------------------------------------------------------- scroll props
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> scrollCursor(Map<String, Object> parsed, String path) {
+        Object metadata = parsed.get(PageKeys.SCROLL_PROPS);
+        if (!(metadata instanceof Map<?, ?> entries)) {
+            throw new AssertionError("missing scrollProps metadata");
+        }
+        Object cursor = ((Map<String, Object>) entries).get(path);
+        if (!(cursor instanceof Map<?, ?>)) {
+            throw new AssertionError("missing scrollProps entry: " + path);
+        }
+        return (Map<String, Object>) cursor;
+    }
+
+    @Test
+    void scrollPropsCarryCursorAndMergeLabelOnFullVisits() {
+        MockRequest request = MockRequest.get("/posts").inertia();
+        InertiaPage page = engine(request).render("Posts", p -> p
+                .withScroll("posts", () -> List.of(Map.of("id", 1))));
+
+        Map<String, Object> parsed = PageJson.parse(engine(request).result(page).json().orElseThrow());
+        Object wrappedValue = prop(parsed, "posts").get("data");
+        List<?> data = wrappedValue instanceof List<?> items ? items : List.of();
+        assertEquals(1L, data.isEmpty() ? 0L : ((java.util.Map<?, ?>) data.get(0)).get("id"));
+        assertEquals(List.of("posts.data"), parsed.get(PageKeys.MERGE_PROPS));
+        Map<String, Object> cursor = scrollCursor(parsed, "posts");
+        assertEquals("page", cursor.get("pageName"));
+        assertEquals(1L, cursor.get("currentPage"));
+        assertNull(cursor.get("previousPage"));
+        assertNull(cursor.get("nextPage"));
+        assertEquals(Boolean.FALSE, cursor.get("reset"));
+    }
+
+    @Test
+    void scrollCursorFollowsThePageQueryParameter() {
+        MockRequest request = MockRequest.get("/posts", "page=2").inertia();
+        InertiaPage page = engine(request).render("Posts", p -> p
+                .withScroll("posts", () -> List.of(), o -> o.page(1, true)));
+
+        Map<String, Object> parsed = PageJson.parse(engine(request).result(page).json().orElseThrow());
+        Map<String, Object> cursor = scrollCursor(parsed, "posts");
+        assertEquals(2L, cursor.get("currentPage"), "the client-driven query parameter wins");
+        assertEquals(1L, cursor.get("previousPage"));
+        assertEquals(3L, cursor.get("nextPage"), "hasMore from the reload options");
+    }
+
+    @Test
+    void scrollOptionsInitializeFirstVisitsAndHasMoreDrivesNext() {
+        MockRequest request = MockRequest.get("/posts").inertia();
+        InertiaPage page = engine(request).render("Posts", p -> p
+                .withScroll("posts", () -> List.of(), o -> o.page(3, true)));
+
+        Map<String, Object> cursor = scrollCursor(PageJson.parse(engine(request).result(page).json().orElseThrow()), "posts");
+        assertEquals(3L, cursor.get("currentPage"));
+        assertEquals(2L, cursor.get("previousPage"));
+        assertEquals(4L, cursor.get("nextPage"));
+    }
+
+    @Test
+    void scrollMetadataProviderWinsWithCursorStrings() {
+        MockRequest request = MockRequest.get("/chat", "cursor=ignored").inertia();
+        InertiaPage page = engine(request).render("Chat", p -> p
+                .withScroll("messages", () -> List.of(), o -> o
+                        .pageName("cursor")
+                        .metadata(new ScrollMetadata() {
+                            @Override
+                            public String pageName() {
+                                return "cursor";
+                            }
+
+                            @Override
+                            public Object currentPage() {
+                                return "c2";
+                            }
+
+                            @Override
+                            public Object nextPage() {
+                                return "c3";
+                            }
+
+                            @Override
+                            public Object previousPage() {
+                                return "c1";
+                            }
+                        })));
+
+        Map<String, Object> cursor = scrollCursor(PageJson.parse(engine(request).result(page).json().orElseThrow()), "messages");
+        assertEquals("cursor", cursor.get("pageName"));
+        assertEquals("c2", cursor.get("currentPage"));
+        assertEquals("c1", cursor.get("previousPage"));
+        assertEquals("c3", cursor.get("nextPage"));
+    }
+
+    @Test
+    void scrollResetRequestsFlagTheCursorWithoutDroppingTheLabel() {
+        MockRequest request = MockRequest.get("/posts").inertia()
+                .header(InertiaHeaders.RESET, "posts");
+        InertiaPage page = engine(request).render("Posts", p -> p
+                .withScroll("posts", () -> List.of()));
+
+        Map<String, Object> parsed = PageJson.parse(engine(request).result(page).json().orElseThrow());
+        assertEquals(List.of("posts.data"), parsed.get(PageKeys.MERGE_PROPS), "the label survives resets");
+        assertEquals(Boolean.TRUE, scrollCursor(parsed, "posts").get("reset"));
+    }
+
+    @Test
+    void customScrollWrappersLabelTheirOwnKey() {
+        MockRequest request = MockRequest.get("/feed").inertia();
+        InertiaPage page = engine(request).render("Feed", p -> p
+                .withScroll("feed", () -> java.util.Map.of("items", List.of("a")), o -> o.wrapper("items")));
+
+        Map<String, Object> parsed = PageJson.parse(engine(request).result(page).json().orElseThrow());
+        assertEquals(List.of("a"), prop(parsed, "feed").get("items"));
+        assertEquals(List.of("feed.items"), parsed.get(PageKeys.MERGE_PROPS));
+    }
+
+    @Test
+    void deferredScrollAnnouncesOnlyThenResolvesWithCursorOnThePartial() {
+        Prop pageFactory = null;
+        MockRequest full = MockRequest.get("/timeline").inertia();
+        InertiaPage fullPage = engine(full).render("Timeline", p -> p
+                .withScroll("posts", () -> List.of("post"), o -> o.deferred("feed")));
+        Map<String, Object> fullParsed = PageJson.parse(engine(full).result(fullPage).json().orElseThrow());
+        assertNull(propValue(fullParsed, "posts"));
+        assertEquals(Map.of("feed", List.of("posts")), fullParsed.get(PageKeys.DEFERRED_PROPS));
+        assertNull(fullParsed.get(PageKeys.SCROLL_PROPS));
+        assertNull(fullParsed.get(PageKeys.MERGE_PROPS), "no value resolved, no label");
+
+        MockRequest partial = MockRequest.get("/timeline").inertia()
+                .header(InertiaHeaders.PARTIAL_COMPONENT, "Timeline")
+                .header(InertiaHeaders.PARTIAL_DATA, "posts");
+        InertiaPage partialPage = engine(partial).render("Timeline", p -> p
+                .withScroll("posts", () -> List.of("post"), o -> o.deferred("feed")));
+        Map<String, Object> partialParsed = PageJson.parse(engine(partial).result(partialPage).json().orElseThrow());
+        assertEquals(List.of("post"), prop(partialParsed, "posts").get("data"));
+        assertEquals(List.of("posts.data"), partialParsed.get(PageKeys.MERGE_PROPS));
+        assertEquals(1L, scrollCursor(partialParsed, "posts").get("currentPage"));
+    }
+
+    @Test
+    void scrollPartialSubPathFilteringWalksTheValue() {
+        MockRequest request = MockRequest.get("/posts").inertia()
+                .header(InertiaHeaders.PARTIAL_COMPONENT, "Posts")
+                .header(InertiaHeaders.PARTIAL_DATA, "posts.data");
+        InertiaPage page = engine(request).render("Posts", p -> p
+                .withScroll("posts", () -> java.util.Map.of(
+                        "data", List.of("a"),
+                        "meta", java.util.Map.of("page", 2))));
+
+        Map<String, Object> parsed = PageJson.parse(engine(request).result(page).json().orElseThrow());
+        Map<String, Object> posts = prop(parsed, "posts");
+        assertEquals(List.of("a"), posts.get("data"));
+        assertNull(posts.get("meta"), "only the requested sub-path walks through");
+    }
+
     @Test
     void responseUpgradeAddsVaryUpgradesNonGetAndEscalatesFragmentRedirects() {
         MockShell shell = new MockShell(302).location("/after");

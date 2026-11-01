@@ -26,6 +26,12 @@ public final class PageKeys {
     /** Item identity key used when merging arrays ({@code testProp.onKey} paths). */
     public static final String MATCH_PROPS_ON = "matchPropsOn";
 
+    /** Cursor metadata of scroll (infinite scroll) props, keyed by prop path. */
+    public static final String SCROLL_PROPS = "scrollProps";
+
+    /** Once-prop entries keyed by once key: {@code {prop, expiresAt}}. */
+    public static final String ONCE_PROPS = "onceProps";
+
     /** Top-level shared prop keys, truncated at their first dot. */
     public static final String SHARED_PROPS = "sharedProps";
 

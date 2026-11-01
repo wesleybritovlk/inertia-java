@@ -162,6 +162,8 @@ Page props override shared props with the same key.
 | `withAlways(key, value / supplier)` | Always included — bypasses `only`/`except` partial filtering |
 | `withDeferred(key, supplier)` / `withDeferred(key, group, supplier)` | Excluded here; the client re-requests per group (`deferredProps` metadata); `withDeferredRescued(...)` drops failing props into `rescuedProps` instead of failing the page |
 | `withMerged(key, supplier, options)` | Client-side merge with `append()/prepend()/deep()/matchOn(...)/appendAt(...)` |
+| `withOnce(key, supplier, options)` | `Inertia::once()` parity: resolved a single time per client; remembered keys (`X-Inertia-Except-Once-Props`) skip it on full visits (`onceProps` metadata stays); `as()/until()/fresh()/deferred()/merged()/lazy()` compose |
+| `withScroll(key, supplier, options)` | `Inertia::scroll()` parity: value wrapped `{data: [...]}`, merge label `<path>.<wrapper>`, cursor in `scrollProps` (request parameter or `metadata()` provider); `wrapper()/pageName()/page(current, hasMore)/deferred()` compose |
 | `withViewData(key, value)` | Template-only variables (never in the page JSON) |
 
 Partial reload honoring follows the Inertia protocol: `X-Inertia-Partial-Component` must match the rendered component (otherwise the request degrades to a full response), `X-Inertia-Partial-Data`/`X-Inertia-Partial-Except` accept dot-paths (only matching subtrees of object props are sent), `X-Inertia-Reset` disables merge metadata per path.
@@ -186,11 +188,11 @@ Notes: JSON object key order is not part of the Inertia protocol; only the bundl
 | Partial reloads (`only`/`except`/`reset`, component match) | ✅ |
 | Redirects: 302, method upgrades to 303, external 409 `X-Inertia-Location`, fragment 409 `X-Inertia-Redirect` | ✅ |
 | Shared props + always/lazy/deferred (groups + rescue) + merge metadata | ✅ |
+| Once props (`X-Inertia-Except-Once-Props`, `fresh`, `until`, `as`, compose) | ✅ |
+| Scroll props (infinite scroll: `mergeProps` label + `scrollProps` cursor, reset, deferred) | ✅ |
 | Flash + validation error bags over session | ✅ |
 | `clearHistory` / `preserveFragment` / `encryptHistory` | ✅ |
 | Root template (Thymeleaf, overridable) | ✅ |
-| Once props (`X-Inertia-Except-Once-Props`) | roadmap |
-| Scroll props (infinite pagination) | roadmap |
 | SSR (Node render server client + `@inertiaHead` fragment) | roadmap (módulo separado) |
 | Quarkus integration | roadmap (same core ports) |
 
