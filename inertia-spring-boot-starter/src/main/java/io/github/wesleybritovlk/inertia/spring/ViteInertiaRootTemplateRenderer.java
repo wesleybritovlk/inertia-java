@@ -18,9 +18,13 @@ import java.util.Map;
  */
 public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplateRenderer {
 
+    private static final long PROBE_TTL_MS = 1000;
+
     private final InertiaRootTemplateRenderer delegate;
     private final ManifestSource manifests;
     private final HotMode hot;
+    /** last negative probe result — self-heals stale flags (dead dev server left the file). */
+    private volatile long lastFailedProbeAt;
 
     public ViteInertiaRootTemplateRenderer(
             InertiaRootTemplateRenderer delegate,
@@ -34,12 +38,33 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
     @Override
     public String render(String pageJson, Map<String, Object> viewData) {
         LinkedHashMap<String, Object> variables = new LinkedHashMap<>(viewData);
-        if (hot != null && hot.isEnabled()) {
+        if (hot != null && hotActive()) {
             variables.putAll(hotVariables());
         } else {
             variables.putAll(ViteManifest.read(manifests.manifestPath()).templateVariables(manifests.entry(), manifests.base()));
         }
         return delegate.render(pageJson, variables);
+    }
+
+    /**
+     * Laravel {@code isRunningHot} parity plus one guard Laravel does not need: the flag
+     * file alone is not enough — a dead dev server that never removed it would leave the
+     * app serving dead dev URLs. So the flag must exist <em>and</em> the dev server must
+     * answer; failed probes are remembered for {@value #PROBE_TTL_MS} ms and retried on
+     * the next render (self-healing stale flags).
+     */
+    private boolean hotActive() {
+        if (!hot.isEnabled()) {
+            return false;
+        }
+        if (System.currentTimeMillis() - lastFailedProbeAt < PROBE_TTL_MS) {
+            return false;
+        }
+        if (!hot.probe(hot.devUrl())) {
+            lastFailedProbeAt = System.currentTimeMillis();
+            return false;
+        }
+        return true;
     }
 
     private Map<String, Object> hotVariables() {
@@ -109,11 +134,30 @@ public final class ViteInertiaRootTemplateRenderer implements InertiaRootTemplat
     /**
      * Dev-mode settings. {@code hotFile()} relative to the process working directory;
      * {@code enabled()} checks existence per render (Laravel {@code public/hot} parity).
+     * {@code probe()} guards against stale flags: with the file present but the dev
+     * server unreachable, the renderer falls back to build mode.
      */
     public record HotMode(Path hotFile, String devUrl, String entry, boolean reactRefresh) {
 
         boolean isEnabled() {
             return hotFile != null && java.nio.file.Files.exists(hotFile);
+        }
+
+        boolean probe(String url) {
+            java.net.HttpURLConnection connection;
+            try {
+                connection = (java.net.HttpURLConnection) new java.net.URI(url).toURL().openConnection();
+            } catch (java.net.URISyntaxException | java.io.IOException malformed) {
+                return false;
+            }
+            try {
+                connection.setConnectTimeout(250);
+                connection.setReadTimeout(250);
+                connection.setRequestMethod("GET");
+                return connection.getResponseCode() == 200;
+            } catch (java.io.IOException io) {
+                return false;
+            }
         }
     }
 }

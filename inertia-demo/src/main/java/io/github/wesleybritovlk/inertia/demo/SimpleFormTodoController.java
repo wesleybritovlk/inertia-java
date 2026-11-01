@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/form-todo")
 class SimpleFormTodoController {
+    private static final String ROUTE = "/form-todo";
 
     private final Inertia inertia;
 
@@ -52,10 +53,10 @@ class SimpleFormTodoController {
             var errors = new org.springframework.validation.MapBindingResult(Map.of(), "todo");
             errors.rejectValue("title", "NotBlank", "The todo title is required.");
             ValidationErrors.store(inertia, errors, "default");
-            return inertia.redirect("/form-todo");
+            return inertia.redirect(ROUTE);
         }
         add(title.trim());
-        return inertia.redirect("/form-todo");
+        return inertia.redirect(ROUTE);
     }
 
     @PatchMapping("/{id}")
@@ -65,7 +66,7 @@ class SimpleFormTodoController {
             throw new java.util.NoSuchElementException("Todo " + id + " not found");
         }
         store.put(id, new Todo(id, todo.title(), !todo.done()));
-        return inertia.redirect("/form-todo");
+        return inertia.redirect(ROUTE);
     }
 
     @DeleteMapping("/{id}")
@@ -73,7 +74,7 @@ class SimpleFormTodoController {
         if (store.remove(id) == null) {
             throw new java.util.NoSuchElementException("Todo " + id + " not found");
         }
-        return inertia.redirect("/form-todo");
+        return inertia.redirect(ROUTE);
     }
 
     private List<Todo> all() {

@@ -1,11 +1,14 @@
 <script>
-    import { Head, Link, useForm, usePage } from '@inertiajs/svelte';
+    import { Link, useForm, usePage } from '@inertiajs/svelte';
     import Navbar from '../../Shared/Navbar.svelte';
 
-    const page = usePage();
-    const form = useForm({ title: '' });
+    const page = usePage(); // adapter v3 runes state (page.svelte.js) - reactive, NOT a store
+    const form = useForm({ title: '' }); // deep-reactive via $state, mutate fields directly
 
-    const submit = () => form.post('/form-todo');
+    const submit = (event) => {
+        event.preventDefault();
+        form.post('/form-todo');
+    };
 </script>
 
 <Navbar />
@@ -13,8 +16,12 @@
 <div class="wrap">
     <h1>Todos</h1>
 
-    <form class="form" onsubmit={(e) => { e.preventDefault(); submit(); }}>
-        <input value={form.title} oninput={(e) => (form.title = e.currentTarget.value)} placeholder="New todo title" />
+    <form class="form" onsubmit={submit}>
+        <input
+            placeholder="New todo title"
+            value={form.title}
+            oninput={(e) => (form.title = e.currentTarget.value)}
+        />
         <button type="submit" disabled={form.processing}>Add</button>
         {#if form.errors.title}
             <p class="error">{form.errors.title}</p>
@@ -22,7 +29,7 @@
     </form>
 
     <ul class="list">
-        {#each $page.props.todos as todo (todo.id)}
+        {#each page.props.todos as todo (todo.id)}
             <li class:done={todo.done}>
                 <span class="title">{todo.title}</span>
                 <Link as="button" method="patch" href={`/form-todo/${todo.id}`}>
@@ -98,13 +105,6 @@
     }
     .list .title {
         flex: 1;
-    }
-    .list button {
-        padding: 6px 12px;
-        border-radius: 6px;
-        border: none;
-        background: #e5e7eb;
-        cursor: pointer;
     }
     .hint {
         color: #6b7280;

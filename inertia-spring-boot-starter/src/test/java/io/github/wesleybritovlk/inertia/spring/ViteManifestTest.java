@@ -111,6 +111,27 @@ class ViteManifestTest {
     }
 
     @Test
+    void staleFlagWithDeadDevServerSelfHealsToBuildMode() throws Exception {
+        Path stale = tempDir.resolve(".hot-inertia");
+        java.nio.file.Files.writeString(stale, "5173"); // dev server was killed -9, file left behind
+
+        LinkedHashMap<String, Object> captured = new LinkedHashMap<>();
+        ViteInertiaRootTemplateRenderer renderer = new ViteInertiaRootTemplateRenderer(
+                (pageJson, viewData) -> {
+                    captured.putAll(viewData);
+                    return "<html/>";
+                },
+                new ViteInertiaRootTemplateRenderer.ManifestSource(FIXTURE, "", "/"),
+                new ViteInertiaRootTemplateRenderer.HotMode(stale, "http://localhost:55599", "", false));
+
+        String html = renderer.render("{}", Map.of());
+
+        assertEquals("<html/>", html);
+        assertNull(captured.get("viteDevMode")); // fell back: no vite running on 55599
+        assertEquals("/assets/app-Hx987.js", captured.get("viteAppJs"));
+    }
+
+    @Test
     void rendererPassesViteVariablesToTheDelegate() throws Exception {
         LinkedHashMap<String, Object> captured = new LinkedHashMap<>();
         InertiaRootTemplateRenderer delegate = (pageJson, viewData) -> {
@@ -135,6 +156,13 @@ class ViteManifestTest {
         server.createContext("/src/app.js", exchange -> {
             byte[] body = "export default {}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
+        // generic root: the hot-mode probe hits the dev server itself
+        server.createContext("/", exchange -> {
+            byte[] body = "ok".getBytes(java.nio.charset.StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(200, body.length);
             exchange.getResponseBody().write(body);
             exchange.close();

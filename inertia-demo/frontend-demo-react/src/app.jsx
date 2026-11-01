@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client';
 // glob entries are loaders, so the resolver must invoke the matching one
 const pages = import.meta.glob('./Pages/**/*.jsx');
 
-createInertiaApp({
+await createInertiaApp({
     title: (title) => (title ? `${title} — inertia-java-bean demo` : 'inertia-java-bean demo'),
     resolve: (name) => {
         const loader = pages[`./Pages/${name}.jsx`];

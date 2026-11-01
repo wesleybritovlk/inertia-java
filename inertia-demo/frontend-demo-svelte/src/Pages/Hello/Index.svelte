@@ -1,5 +1,5 @@
 <script>
-    import { Head, usePage } from '@inertiajs/svelte';
+    import { usePage } from '@inertiajs/svelte';
     import Navbar from '../../Shared/Navbar.svelte';
 
     const page = usePage();
