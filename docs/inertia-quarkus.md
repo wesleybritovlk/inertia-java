@@ -118,5 +118,7 @@ is also a plain-map overload for any other validation backend.
 | Quarkus wiring (CDI beans, config, Undertow registration, RESTEasy writer) | `inertia-quarkus` (this module) |
 
 Everything else — getting started content, prop types, partial reloads — is identical
-between the Spring and Quarkus sides; this adapter simply reuses them. See the module
-tests (`QuarkusAdapterTest`) wiring for a live Undertow + RESTEasy proof of both stacks.
+between the Spring and Quarkus sides; this adapter simply reuses them. A runnable proof
+of the whole flow lives in the demo tree: `inertia-demo/inertia-demo-quarkus` serves the
+same canonical pages the Spring demo does, from one front-end build — setup and run
+commands in [the demo README](../inertia-demo/README.md).

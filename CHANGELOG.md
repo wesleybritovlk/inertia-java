@@ -18,6 +18,15 @@ All notable changes of this project are documented here. Format based on
   writers, Thymeleaf/Vite root renderers, version/hot providers, bundled root template).
   The Spring starter delegates to it; every servlet-based stack can too.
 
+### Added — demos
+- `inertia-demo` became an aggregator with **two adapter flavors sharing ONE copy of the
+  canonical front-ends**: `inertia-demo-spring` (the Spring Boot app) and
+  `inertia-demo-quarkus` (the Quarkus app). The three Vite front-ends (Vue 3, React 19,
+  Svelte 5) build once into the shared `frontend-assets/` folder that both apps mount as
+  classpath resources — one `npm run build` feeds both — and both run on the default
+  port 8080 (they are never run together). Beans of `inertia-quarkus` are discoverable
+  by external Quarkus applications via a `META-INF/beans.xml` bean-archive marker.
+
 ### Added — `inertia-quarkus`
 - Full Quarkus adapter over the same protocol and the same shared glue: CDI producers
   (version provider → hot-aware, hybrid serializer, Thymeleaf+Vite renderer), the protocol

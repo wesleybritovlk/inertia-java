@@ -2,7 +2,9 @@
 
 This guide builds a complete Inertia application with Spring Boot MVC: backed-up pages,
 dev-time partial reloads and a validation round trip. Everything here works on **Boot 3.x
-and 4.x** (Servlet 6.x, Thymeleaf 3.1).
+and 4.x** (Servlet 6.x, Thymeleaf 3.1). A ready-to-run version of every step lives in the
+demo tree ([inertia-demo](../inertia-demo/README.md)) — including the Quarkus flavor
+running the same pages.
 
 ## 1. Dependencies
 
