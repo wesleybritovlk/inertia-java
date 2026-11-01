@@ -8,6 +8,22 @@ Java 17+, Maven, Node 20+. The concepts:
 [inertia-servlet.md](inertia-servlet.md) (transport) + [inertia-web.md](inertia-web.md)
 (ROOT documents, renderers, versions).
 
+## On the legacy javax line instead (Tomcat 9-, Java EE 8-)
+
+This guide's walkthrough is **the same** for pre-Jakarta containers — Tomcat 8/9,
+Jetty 9/10-, WebSphere/WebLogic Java EE 8, any `javax.servlet` host, even JVM 8 deploys.
+The twin artifact carries the identical classes one package down:
+
+| This guide (jakarta) | The legacy twin |
+|---|---|
+| `<artifactId>inertia-servlet</artifactId>` + `jakarta.servlet-api:6.0.0` provided | `<artifactId>inertia-servlet-javax</artifactId>` + `javax.servlet-api:4.0.1` provided |
+| package `io.github.wesleybritovlk.inertia.servlet` | package `io.github.wesleybritovlk.inertia.servlet.javax` |
+| Java 17, tomcat 10.1+ container | Java 8, tomcat 9- container |
+
+Class names, head-fragment override paths (`WEB-INF/classes/templates/inertia.html`),
+properties and the whole protocol stay the same ([what changes between the twins](inertia-servlet.md#the-legacy-javax-twin));
+`inertia-core` and `inertia-web` are the SHARED jars of both lines.
+
 ## 1. The pom.xml
 
 A WAR application with one library dependency:
@@ -287,7 +303,7 @@ there.
 npm run dev
 
 # terminal 2 — back-end
-mvn package && docker run --rm -p 8080:8080 -v "$PWD/target/my-app-1.0.0.war:/usr/local/tomcat/webapps/ROOT.war" tomcat:10.1-jre17-temurin
+mvn package && docker run --rm -p 8080:8080 -v "$PWD/target/my-app-1.0.0.war:/usr/local/tomcat/webapps/ROOT.war" tomcat:10.1-jre17
 # — or your IDE's embedded Tomcat 10.1 / any Jakarta EE 10 server
 ```
 
@@ -302,7 +318,8 @@ npm run build       # front-end first: assets are ordinary webapp files
 mvn package         # → target/my-app-1.0.0.war
 ```
 
-Deploy the WAR on Tomcat 10.1+ or any Jakarta EE 9+ server. The root template override
+Deploy the WAR on Tomcat 10.1+ or any Jakarta EE 9+ server (the javax twin deploys the
+same way on Tomcat 9- containers). The root template override
 works the same way: a head fragment at `WEB-INF/classes/templates/inertia.html` (or
 pass a path to `ThymeleafInertiaRootTemplateRenderer`) —
 [the root template section](getting-started.md#the-root-template-usually-you-do-not-need-one).

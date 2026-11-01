@@ -56,6 +56,29 @@ Nothing else is required — not even Thymeleaf (the root template renderer brin
 engine). If your application uses Spring Boot's Jackson, the starter reuses **your**
 mapper for serialization ([serialization.md](serialization.md)).
 
+## On a Spring Boot 2.7 application instead
+
+Everything in this guide — the application class, the controllers, the properties, the
+front-end, the validation round trip — is **identical** on the legacy line. Only the
+first dependency swaps:
+
+```xml
+<dependency>
+    <groupId>io.github.wesleybritovlk.inertia</groupId>
+    <artifactId>inertia-spring-boot2</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+</dependency>
+```
+
+That artifact (Java 8, `javax.servlet`, Spring 5.3, Boot 2.7 line) carries the same auto-configuration through
+`META-INF/spring.factories` — same `inertia.*` properties, request-scoped `Inertia` bean,
+filter, MVC bridges; neither the code nor the front-end changes. Two Java-ecosystem notes:
+
+- prop value classes need Jackson-visible accessors (`getId`/`isDone`) — record-style
+  `id()` accessors belong to the Boot 3+ Jackson 3 runtime ([why](serialization.md#resolution-order));
+- the runnable proof is the demo: `mvn -pl :inertia-demo-spring-boot2 spring-boot:run` serves
+  the same pages the Boot 3 demo does ([demo README](../inertia-demo/README.md)).
+
 ## 2. The application class
 
 ```java
