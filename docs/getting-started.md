@@ -193,3 +193,4 @@ commands, React Fast Refresh specifics, security notes — is in
 
 - [Spring Boot 3.x / 4.x — from empty folder to packaged app](getting-started-spring.md)
 - [Quarkus — from empty folder to packaged app](getting-started-quarkus.md)
+- [Pure servlet / Jakarta EE 9+ — WAR on any container](getting-started-servlet.md)

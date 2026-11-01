@@ -50,7 +50,9 @@ writer.write(returnValue, response);
 writes bare results (the filter's guard/escalations build them). The Thymeleaf root
 template and its Vite dev-mode support are inside the same module
 ([configuration.md](configuration.md) describes the `inertia.vite-*` properties on the
-Spring side; the Quarkus module mirrors them as `inertia.*` config entries).
+Spring side; the Quarkus module mirrors them as `inertia.*` config entries). For a full
+zero-to-WAR walkthrough — bootstrap listener, filter wiring with the engine-scoping
+attachment, page servlets — see [the pure-servlet guide](getting-started-servlet.md).
 
 ## Raw servlet example
 

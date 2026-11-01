@@ -13,6 +13,8 @@ with Thymeleaf playing the role of Laravel's Blade.
 | [Getting started — the concepts](getting-started.md) | How the Inertia protocol maps to this adapter: the request flow, the modules, the root template, the front-end boilerplate (any stack) and dev vs build mode |
 | [Getting started (Spring Boot)](getting-started-spring.md) | A new project from an empty folder to a packaged app: pom, application class, controller, front-end, dev loop, build mode, validation, packaging |
 | [Getting started (Quarkus)](getting-started-quarkus.md) | The same zero-to-packaged path on Quarkus: pom, controller with `@Inject Inertia`, config, dev loop, build mode, validation, packaging |
+| [Getting started (pure servlet)](getting-started-servlet.md) | The Inertia protocol on any servlet container (Tomcat 10.1+, Jetty, Jakarta EE 9+ WAR): bootstrap listener, protocol filter, page servlets, WAR packaging |
+| [The servlet glue](inertia-servlet.md) | `inertia-servlet`: every class of the framework-neutral layer, what the adapters add on top, and what raw-servlet users wire themselves |
 | [Development workflow](dev-workflow.md) | `npm run dev` + the back-end pairing (HMR): hot flag file, Vite client injection, Fast Refresh, spring-boot-devtools |
 | [Pages and props](pages-and-props.md) | `inertia.render`, every prop builder (`with`, `withLazy`, `withAlways`, `withDeferred`, `withDeferredRescued`, `withMerged`, `withOnce`, `withScroll`), dot-key nesting and `withViewData` |
 | [Partial reloads](partial-reloads.md) | `X-Inertia-Partial-*` semantics, subtree cutting inside object props, deferred groups, merge metadata and `X-Inertia-Reset` |

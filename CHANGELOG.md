@@ -11,7 +11,11 @@ All notable changes of this project are documented here. Format based on
   concepts page (protocol flow, module map, root template, the any-stack front-end
   boilerplate, dev vs build mode) and two zero-to-package guides were added —
   `getting-started-spring` and `getting-started-quarkus` (pom, application/controller,
-  front-end, dev loop, build mode, validation, packaging, SPA catch-all).
+  front-end, dev loop, build mode, validation, packaging, SPA catch-all). The shared
+  servlet glue gained its own module page (`inertia-servlet.md`) and a pure-servlet
+  getting-started (`getting-started-servlet.md`) for Jakarta EE 9+ / plain Tomcat/Jetty
+  deployments: bootstrap listener, protocol filter with the engine-scoping attachment
+  hook, page servlets and WAR packaging.
 - **Quarkus engine ergonomics = Spring/laravel parity**: resources inject the engine
   directly — `@Inject Inertia inertia` (a request-scoped CDI bean produced by the
   adapter; CDI commands the client proxy) — replacing the `InertiaProvider` wrapper.
