@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Dead-code gate. Complements the SpotBugs gate with the unused-declaration
+  patterns SpotBugs does not own — proven empirically: a never-called private
+  method passed a threshold=low / effort=max SpotBugs analysis with zero
+  findings (Records8.resolveComponentsFetcher, commit f452adb).
+  Deliberately narrow: only unused-declaration rules, on main sources — the
+  scope where dead code ships.
+-->
+<ruleset name="inertia-java dead-code gate"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    <description>Dead-code detector: the unused-declaration rules SpotBugs does not
+        own (main sources of the published modules).</description>
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateMethod"/>
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateField"/>
+    <rule ref="category/java/bestpractices.xml/UnusedLocalVariable"/>
+</ruleset>

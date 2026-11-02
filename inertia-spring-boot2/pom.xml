@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.wesleybritovlk.inertia</groupId>
+        <artifactId>inertia-java</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>inertia-spring-boot2</artifactId>
+
+    <name>inertia-spring-boot2</name>
+    <description>Spring Boot 2 adapter of inertia-java (the legacy twin of inertia-spring-boot): javax servlet glue, java 8, auto-configuration via META-INF/spring.factories — Boot 2.7 line, Spring 5.3, Tomcat 9 era.</description>
+
+    <properties>
+        <!-- the legacy line rides java 8 -->
+        <maven.compiler.release>8</maven.compiler.release>
+        <!-- tests keep modern syntax on the CI toolchain -->
+        <maven.compiler.testRelease>17</maven.compiler.testRelease>
+        <!-- last Boot 2.x patch; Spring 5.3 officially supports JDK 8-21 -->
+        <spring.boot2.version>2.7.18</spring.boot2.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot2.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.wesleybritovlk.inertia</groupId>
+            <artifactId>inertia-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.wesleybritovlk.inertia</groupId>
+            <artifactId>inertia-servlet-javax</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.wesleybritovlk.inertia</groupId>
+            <artifactId>inertia-web</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- compile-only: the app provides these at runtime -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- tests: a real Boot 2 web app runs on the CI toolchain (Java 17) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

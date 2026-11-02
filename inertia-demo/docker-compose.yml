@@ -1,0 +1,31 @@
+# the three demo apps of the canonical front-end (ONE Svelte build feeds all three):
+# inertia-demo-spring          → Boot 3.3 adapter  (localhost:8080)
+# inertia-demo-quarkus         → Quarkus adapter   (localhost:8081)
+# inertia-demo-spring-boot2    → Boot 2.7 adapter  (localhost:8082)
+# the native builds live in each module's Dockerfile.native (8081/8082 at the host docs);
+# this compose (JVM mode) runs all three at the 8080/81/82 range.
+#
+# usage:
+#   cd inertia-demo && docker compose -f docker-compose.yml up --build
+#   # or only one back-end: docker compose -f docker-compose.yml up demo-spring
+services:
+  demo-spring:
+    build:
+      context: ..
+      dockerfile: inertia-demo/inertia-demo-spring/Dockerfile.native
+    ports:
+      - "8080:8080"
+
+  demo-quarkus:
+    build:
+      context: ..
+      dockerfile: inertia-demo/inertia-demo-quarkus/Dockerfile.native
+    ports:
+      - "8081:8080"
+
+  demo-spring-boot2:
+    build:
+      context: ..
+      dockerfile: inertia-demo/inertia-demo-spring-boot2/Dockerfile
+    ports:
+      - "8082:8080"

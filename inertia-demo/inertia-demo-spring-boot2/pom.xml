@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.wesleybritovlk.inertia</groupId>
+        <artifactId>inertia-demo</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>inertia-demo-spring-boot2</artifactId>
+
+    <name>inertia-demo-spring-boot2</name>
+    <description>Hello-world demo over the legacy Spring Boot 2 adapter: the canonical Vite front-ends (Vue 3, React 19, Svelte 5) served by a Spring Boot 2.7 / javax back-end with the bundled Thymeleaf root template — the Boot 2 twin of inertia-demo-spring.</description>
+
+    <properties>
+        <spring.boot2.version>2.7.18</spring.boot2.version>
+        <!-- the legacy demo compiles on the java 8 line TOO (the local JDK 17 runtime ran
+             the major-61 jar unnoticed; the container's jre 8 exposed the mismatch) -->
+        <maven.compiler.release>8</maven.compiler.release>
+        <!-- the demo is an application, not a library: gates stay on the library modules -->
+        <jacoco.skip>true</jacoco.skip>
+        <spotbugs.skip>true</spotbugs.skip>
+        <!-- @PathVariable without explicit names needs reflection parameter names -->
+        <maven.compiler.parameters>true</maven.compiler.parameters>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot2.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.wesleybritovlk.inertia</groupId>
+            <artifactId>inertia-spring-boot2</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>inertia-demo-spring-boot2</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <!-- the canonical Vite front-ends build into ../frontend-assets (single source:
+                 one `npm run build` feeds every demo app). targetPath follows the Servlet
+                 spec static-resources location so all stacks serve the assets: Spring Boot
+                 (classpath:/META-INF/resources) and the Undertow default servlet (jar
+                 META-INF/resources) -->
+            <resource>
+                <directory>${project.basedir}/../frontend-assets</directory>
+                <targetPath>META-INF/resources</targetPath>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot2.version}</version>
+                <configuration>
+                    <!-- dev-mode hot-flag discovery scans the WORKING directory (three
+                         levels, node_modules aware): the front-ends live in the parent
+                         demo folder, so the run anchors at the repo root — the same
+                         layout every stack documents -->
+                    <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

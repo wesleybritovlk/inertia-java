@@ -1,0 +1,5 @@
+{
+  "vendor.js": { "file": "assets/vendor-x.js", "css": ["assets/vendor.css", 42], "imports": ["app.js", 7] },
+  "app.js": { "file": "assets/app-x.js", "isEntry": true, "css": [], "imports": ["vendor.js"] },
+  "cycle.js": { "file": "assets/cycle-x.js", "css": ["assets/cycle.css"], "imports": ["app.js"] }
+}

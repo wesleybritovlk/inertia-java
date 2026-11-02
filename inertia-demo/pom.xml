@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.wesleybritovlk.inertia</groupId>
+        <artifactId>inertia-java</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>inertia-demo</artifactId>
+    <packaging>pom</packaging>
+
+    <name>inertia-demo</name>
+    <description>Demos of inertia-java: the same canonical Vite front-ends (Vue 3, React 19, Svelte 5) served by both adapter flavors — the Spring Boot demo (inertia-demo-spring) and the Quarkus demo (inertia-demo-quarkus). One front build feeds both apps.</description>
+
+    <modules>
+        <module>inertia-demo-spring</module>
+        <module>inertia-demo-spring-boot2</module>
+        <module>inertia-demo-quarkus</module>
+    </modules>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

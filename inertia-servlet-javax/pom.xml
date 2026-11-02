@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.wesleybritovlk.inertia</groupId>
+        <artifactId>inertia-java</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>inertia-servlet-javax</artifactId>
+
+    <name>inertia-servlet-javax</name>
+    <description>Legacy javax Servlet glue of inertia-java (Java EE 8 / pre-Jakarta containers, Tomcat 9 era): the javax twin of inertia-servlet — request adapter, protocol filter, result/page writers on java 8. The shared web layer (renderers, version providers, root template) is the same inertia-web jar.</description>
+
+    <properties>
+        <!-- the whole legacy line rides java 8 -->
+        <maven.compiler.release>8</maven.compiler.release>
+        <!-- tests keep modern syntax on the CI toolchain -->
+        <maven.compiler.testRelease>17</maven.compiler.testRelease>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.wesleybritovlk.inertia</groupId>
+            <artifactId>inertia-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.wesleybritovlk.inertia</groupId>
+            <artifactId>inertia-web</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- provided: the host container (Tomcat 9-, Boot 2-era javax:ServletApi servers).
+             4.0.1 is the last javax release; the adapter surface (Filter, HttpSession,
+             DispatcherType) is stable back to Servlet 3.0. -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

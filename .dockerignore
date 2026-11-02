@@ -1,0 +1,10 @@
+# build-context hygiene for the native demo Dockerfiles: sources only — the node_modules,
+# build outputs, maven targets and VCS state never enter the image (the front-end is
+# rebuilt inside the container stage 1, targets are rebuilt in stage 2)
+**/node_modules/
+**/target/
+inertia-demo/frontend-assets/
+.git/
+.githooks/
+docs/
+scripts/

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#
+# Git pre-commit hook: runs the full quality gate before every commit.
+# Gate: Spotless (formatting) + JaCoCo check (75% instruction/branch) + SpotBugs
+# (threshold Normal, effort Max) + the whole test suite.
+#
+# One-time setup (per clone):
+#   git config core.hooksPath .githooks
+#
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+# clean is mandatory: profile switches (mvn -Pboot4 ...) leave stale test classes
+# compiled against the other framework major, and Maven only recompiles on
+# source-touch. This keeps the unprofiled (Boot 3 baseline) gate trustworthy.
+mvn -B -q clean verify

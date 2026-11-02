@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.wesleybritovlk.inertia</groupId>
+        <artifactId>inertia-demo</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>inertia-demo-spring</artifactId>
+
+    <name>inertia-demo-spring</name>
+    <description>Hello-world demo over the Spring adapter: the canonical Vite front-ends (Vue 3, React 19, Svelte 5) served by the Spring Boot back-end with the bundled Thymeleaf root template.</description>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.wesleybritovlk.inertia</groupId>
+            <artifactId>inertia-spring-boot</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+    </dependencies>
+
+    <properties>
+        <!-- the demo is an application, not a library: gates stay on the library modules -->
+        <jacoco.skip>true</jacoco.skip>
+        <spotbugs.skip>true</spotbugs.skip>
+        <!-- @PathVariable without explicit names needs reflection parameter names -->
+        <maven.compiler.parameters>true</maven.compiler.parameters>
+    </properties>
+
+    <build>
+        <finalName>inertia-demo-spring</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <!-- the canonical Vite front-ends build into ../frontend-assets (single source:
+                 one `npm run build` feeds this app AND the Quarkus demo). targetPath follows
+                 the Servlet spec static-resources location so BOTH stacks serve the assets:
+                 Spring Boot (classpath:/META-INF/resources) and the Undertow default
+                 servlet (jar META-INF/resources) -->
+            <resource>
+                <directory>${project.basedir}/../frontend-assets</directory>
+                <targetPath>META-INF/resources</targetPath>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
+                <configuration>
+                    <!-- dev-mode hot-flag discovery scans the WORKING directory (three
+                         levels, node_modules aware): the front-ends live in the parent
+                         demo folder, so the run anchors at the repo root — the same
+                         layout both stacks document -->
+                    <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- GraalVM native build of the demo: mvn -pl :inertia-demo-spring -Pnative package
+             (needs GraalVM 17+ with native-image); the AOT renders per-boot beans and the
+             registrar hints of the starter come along -->
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>process-aot</id>
+                                <goals>
+                                    <goal>process-aot</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <!-- pin: the Boot 3.3 line's own version (unpinned resolves to
+                             1.1.18, whose reachability-metadata schema requires a newer
+                             GraalVM than 17). Bound to the VERIFY phase on purpose: at
+                             package the Boot repackage has already swapped the artifact for
+                             the fat jar, whose nested-jar layout native-image cannot use as
+                             classpath ("Main entry point class ... not found") - at verify
+                             the compile sees plain target/classes. -->
+                        <version>0.10.6</version>
+                        <executions>
+                            <execution>
+                                <id>native-compile</id>
+                                <!-- after process-aot (same phase, declared earlier) and
+                                     before package (where the repackage swaps the artifact
+                                     for the fat jar native-image cannot consume) -->
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SpotBugs exclusions (threshold Normal, effort Max).
+
+  Every match below needs a justification comment: spotbugs findings are removed
+  by correctness fixes whenever possible; exclusions are the exception, kept
+  minimal and documented.
+-->
+<FindBugsFilter>
+    <!-- Prop.Merge accessors expose their List fields directly. The fields are
+         unmodifiable defensive copies taken in the constructor (the pre-release-8
+         record did exactly the same through List.copyOf in its compact body), so
+         nothing mutable leaks through; per-call copies would allocate on every
+         resolution and hand back MUTABLE lists, which is strictly worse for both
+         parity and safety. -->
+    <Match>
+        <Class name="io.github.wesleybritovlk.inertia.core.Prop$Merge"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+</FindBugsFilter>

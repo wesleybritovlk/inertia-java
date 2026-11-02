@@ -1,73 +1,84 @@
-# inertia-java-bean
+# inertia-java
 
-Framework-agnostic server adapter for [Inertia.js](https://inertiajs.com) applications.
+Server-side [Inertia.js](https://inertiajs.com) adapter for the Java ecosystem, built the
+way [`inertia-laravel`](https://github.com/inertiajs/inertia-laravel) is: controllers return
+page objects, the protocol carries them over plain HTTP, and the client-side router
+renders — no API layer, no embedded server. The library is a plain, registerable bean
+that manipulates only the HTTP exchange and the HTML root page, with Thymeleaf playing
+the role of Laravel's Blade.
 
-Inertia.js is a client adapter that turns your backend API into a single-page app without a separate API: controllers return page metadata, the client router renders pages, and the Inertia protocol handles the rest. To use Inertia on the server side, your framework must handle **requests** (partial reload headers, page metadata, asset versioning) and **responses** (JSON page object vs HTML root page).
-
-Existing Java adapters couple Inertia to a single framework / web stack and break against alternate locks. **inertia-java-bean takes the `inertia-laravel` design goal and implements it for Java**: everything lives inside a plain, registerable Java bean. You don't get a servlet (or IDE) boot: your own Spring MVC stack, Quarkus, or any framework serves the HTTP part; the adapter owns only the protocol.
-
-## Design goals
-
-- **Zero coupling on the core**: `inertia-core` has **zero third-party dependencies** (JSR-free, only JDK 17). The Inertia protocol lives here: page metadata, property types, partial reloads, asset versioning and redirect rules.
-- **No Jackson 2/3 trap**: `inertia4j`'s hard Jackson coupling breaks on Spring Boot 4 (Jackson 3). By default, `inertia-java-bean` serializes with a custom JSON writer. If you need a custom serializer, swap the `PageResolver` SPI.
-- **No `RequestContextHolder` / `ThreadLocal` traps**: request access uses a neutral `InertiaRequest` port, created per request by the integration module (`@RequestScope`/`@RequestScoped` bean).
-- **No `ResponseEntity` leaking**: the core produces `InertiaResult` (status + headers + payload); each integration maps it to the native response type. Nothing framework-specific crosses the core boundary.
-- **Thymeleaf over Blade**: the root page template (Blade's `app.blade.php` + `@inertia`) ships as a Thymeleaf template. You can override it by name. Thymeleaf lives only inside the Spring module, never the core.
+Works on **Spring Boot 3.x and 4.x**, **Quarkus**, and **any Jakarta EE 9+ servlet
+container** (plain Tomcat/Jetty included) — including GraalVM-native-ready Boot 4 with
+Jackson 3, the case that breaks other Java adapters.
 
 ## Modules
 
-| Module | Contents |
+| Artifact | Purpose |
 |---|---|
-| `inertia-core` | Inertia protocol engine (page object, prop resolution, partial reloads, asset versioning, redirects, flash + error bag SPI). Zero dependencies. |
-| `inertia-spring-boot-starter` | Auto-configuration for Spring Boot (3.x and 4.x): `OncePerRequestFilter` mapping, `InertiaRequest` bean, page/response writer, Thymeleaf root template, `InertiaProps` return value support, flash via `HttpSession`. |
-
-## Usage
-
-Compile, then add only the starter artifact:
+| `inertia-core` | The Inertia protocol engine. **Zero dependencies** (Java 8+). |
+| `inertia-web` | Framework-neutral web glue (no servlet dependency): Thymeleaf + Vite renderers, version/hot providers, bundled root template — Java 8+. |
+| `inertia-servlet` | Jakarta Servlet glue: protocol filter, request adapter, writers (delegates to `inertia-web`). |
+| `inertia-servlet-javax` | The legacy twin for pre-Jakarta containers (Tomcat 9 / Java EE 8 era): same glue on `javax.servlet`, Java 8 — tests are the parity pin. |
+| `inertia-spring-boot` | Spring Boot integration (3.x and 4.x). |
+| `inertia-spring-boot2` | The legacy Boot 2 twin (2.7 line, javax + Java 8): same auto-configuration via `META-INF/spring.factories`, same properties. |
+| `inertia-quarkus` | Quarkus integration (Undertow + RESTEasy + CDI). |
+| `inertia-demo` | Runnable demo: three canonical Vite front-ends (Vue 3, React 19, Svelte 5) served by three back-ends (Boot 3/4, Boot 2.7 legacy, Quarkus). |
 
 ```xml
 <dependency>
     <groupId>io.github.wesleybritovlk.inertia</groupId>
-    <artifactId>inertia-spring-boot-starter</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <artifactId>inertia-spring-boot</artifactId>
+    <version>1.0.0</version>
 </dependency>
 ```
 
-Use the `Inertia` bean inside controllers:
+(Quarkus: `inertia-quarkus` · raw servlet/Jakarta EE: `inertia-servlet`.)
 
-```java
-@Controller
-class UsersController {
+## Documentation
 
-    private final Inertia inertia;
+| Doc | Topic |
+|---|---|
+| [Getting started — concepts](docs/getting-started.md) | the protocol, the modules, the root template, the front-end boilerplate (any stack), dev vs build mode |
+| [Getting started (Spring Boot)](docs/getting-started-spring.md) | zero-to-package: pom, controller, front-end, dev loop, validation |
+| [Getting started (Quarkus)](docs/getting-started-quarkus.md) | the same path on Quarkus (`@Inject Inertia`, `quarkus:dev`) |
+| [Getting started (pure servlet)](docs/getting-started-servlet.md) | WAR on any Jakarta EE 9+ container |
+| [The web layer](docs/inertia-web.md) | the `inertia-web` module: bundled root.html, head-fragment override, renderers, versions — Java 8 |
+| [Native compilation](docs/compile-native.md) | GraalVM native-image: ownership, the reflective serializer bridge, build recipes, lab evidence |
+| [Publishing](docs/publishing.md) | the `central` profile, dry-run bundle validation, your one-time secrets (token + GPG key), the release-day command |
+| [The servlet glue](docs/inertia-servlet.md) | the `inertia-servlet` transport glue, class by class |
+| [Development workflow](docs/dev-workflow.md) | `npm run dev` + the back-end (HMR, Fast Refresh, hot flag) |
+| [Pages and props](docs/pages-and-props.md) | every prop builder: lazy, deferred, merged, once, scroll |
+| [Partial reloads](docs/partial-reloads.md) | the `X-Inertia-Partial-*` protocol |
+| [Redirects and versioning](docs/redirects-and-versioning.md) | 303/409 rules, asset-version guard |
+| [Flash and validation](docs/flash-and-validation.md) | session flash, error bags |
+| [Shared props](docs/shared-props.md) | request-scoped shared props |
+| [Serialization](docs/serialization.md) | Jackson 2/3 hybrid chain + the `PageSerializer` SPI |
+| [Configuration](docs/configuration.md) | every `inertia.*` property and bean override |
+| [Quarkus adapter](docs/inertia-quarkus.md) | CDI wiring, config mapping, overrides |
+| [Other frameworks](docs/other-frameworks.md) | the core ports without any servlet layer |
+| [Differences from inertia-laravel](docs/differences-from-inertia-laravel.md) | every behavior that is not a 1:1 port |
 
-    UsersController(Inertia inertia) { // request-scoped
-        this.inertia = inertia;
-    }
+A runnable proof of the whole flow lives in [`inertia-demo/`](inertia-demo/README.md).
 
-    @GetMapping("/users")
-    InertiaPage index() {
-        return inertia.render("Users/Index")
-            .with("users", this::users)
-            .withLazy("companies", this::companies)
-            .withAlways("auth.user", this::currentUser)
-            .withDeferred("permissions", this::permissions);
-    }
-}
+## Building from source
+
+```bash
+git config core.hooksPath .githooks   # one-time: enables the pre-commit gates
+mvn test                              # the full suite (209 tests)
+mvn install                           # installs all modules locally
+mvn verify -Pboot4                    # the whole reactor on Spring Boot 4 (Jackson 3)
 ```
 
-The starter handles the rest: on `X-Inertia` visits it responds with the JSON page object and standard Inertia headers; non-Inertia visits render the root Thymeleaf template with the page embedded (`data-page`), same as Laravel's `@inertia` directive.
+The pre-commit hook enforces Spotless formatting, 75% instruction/branch coverage
+(JaCoCo), zero SpotBugs findings (`effort Max`) and zero dead-code findings (PMD)
+on every commit.
 
-## Status
+Each behavioral rule was implemented and then verified against the actual sources of
+`inertia-laravel` and `@inertiajs/core` (v3.10) — see the test names in `inertia-core`
+(`InertiaProtocolTest`).
 
-Early development:
-- [x] Project scaffold (Maven, Java 17)
-- [x] `inertia-core` protocol engine
-- [ ] `inertia-spring-boot-starter` (Spring Boot 3/4 support, Quarkus planned)
-- [ ] End-to-end contract tests against the Inertia client protocol
+## Credits
 
-## Credits & prior art
-
-- [inertia-laravel](https://github.com/inertiajs/inertia-laravel) — the canonical server adapter, source of protocol semantics here.
-- [inertia4j](https://github.com/inertia4j/inertia4j) — the Java context. `inertia-java-bean` deliberately diverges to stay framework-agnostic with first-class Spring Boot 4 support.
-- [inertia.js docs MCP](https://inertiajs.com/docs) — protocol reference.
+- [`inertia-laravel`](https://github.com/inertiajs/inertia-laravel) — the canonical server adapter; the behavioral reference for this port.
+- [`inertia4j`](https://github.com/inertia4j/inertia4j) — the prior Java adapter; the SPI/core split that inspired the ports design here.
+- [`@inertiajs/core`](https://github.com/inertiajs/inertia) sources + [inertia docs](https://inertiajs.com/docs/v2/the-protocol) — the client-side protocol contract.

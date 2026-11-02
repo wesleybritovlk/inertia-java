@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Marks this jar as a CDI bean archive: applications depending on inertia-quarkus discover its
+  beans (the adapter producers, the filter attachment, the request registry and the JAX-RS
+  writers). Without it domain' beans stay out of external Quarkus applications
+  (Quarkus indexes only the application's own classes + marked bean libraries).
+-->
+<beans xmlns="https://jakarta.ee/xml/ns/jakartaee"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       version="3.0"
+       bean-discovery-mode="all" />

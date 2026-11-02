@@ -6,8 +6,8 @@
 
     <parent>
         <groupId>io.github.wesleybritovlk.inertia</groupId>
-        <artifactId>inertia-java-bean</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <artifactId>inertia-java</artifactId>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>inertia-core</artifactId>
@@ -15,11 +15,57 @@
     <name>inertia-core</name>
     <description>Inertia.js protocol engine: framework-agnostic, zero-dependency core (page object, props, partial reloads, redirects, flash/error SPI).</description>
 
+    <properties>
+        <!-- the core rides the legacy line (bytecode 8 runs on every modern runtime too) -->
+        <maven.compiler.release>8</maven.compiler.release>
+        <!-- tests exercise runtime-17 features (user records) over the bytecode-8 classes -->
+        <maven.compiler.testRelease>17</maven.compiler.testRelease>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- serializer bridge tests: Jackson 2.20 satisfies BOTH the Jackson 2 and the
+             Jackson 3 (tools.jackson) lineages via the shared com.fasterxml annotations -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.20.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>3.0.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>
