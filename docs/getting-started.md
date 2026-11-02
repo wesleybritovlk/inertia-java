@@ -104,7 +104,7 @@ your-app/
 ├── src/main/resources/
 │   └── static/                   # ← npm run build lands here (hashed assets + manifest)
 ├── src/main/java/...             # your controllers (per-stack guide)
-└── src/frontend/
+└── frontend/
     ├── package.json
     ├── vite.config.js
     └── src/
@@ -119,6 +119,19 @@ Svelte: `@inertiajs/svelte` + `@sveltejs/vite-plugin-svelte` + `.svelte` pages):
 ```bash
 npm init -y
 npm i vite @vitejs/plugin-vue @inertiajs/vue3 vue
+```
+
+`package.json`
+```json
+{
+  "name": "my-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite"
+  }
+}
 ```
 
 The only non-standard bit is the **hot-file plugin** — small enough to be copied
@@ -153,15 +166,24 @@ export default defineConfig({
 });
 ```
 
-The entrypoint is the canonical `@inertiajs` setup (Vue shown):
+The entrypoint is the canonical `@inertiajs` setup `app.js` (Vue shown):
 
 ```js
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 
+// vite-native lazy page mapping (per-page chunks from the Pages folder);
+// glob entries are loaders, so the resolver must invoke the matching one
+const pages = import.meta.glob('./Pages/**/*.vue');
+
 createInertiaApp({
-    id: 'app', // must match inertia.root-id (default: app)
-    resolve: (name) => import(`./Pages/${name}.vue`),
+    resolve: (name) => {
+        const loader = pages[`./Pages/${name}.vue`];
+        if (loader === undefined) {
+            return Promise.reject(new Error('Page not found: ' + name));
+        }
+        return loader();
+    },
     setup({ el, App, props, plugin }) {
         createApp({ render: () => h(App, props) }).use(plugin).mount(el);
     },
