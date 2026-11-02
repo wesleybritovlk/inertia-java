@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * Fluent page builder produced by {@link Inertia#render(String...)}: the component name plus
+ * Fluent page builder produced by {@link Inertia#render}: the component name plus
  * ordered props. Resolved into an {@link InertiaResult} lazily by the adapter (or
  * {@link Inertia#result(InertiaPage) result(...)}) against the current request.
  */

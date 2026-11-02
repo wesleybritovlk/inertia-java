@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 
 /**
  * Prop wrappers driving how each value participates in resolution and partial reloads.
- * The default ({@link #plain(Object)}) is evaluated and included on standard visits and
+ * The default ({@link InertiaPage#with}) is evaluated and included on standard visits and
  * filtered by partial reload matching;{@link Lazy}, {@link Always}, {@link Deferred},
  * {@link Merge}, {@link Once} and {@link Scroll} change one particular rule, mirroring
  * {@code inertia-laravel}.

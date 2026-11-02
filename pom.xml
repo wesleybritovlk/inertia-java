@@ -18,7 +18,6 @@
     <packaging>pom</packaging>
 
     <name>inertia-java</name>
-    <description>Framework-agnostic Inertia.js adapter for Java: server-side driving layer that plugs into Spring Boot (3 and 4) or Quarkus as a plain bean, manipulating only HTTP requests and responses.</description>
 
     <licenses>
         <license>
@@ -27,6 +26,22 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+
+    <!-- Central-required metadata (the release profile below deploys with this pom) -->
+    <url>https://github.com/wesleybritovlk/inertia-java</url>
+    <description>Framework-agnostic Inertia.js adapter for Java: server-side driving layer that plugs into Spring Boot (3 and 4) or Quarkus as a plain bean, manipulating only HTTP requests and responses — protocol parity verified against the @inertiajs 3.10 client (the legacy line targets the same client on Java 8).</description>
+    <developers>
+        <developer>
+            <name>Wesley Britovlk</name>
+            <url>https://github.com/wesleybritovlk</url>
+        </developer>
+    </developers>
+    <scm>
+        <url>https://github.com/wesleybritovlk/inertia-java</url>
+        <connection>scm:git:https://github.com/wesleybritovlk/inertia-java.git</connection>
+        <developerConnection>scm:git:https://github.com/wesleybritovlk/inertia-java.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
 
     <modules>
         <module>inertia-core</module>
@@ -149,6 +164,31 @@
                     </executions>
                 </plugin>
 
+                <!-- Central publication helper plugins (active in the `central` profile
+                     below): sources/javadoc jars are Central prerequisites; gpg.skip is
+                     flipped to false on the release day (the demo modules are excluded
+                     from the bundle by artifactId) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.3.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.11.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>3.2.7</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
+                    <version>0.12.0</version>
+                </plugin>
+
                 <!-- CI-friendly versions need consumer-resolvable poms: flatten resolves ONLY
                      the revision/changelist/sha1 properties into literal versions (non-
                      destructive since 1.7.1) for EVERYTHING that gets installed — otherwise
@@ -244,6 +284,71 @@
     </build>
 
     <profiles>
+        <!-- Central publication (post-key): mvn -Pcentral -Drevision=1.0.0 clean deploy
+             -DskipTests (settings.xml server id `central` + uploaded user token; GPG key
+             required: pass -Dgpg.skip=false to sign). Dry run without any secret:
+             -Dgpg.skip=true -DskipUpload=true (bundle files are staged locally). -->
+        <profile>
+            <id>central</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <deploymentName>inertia-java</deploymentName>
+                            <!-- EVERYTHING under inertia-demo: the aggregator pom and all
+                                 the runnable applications (library coordinates only ship) -->
+                            <excludeArtifacts>
+                                <excludeArtifact>inertia-demo</excludeArtifact>
+                                <excludeArtifact>inertia-demo-spring</excludeArtifact>
+                                <excludeArtifact>inertia-demo-spring-boot2</excludeArtifact>
+                                <excludeArtifact>inertia-demo-quarkus</excludeArtifact>
+                            </excludeArtifacts>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-sources-every-module</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-javadoc-every-module</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-central-bundle</id>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <!-- Boot 4 compatibility benchmark: mvn -Pboot4 verify -->
         <profile>
             <id>boot4</id>
