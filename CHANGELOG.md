@@ -87,6 +87,13 @@ All notable changes of this project are documented here. Format based on
   Spring Boot 2.7 / javax / Java 8 stack — same pages, routes and props as the Boot 3
   demo (one `npm run build` feeds all three apps), proof that the Boot 2 adapter serves
   the whole flow end to end (smoke-tested against the packaged jar).
+- **One compose lifts all three demos**: `cd inertia-demo && docker compose up --build`
+  — Boot 3 at `:8080` and Quarkus at `:8081` as GraalVM CE native images (Svelte front-end
+  rebuilt inside every image build), Boot 2 at `:8082` on a Liberica Java 8 JRE (alpine —
+  the JVM-mode runtime can go musl; only native-image binaries are glibc-locked). Useful
+  proof when building: the demo jar must carry classfile major 52, the version the
+  Java-8 JRE demands (the first compose-with-java-8 runtime exposed a lazy
+  `release 17` compile that a JDK 17 smoke had hidden).
 - `inertia-demo` became an aggregator with **two adapter flavors sharing ONE copy of the
   canonical front-ends**: `inertia-demo-spring` (the Spring Boot app) and
   `inertia-demo-quarkus` (the Quarkus app). The three Vite front-ends (Vue 3, React 19,

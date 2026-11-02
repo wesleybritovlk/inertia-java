@@ -17,6 +17,9 @@
 
     <properties>
         <spring.boot2.version>2.7.18</spring.boot2.version>
+        <!-- the legacy demo compiles on the java 8 line TOO (the local JDK 17 runtime ran
+             the major-61 jar unnoticed; the container's jre 8 exposed the mismatch) -->
+        <maven.compiler.release>8</maven.compiler.release>
         <!-- the demo is an application, not a library: gates stay on the library modules -->
         <jacoco.skip>true</jacoco.skip>
         <spotbugs.skip>true</spotbugs.skip>

@@ -180,6 +180,11 @@ docker build -f inertia-demo/inertia-demo-quarkus/Dockerfile.native -t inertia-d
 docker run --rm -p 8082:8080 inertia-demo-quarkus:native   # → localhost:8082
 ```
 
+`inertia-demo/docker-compose.yml` lifts all three demos at once — `:8080` (Boot 3 native),
+`:8081` (Quarkus native) and `:8082` (the Boot 2 demo on a Liberica Java 8 JRE alpine:
+JVM mode, no AOT engine exists for Boot 2 — and a JVM image *can* be musl; the glibc
+constraint belongs to compiled native binaries).
+
 Traps baked into those files, each validated:
 
 - **The CE image does not bundle the `native-image` component** (22.x installer era:

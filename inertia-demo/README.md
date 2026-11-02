@@ -40,6 +40,20 @@ mvn -pl :inertia-demo-quarkus quarkus:dev          # Quarkus (Undertow/RESTEasy)
 # → http://localhost:8080
 ```
 
+**All three at once with Docker (compose, 8080/8081/8082):**
+
+```bash
+cd inertia-demo && docker compose up --build
+# demo-spring          → 8080  (Boot 3.3 native binary, GraalVM CE in-image)
+# demo-quarkus         → 8081  (Quarkus native runner, GraalVM CE in-image)
+# demo-spring-boot2    → 8082  (Boot 2.7 fat jar on a Liberica Java 8 JRE alpine — no
+#                                native possible: Boot 2 has no AOT engine)
+```
+
+The Svelte front-end is rebuilt inside EVERY image build (the assets bake into each binary),
+so `docker compose up --build` is self-sufficient. Mechanics and traps:
+[docs/compile-native.md](../docs/compile-native.md).
+
 Edits in the front-end source update the running page through HMR — no reloads, no
 builds. In dev mode the page version is `null` (the versioned 409 flow belongs to
 build mode). Full loop details: [../docs/dev-workflow.md](../docs/dev-workflow.md).

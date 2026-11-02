@@ -1,6 +1,7 @@
 package io.github.wesleybritovlk.inertia.demo;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,7 +53,7 @@ class SimpleFormTodoController {
         String title = body.get("title");
         if (title == null || title.trim().isEmpty()) {
             org.springframework.validation.MapBindingResult errors =
-                    new org.springframework.validation.MapBindingResult(Map.of(), "todo");
+                    new org.springframework.validation.MapBindingResult(new LinkedHashMap<>(), "todo");
             errors.rejectValue("title", "NotBlank", "The todo title is required.");
             ValidationErrors.store(inertia, errors, "default");
             return inertia.redirect(ROUTE);
