@@ -246,6 +246,58 @@ GraalVM native: the demo apps carry the profile — install a GraalVM 17+ with
 ([the native guide](compile-native.md) for the ownership table, the reflective
 registration story, recipes and troubleshooting).
 
+## Containerizing the published coordinates
+
+The same project packaged as an image assumes the library is **published**: the build
+stage resolves the `io.github.wesleybritovlk.inertia` artifact from Maven Central and
+does NOT carry any reactor sibling — the whole reactor-copy pile the demo Dockerfiles
+need only exists because the coordinates are not shipped yet. Until the release
+publishes, the shortcuts are `mvn clean install` on the host (nothing to change in this
+file — it will resolve once Central has it) or mounting the local `~/.m2` over
+`/root/.m2` with `-v`.
+
+The folder layout is the boilerplate's: `frontend/` next to `src/`, whose `outDir`
+dumps into `src/main/resources/static` — so the jar packaging picks the front build for
+free and the front stage only needs to run first:
+
+```dockerfile
+# 1) the front-end is rebuilt on every image build (hashed assets + manifest bake in)
+FROM node:20-alpine AS front
+WORKDIR /app
+COPY frontend frontend
+RUN cd frontend && npm ci && npm run build
+
+# 2) the application compiles against the PUBLISHED inertia coordinates (Central);
+#    swap the pom version to the released one when shipping
+FROM bellsoft/liberica-openjdk-alpine:17 AS build
+WORKDIR /app
+COPY --from=maven:3.9 /usr/share/maven /usr/share/maven
+RUN ln -s /usr/share/maven/bin/mvn /usr/local/bin/mvn
+COPY pom.xml .
+COPY src src
+# graft the front build next to the boilerplate outDir: the front stage wrote it in its
+# OWN filesystem, the `COPY src` above carries the back-end tree from the context
+COPY --from=front /app/src/main/resources/static src/main/resources/static
+RUN mvn -B package -DskipTests
+
+# 3) runtime: java 17 JRE on alpine (JVM images may go musl; only native-image
+#    binaries are glibc-locked)
+FROM bellsoft/liberica-openjre-alpine:17
+WORKDIR /app
+COPY --from=build /app/target/my-app-1.0.0.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+```bash
+docker build -t my-app .
+docker run --rm -p 8080:8080 my-app   # → localhost:8080 (root page + protocol)
+```
+
+The **native variant** of this exact project lives in
+[compile-native.md](compile-native.md) (the demo files show the reactor-in-image shape
+today, which goes away when the coordinates ship).
+
 The jar is self-contained: hashed assets, manifest, root template and the whole
 protocol machinery. SPA catch-all routing (`@GetMapping("/{*path}")`) keeps first
 visits of client-side routes working the same way as any other page.

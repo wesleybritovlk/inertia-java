@@ -93,11 +93,11 @@ import java.util.List;
 import io.github.wesleybritovlk.inertia.core.Inertia;
 import io.github.wesleybritovlk.inertia.core.PlainJsonPageSerializer;
 import io.github.wesleybritovlk.inertia.core.VersionProvider;
-import io.github.wesleybritovlk.inertia.servlet.FileVersionProvider;
-import io.github.wesleybritovlk.inertia.servlet.HotAwareVersionProvider;
+import io.github.wesleybritovlk.inertia.web.FileVersionProvider;
+import io.github.wesleybritovlk.inertia.web.HotAwareVersionProvider;
 import io.github.wesleybritovlk.inertia.servlet.InertiaPageWriter;
-import io.github.wesleybritovlk.inertia.servlet.ThymeleafInertiaRootTemplateRenderer;
-import io.github.wesleybritovlk.inertia.servlet.ViteInertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.web.ThymeleafInertiaRootTemplateRenderer;
+import io.github.wesleybritovlk.inertia.web.ViteInertiaRootTemplateRenderer;
 
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
@@ -149,6 +149,7 @@ import io.github.wesleybritovlk.inertia.servlet.InertiaFilter;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.annotation.WebFilter;
@@ -323,6 +324,45 @@ same way on Tomcat 9- containers). The root template override
 works the same way: a head fragment at `WEB-INF/classes/templates/inertia.html` (or
 pass a path to `ThymeleafInertiaRootTemplateRenderer`) —
 [the root template section](getting-started.md#the-root-template-usually-you-do-not-need-one).
+
+## Containerizing the published coordinates
+
+For the servlet flavor the container IS the servlet container (Tomcat in, Tomcat out):
+a stage builds the front-end with the boilerplate path (the WAR serves its own files —
+`outDir: '../src/main/webapp/static'`), a stage compiles the WAR against the published
+`inertia-servlet` coordinates (Central; swap the pom placeholder at release time), and
+the runtime is the Tomcat image itself with the WAR as the root application — no JVM
+stage needed, the container runtime ships Java:
+
+```dockerfile
+# 1) the front-end, rebuilt on every image build
+FROM node:20-alpine AS front
+WORKDIR /app
+COPY frontend frontend
+RUN cd frontend && npm ci && npm run build -- --outDir ../src/main/webapp/static
+
+# 2) the WAR compiles against the PUBLISHED inertia coordinates (Central)
+FROM bellsoft/liberica-openjdk-alpine:17 AS build
+WORKDIR /app
+COPY --from=maven:3.9 /usr/share/maven /usr/share/maven
+RUN ln -s /usr/share/maven/bin/mvn /usr/local/bin/mvn
+COPY pom.xml .
+COPY src src
+# the servlet flavour serves its own files: graft the front build into the WAR's static
+COPY --from=front /app/src/main/webapp/static src/main/webapp/static
+RUN mvn -B package -DskipTests
+
+# 3) the container is the servlet container: the WAR becomes the root application
+FROM tomcat:10.1-jre17
+COPY --from=build /app/target/my-app-1.0.0.war /usr/local/tomcat/webapps/ROOT.war
+EXPOSE 8080
+ENTRYPOINT ["catalina.sh", "run"]
+```
+
+The **javax twin** swaps two lines: the Maven coordinates become
+`inertia-servlet-javax` (Java 8 line — the application's own bytecode can also go
+`<maven.compiler.release>8</maven.compiler.release>`), and the runtime becomes
+`tomcat:9-jre8`.
 
 ## What to read next
 

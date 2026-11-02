@@ -122,7 +122,7 @@ JSON and browser visits with the root HTML; the shared filter does the version g
 properties ([configuration.md](configuration.md)). For real applications:
 
 ```properties
-inertia.vite-manifest=classpath:static/manifest.json
+inertia.vite-manifest=classpath:META-INF/resources/manifest.json
 # inertia.root-id=app        # default; must match createInertiaApp({ id })
 # inertia.vite-dev-hot=off   # recommended on production servers
 ```
@@ -132,8 +132,18 @@ inertia.vite-manifest=classpath:static/manifest.json
 Identical to every other stack — follow
 [the boilerplate section](getting-started.md#the-front-end-boilerplate-any-stack) of the
 concepts page (`vite.config.js` with the inline hot-file plugin, `src/app.js`,
-`src/Pages/...`). `npm run build` writes into `src/main/resources/static/`; the
-classpath property above points at it.
+`src/Pages/...`) with ONE quarkus-specific override: the build writes into
+`../src/main/resources/META-INF/resources/` — the classpath convention the adapter's
+static-resources filter serves (plain `static/` is invisible on Quarkus):
+
+```js
+// vite.config.js (quarkus flavour) — besides the boilerplate's config:
+build: { outDir: '../src/main/resources/META-INF/resources' },
+```
+
+`npm run build` bakes front-end assets and manifest into
+`src/main/resources/META-INF/resources/` — served by the adapter's filter AND read as
+the version source by the `inertia.*` config below (`classpath:META-INF/resources/manifest.json`).
 
 ## 5. The root template
 
@@ -215,6 +225,51 @@ GraalVM native: install a GraalVM 17+ with `native-image` and `mvn package -Dnat
 writes a single executable that boots in milliseconds
 ([the native guide](compile-native.md) for the ownership table, the reflective
 registration story, recipes and troubleshooting).
+
+## Containerizing the published coordinates
+
+The same project as an image, assuming the library ships on Maven Central — three
+stages, no reactor copies: the `frontend/` build (boilerplate out
+`../src/main/resources/static`) is baked in every image build, the application compiles
+against the published `inertia-quarkus` coordinates (swap the pom placeholder for the
+released version when publishing), and the fast-jar layout travels whole (the Quarkus
+runtime is a folder, not a single file):
+
+```dockerfile
+# 1) the front-end, rebuilt on every image build (assets bake in each time)
+FROM node:20-alpine AS front
+WORKDIR /app
+COPY frontend frontend
+RUN cd frontend && npm ci && npm run build
+
+# 2) the application compiles against the PUBLISHED inertia coordinates (Central)
+FROM bellsoft/liberica-openjdk-alpine:17 AS build
+WORKDIR /app
+COPY --from=maven:3.9 /usr/share/maven /usr/share/maven
+RUN ln -s /usr/share/maven/bin/mvn /usr/local/bin/mvn
+COPY pom.xml .
+COPY src src
+# graft the front build into the quarkus convention (the adapter's static-resources
+# filter serves META-INF/resources; the front stage wrote exactly there)
+COPY --from=front /app/src/main/resources/META-INF/resources src/main/resources/META-INF/resources
+RUN mvn -B package -DskipTests
+
+# 3) fast-jar runtime: the quarkus-app FOLDER is the runnable unit
+FROM bellsoft/liberica-openjre-alpine:17
+WORKDIR /app
+COPY --from=build /app/target/quarkus-app quarkus-app
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "quarkus-app/quarkus-run.jar"]
+```
+
+```bash
+docker build -t my-app .
+docker run --rm -p 8080:8080 my-app   # → localhost:8080
+```
+
+Until the release is public, `mvn clean install` on the libraries fills `~/.m2` and your
+host `mvn package` resolves the snapshot — the published version drops in the same
+placeholder afterwards. [The native variant](compile-native.md).
 
 ## What to read next
 

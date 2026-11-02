@@ -172,6 +172,9 @@ static-resources filter validated inside the binary).
 container — three stages: the **Svelte front-end is rebuilt every time** (the assets bake
 into the image), the reactor compiles inside `ghcr.io/graalvm/graalvm-ce:ol9-java17-22.3.3`
 (maven copied from `maven:3.9`), and `debian:bookworm-slim` ships the executable alone.
+(The getting-started guides carry the *published-coordinate* plain-JVM Dockerfiles —
+the whole-reactor copy `inertia-demo/...` pile exists only because the snapshots are not
+on Central yet; the natives live on THIS page, the plain ones with the guides.)
 
 ```bash
 docker build -f inertia-demo/inertia-demo-spring/Dockerfile.native -t inertia-demo-spring:native .

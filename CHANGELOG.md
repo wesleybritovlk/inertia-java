@@ -7,6 +7,13 @@ All notable changes of this project are documented here. Format based on
 ## [Unreleased]
 
 ### Changed
+- **The getting-started guides ship the published-coordinates container recipes**: a
+  plain three-stage Dockerfile per guide (front-end rebuilt every build → the boiling war
+  goes into the WAR, application compiled against Maven-Central coordinates — no
+  reactor-copy pile needed once the release ships; Liberica JRE alpine runtime for the
+  JVM flavors, `tomcat:10.1-jre17` as the container-runtime for the WAR one, the javax
+  twin note targets `tomcat:9-jre8`), each validated inside its own sandbox.
+  The native-compiled Dockerfiles stay in [compile-native.md](docs/compile-native.md).
 - **`inertia-core` and the web glue compile on Java 8**: the baseline aimed at reuse by
   legacy servlet containers and future Boot 2 adapters. `Prop`'s seven record kinds and
   the Vite settings records became hand-written parity classes (record-shaped
