@@ -61,6 +61,24 @@ resolved `${revision}` into every deployed pom; no edits needed. Optional flags:
 `-DautoPublish=true -DwaitUntil=published` make the pipeline upload→validate→publish
 unattended.)
 
+## What ships, what consumers pull
+
+The bundle carries the SEVEN library artifacts + the **parent pom** (`inertia-java`).
+The parent is NOT a thing anyone declares — it is the few-KB pom descriptor the Maven
+model builder downloads automatically to read the children's inherited metadata
+(license, url, plugin defaults); it cannot be left out of the publication because the
+published child poms reference it. Consumers never touch it directly:
+
+| Consumer depends on | Maven pulls (transitive) | Never pulled |
+|---|---|---|
+| `inertia-spring-boot` (Boot 3/4) | it + `inertia-core` + `inertia-web` + `inertia-servlet` + Thymeleaf | the demos, the Boot/Spring stack (provided scopes stay out of consumers) |
+| `inertia-quarkus` (Quarkus) | it + `inertia-core` + `inertia-web` + `inertia-servlet` | same |
+| `inertia-servlet-javax` (Java-EE 8 era glue) | it + `inertia-core` + `inertia-web` | same |
+| raw servlets + manual wiring | `inertia-servlet` / `inertia-servlet-javax` + the same two below | same |
+
+The `provided`-scope dependencies (servlet API, Spring surfaces) do not travel to
+consumers — they come from the consumer's own container/framework.
+
 ## What NOT to do
 
 - Do not publish `-SNAPSHOT` from this profile unless you actually want snapshot
