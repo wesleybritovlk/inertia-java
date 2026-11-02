@@ -4,7 +4,13 @@ All notable changes of this project are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.0] — 2026-11-01
+
+_The first release: `io.github.wesleybritovlk.inertia` artifacts live on Maven Central — see [docs/publishing.md](docs/publishing.md)._
+
 ## [Unreleased]
+
+<!-- next cycle: demo pages (login/auth, infinite scroll) and whatever else ships -->
 
 ### Changed
 - **The getting-started guides ship the published-coordinates container recipes**: a

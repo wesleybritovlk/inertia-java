@@ -82,6 +82,6 @@ consumers — they come from the consumer's own container/framework.
 ## What NOT to do
 
 - Do not publish `-SNAPSHOT` from this profile unless you actually want snapshot
-  consumers (`inertia-core/0.1.0-SNAPSHOT`): the `-Drevision` flip is what turns a
+  consumers (`inertia-core/1.0.0`): the `-Drevision` flip is what turns a
   snapshot build into a release.
 - Do not skip the GPG signatures: the bundle validation rejects unsigned files.

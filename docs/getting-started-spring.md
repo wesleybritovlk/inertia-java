@@ -33,7 +33,7 @@ dependency is the web starter:
         <dependency>
             <groupId>io.github.wesleybritovlk.inertia</groupId>
             <artifactId>inertia-spring-boot</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -66,7 +66,7 @@ first dependency swaps:
 <dependency>
     <groupId>io.github.wesleybritovlk.inertia</groupId>
     <artifactId>inertia-spring-boot2</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 

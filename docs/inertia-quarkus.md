@@ -13,7 +13,7 @@ Dependencies (with the Quarkus platform BOM on your app, versions are managed):
 <dependency>
     <groupId>io.github.wesleybritovlk.inertia</groupId>
     <artifactId>inertia-quarkus</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 

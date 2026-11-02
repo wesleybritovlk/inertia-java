@@ -28,7 +28,7 @@ Jackson 3, the case that breaks other Java adapters.
 <dependency>
     <groupId>io.github.wesleybritovlk.inertia</groupId>
     <artifactId>inertia-spring-boot</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 

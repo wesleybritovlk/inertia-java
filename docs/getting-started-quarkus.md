@@ -44,7 +44,7 @@ config mapping — the platform BOM manages versions:
         <dependency>
             <groupId>io.github.wesleybritovlk.inertia</groupId>
             <artifactId>inertia-quarkus</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
 

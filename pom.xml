@@ -56,7 +56,7 @@
 
     <properties>
         <!-- the ONE place a reactor version bump touches -->
-        <revision>0.1.0-SNAPSHOT</revision>
+        <revision>1.0.0</revision>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring.boot.version>3.3.12</spring.boot.version>
